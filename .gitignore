@@ -66,3 +66,9 @@ tests/fixtures/*.pdf
 
 # Claude Code (local settings, memory, session data)
 .claude/
+
+# Pre-publish audit output (generated artefacts)
+audit/report.json
+
+# Schematron XSLT resources (downloaded at runtime, not committed)
+mcp_einvoicing_de/resources/
