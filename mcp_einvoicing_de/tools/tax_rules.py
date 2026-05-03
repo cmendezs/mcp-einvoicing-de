@@ -26,6 +26,8 @@ from typing import Any
 import mcp.types as types
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_core.xml_utils import format_error
+
 logger = logging.getLogger(__name__)
 
 # Current German VAT rates (as of 2025-01-01)
@@ -193,7 +195,7 @@ async def handle_tax_rules(arguments: dict[str, Any]) -> list[types.TextContent]
     try:
         params = TaxRulesInput.model_validate(arguments)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     query_lower = params.query.lower()
     results: list[dict[str, Any]] = []

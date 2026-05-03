@@ -265,3 +265,21 @@ class ZUGFeRDInvoice(BaseModel):
     preceding_invoice_date: date | None = Field(
         None, description="Preceding invoice issue date (BT-26)"
     )
+
+
+# ---------------------------------------------------------------------------
+# Register ZUGFeRD / XRechnung profiles in the core ProfileRegistry.
+# Imported by any DE tool that needs to look up GuidelineID URNs or validate
+# conversion paths without hard-coding the values.
+# ---------------------------------------------------------------------------
+
+from mcp_einvoicing_core.profile_registry import profile_registry as _registry  # noqa: E402
+
+_registry.register("DE", "MINIMUM",   "CII", ZUGFeRDProfile.MINIMUM.value)
+_registry.register("DE", "BASIC_WL",  "CII", ZUGFeRDProfile.BASIC_WL.value)
+_registry.register("DE", "BASIC",     "CII", ZUGFeRDProfile.BASIC.value)
+_registry.register("DE", "EN_16931",  "CII", ZUGFeRDProfile.EN_16931.value)
+_registry.register("DE", "EN_16931",  "UBL", ZUGFeRDProfile.EN_16931.value)
+_registry.register("DE", "EXTENDED",  "CII", ZUGFeRDProfile.EXTENDED.value)
+_registry.register("DE", "XRECHNUNG", "CII", ZUGFeRDProfile.XRECHNUNG.value)
+_registry.register("DE", "XRECHNUNG", "UBL", ZUGFeRDProfile.XRECHNUNG.value)

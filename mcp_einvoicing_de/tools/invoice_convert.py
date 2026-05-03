@@ -22,6 +22,9 @@ from typing import Any
 import mcp.types as types
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_core.exceptions import EInvoicingError
+from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,7 +99,12 @@ async def handle_invoice_convert(arguments: dict[str, Any]) -> list[types.TextCo
     try:
         params = InvoiceConvertInput.model_validate(arguments)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+
+    try:
+        resolve_xml_input(params.xml_content, params.xml_base64)
+    except (ValueError, EInvoicingError) as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     # TODO: implement conversion pipeline
     # Steps:

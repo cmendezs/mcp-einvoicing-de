@@ -20,6 +20,8 @@ from typing import Any
 import mcp.types as types
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_core.exceptions import EInvoicingError
+from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 
 logger = logging.getLogger(__name__)
@@ -141,7 +143,7 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
     try:
         params = InvoiceParseInput.model_validate(arguments)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     # Resolve input to XML bytes
     xml_bytes: bytes
@@ -149,28 +151,19 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
         try:
             pdf_bytes = base64.b64decode(params.pdf_base64)
             xml_bytes = _extract_xml_from_pdf(pdf_bytes)
-        except (NotImplementedError, Exception) as exc:
-            return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
-    elif params.xml_base64 is not None:
-        try:
-            xml_bytes = base64.b64decode(params.xml_base64)
-        except Exception as exc:
-            return [types.TextContent(type="text", text=json.dumps({"error": f"Invalid base64: {exc}"}))]
-    elif params.xml_content is not None:
-        xml_bytes = params.xml_content.encode("utf-8")
+        except (NotImplementedError, EInvoicingError, Exception) as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
     else:
-        return [
-            types.TextContent(
-                type="text",
-                text=json.dumps({"error": "Provide xml_content, xml_base64, or pdf_base64."}),
-            )
-        ]
+        try:
+            xml_bytes = resolve_xml_input(params.xml_content, params.xml_base64)
+        except (ValueError, EInvoicingError) as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     try:
         syntax = detect_invoice_syntax(xml_bytes)
         profile = detect_zugferd_profile(xml_bytes)
     except ValueError as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     if syntax == "CII" or syntax.value == "CII":
         invoice_data = _parse_cii_xml(xml_bytes)

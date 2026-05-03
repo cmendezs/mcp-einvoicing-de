@@ -7,7 +7,7 @@ name = "mcp-einvoicing-de"
 version = "0.1.0"
 description = "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)"
 readme = "README.md"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [{ name = "cmendezs" }]
 requires-python = ">=3.11"
 keywords = [
@@ -25,7 +25,7 @@ keywords = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -34,8 +34,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "mcp>=1.0.0",
-    "mcp-einvoicing-core>=0.1.0,<1.0.0",
+    "mcp-einvoicing-core>=0.3.0,<1.0.0",
     "pydantic>=2.0.0",
     "lxml>=5.0.0",
     "reportlab>=4.0.0",
@@ -44,6 +43,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+pdf = ["pikepdf>=8.0.0"]
 pymupdf = ["PyMuPDF>=1.24.0"]
 dev = [
     "pytest>=8.0.0",
@@ -58,11 +58,15 @@ dev = [
 
 [project.scripts]
 mcp-einvoicing-de = "mcp_einvoicing_de.server:main"
+mcp-einvoicing-de-download-rules = "mcp_einvoicing_de.download_rules:main"
 
 [project.urls]
 Homepage = "https://github.com/cmendezs/mcp-einvoicing-de"
 Repository = "https://github.com/cmendezs/mcp-einvoicing-de"
 Issues = "https://github.com/cmendezs/mcp-einvoicing-de/issues"
+
+[tool.uv.sources]
+mcp-einvoicing-core = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["mcp_einvoicing_de"]

@@ -14,7 +14,6 @@ Official rule sources:
 
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import os
@@ -23,6 +22,8 @@ from typing import Any
 import mcp.types as types
 from pydantic import BaseModel, Field, field_validator
 
+from mcp_einvoicing_core.exceptions import EInvoicingError
+from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
@@ -88,14 +89,7 @@ class InvoiceValidateInput(BaseModel):
 
     def get_xml_bytes(self) -> bytes:
         """Resolve xml_content / xml_base64 to raw bytes."""
-        if self.xml_base64 is not None:
-            try:
-                return base64.b64decode(self.xml_base64)
-            except Exception as exc:
-                raise ValueError(f"xml_base64 is not valid base64: {exc}") from exc
-        if self.xml_content is not None:
-            return self.xml_content.encode("utf-8")
-        raise ValueError("Provide either xml_content or xml_base64.")
+        return resolve_xml_input(self.xml_content, self.xml_base64)
 
 
 class ValidationFinding(BaseModel):
@@ -262,10 +256,7 @@ async def _validate_local(
             syntax=syntax,
         )
 
-    result = validator.validate(xml_bytes)
-    result.profile = profile_name
-    result.syntax = syntax
-    return result
+    return validator.validate(xml_bytes, profile=profile_name, syntax=syntax)
 
 
 async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextContent]:
@@ -273,12 +264,12 @@ async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextC
     try:
         params = InvoiceValidateInput.model_validate(arguments)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     try:
         xml_bytes = params.get_xml_bytes()
-    except ValueError as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+    except (ValueError, EInvoicingError) as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     profile_name = _resolve_profile(params.profile, xml_bytes)
     syntax = _resolve_syntax(params.syntax, xml_bytes)

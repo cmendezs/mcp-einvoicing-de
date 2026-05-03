@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from enum import Enum
 
+from pydantic import Field
+
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 
 
@@ -49,6 +51,3 @@ class XRechnungInvoice(ZUGFeRDInvoice):
         # Force profile to XRECHNUNG regardless of input
         object.__setattr__(self, "profile", ZUGFeRDProfile.XRECHNUNG)
 
-
-# Avoid circular import — Field is already imported via ZUGFeRDInvoice's module
-from pydantic import Field  # noqa: E402 (re-export for XRechnungInvoice annotations)

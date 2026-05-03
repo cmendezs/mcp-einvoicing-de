@@ -6,40 +6,41 @@ BIS Billing 3.0 documents (DE PINT profile).
 
 Peppol SMP lookup flow:
   1. Hash participant ID using SHA-256 (Peppol SML DNS scheme)
-  2. Query DNS: B-<sha256hash>.iso6523-actorid-upis.<sml-domain>
-  3. Fetch SMP record to get capabilities
-  4. Check for DocumentTypeIdentifier matching BIS Billing 3.0
+     [Unverified: confirm hash algorithm against current OpenPeppol BDMSL spec]
+  2. Query DNS (via DNS-over-HTTPS): B-<sha256>.<scheme>.iso6523-actorid-upis.<sml>
+  3. Fetch SMP service group to enumerate supported document types
+  4. Fetch SMP service metadata to get the AS4 endpoint URL
 
-German Peppol Authority: [NEED: confirm German Peppol Authority — likely OpenPeppol DE]
-SML domain for production: [NEED: confirm — edelivery.eu? or sml.peppolcentral.org?]
-SML domain for test: [NEED: confirm test SML domain]
+German Peppol Authority: [NEED: confirm German Peppol Authority name]
+SML domain (production): edelivery.tech.ec.europa.eu  [Unverified]
+SML domain (test):       acc.edelivery.tech.ec.europa.eu  [Unverified]
 
 Peppol participant ID formats for Germany:
   - GLN: 0088:<gln>
   - Leitweg-ID: 0204:<leitweg-id>
   - VAT DE: 9930:DE<vat_number>
-  - [NEED: confirm all EAS codes accepted for German e-invoicing]
-
-[NEED: verify if mcp-einvoicing-core provides a PeppolClient base class]
+  [NEED: confirm all EAS codes accepted for German e-invoicing B2B mandate]
 """
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 from typing import Any
 
-import httpx
 import mcp.types as types
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+from mcp_einvoicing_core.exceptions import EInvoicingError
+from mcp_einvoicing_core.peppol import (
+    PEPPOL_BIS_BILLING_30,
+    PeppolEnvironment,
+    PeppolParticipantId,
+    PeppolSMPClient,
+)
+from mcp_einvoicing_core.xml_utils import format_error
 
-_PEPPOL_SMP_URL = os.environ.get("EINVOICING_DE_PEPPOL_SMP_URL", "")
-# [NEED: confirm production and test SML base URLs]
-_SML_DOMAIN_PRODUCTION = "edelivery.eu"  # [NEED: verify]
-_SML_DOMAIN_TEST = "acc.edelivery.eu"  # [NEED: verify]
+logger = logging.getLogger(__name__)
 
 
 class PeppolCheckInput(BaseModel):
@@ -54,11 +55,11 @@ class PeppolCheckInput(BaseModel):
         ),
     )
     document_type: str = Field(
-        "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2::Invoice##urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0::2.1",
+        PEPPOL_BIS_BILLING_30,
         description=(
             "Peppol document type identifier to check capability for. "
             "Defaults to BIS Billing 3.0. "
-            "[NEED: confirm DE PINT document type identifier]"
+            "[NEED: confirm DE PINT document type identifier once standardised]"
         ),
     )
     environment: str = Field(
@@ -119,25 +120,48 @@ async def handle_peppol_check(arguments: dict[str, Any]) -> list[types.TextConte
     try:
         params = PeppolCheckInput.model_validate(arguments)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps({"error": str(exc)}))]
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
-    # TODO: implement Peppol SMP lookup
-    # Steps:
-    #   1. URL-encode participant_id as ISO 6523 actor ID
-    #   2. SHA-256 hash the participant ID (Peppol DNS scheme)
-    #   3. Construct DNS name: B-<hash>.<scheme>.<sml_domain>
-    #   4. DNS SRV/A lookup to find the SMP host
-    #   5. HTTP GET to SMP: https://<smp_host>/<participant_id>/services/<doc_type>
-    #   6. Parse XML response to extract AS4 endpoint URL
-    # [NEED: implement DNS lookup — use dnspython or httpx to query public DNS-over-HTTPS]
-    # [NEED: verify exact DNS name construction for Peppol SML]
-    # [NEED: verify SMP API path format]
-    # [NEED: verify if mcp-einvoicing-core provides PeppolSMPClient]
+    try:
+        pid = PeppolParticipantId.parse(params.participant_id)
+    except ValueError as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+
+    environment = (
+        PeppolEnvironment.TEST
+        if params.environment == "test"
+        else PeppolEnvironment.PRODUCTION
+    )
+    client = PeppolSMPClient(environment=environment)
+
+    try:
+        lookup = await client.lookup_participant(pid)
+    except EInvoicingError as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+
+    document_type_supported: bool | None = None
+    access_point_url: str | None = None
+    transport_profile: str | None = None
+
+    if lookup.is_registered and params.document_type:
+        document_type_supported = params.document_type in lookup.supported_document_types
+        if document_type_supported:
+            try:
+                service = await client.get_service_endpoint(
+                    pid, params.document_type, smp_hostname=lookup.smp_hostname
+                )
+                access_point_url = service.endpoint_url
+                transport_profile = service.transport_profile
+            except EInvoicingError as exc:
+                logger.warning("Service endpoint fetch failed: %s", exc)
 
     output = PeppolCheckOutput(
-        is_registered=False,
-        participant_id=params.participant_id,
-        error="Peppol SMP lookup not yet implemented. [NEED: implement DNS + SMP lookup]",
+        is_registered=lookup.is_registered,
+        participant_id=str(pid),
+        document_type_supported=document_type_supported,
+        access_point_url=access_point_url,
+        transport_profile=transport_profile,
+        lookup_details=lookup.to_dict(),
+        error=lookup.error,
     )
-
     return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]

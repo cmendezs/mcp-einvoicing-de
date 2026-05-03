@@ -1,23 +1,20 @@
-"""PDF/A-3 generation and ZUGFeRD XML embedding utilities.
+"""PDF/A-3 generation and ZUGFeRD XML embedding utilities for mcp-einvoicing-de.
 
-ZUGFeRD requires attaching the XML invoice to a PDF/A-3 file with a specific
-attachment relationship. This module provides helpers for both generating
-a human-readable PDF invoice and embedding the XML into an existing PDF.
+generate_pdf_invoice() produces a human-readable PDF from a ZUGFeRDInvoice.
+embed_xml_in_pdf() attaches the ZUGFeRD XML to the PDF using the core
+PDFEmbedder (requires pikepdf).
 
-PDF/A-3 conformance requirements:
-- ISO 19005-3 (PDF/A-3)
-- Attachment relationship: 'Alternative' (for ZUGFeRD) or 'Source' (for XRechnung)
-- AFRelationship key in file spec dictionary
+The AFRelationship for ZUGFeRD 2.x is "Alternative".
+[Unverified: confirm the correct value for ZUGFeRD 2.3 and for XRechnung hybrid]
 
-[NEED: confirm ZUGFeRD 2.3 required AFRelationship value — 'Alternative' vs 'Data']
-[NEED: confirm whether mcp-einvoicing-core provides a PDF/A-3 embedding utility]
+The Factur-X XMP ConformanceLevel is derived from the invoice profile name.
+[Unverified: confirm exact string values expected by FeRD / ZUGFeRD validators]
 """
 
 from __future__ import annotations
 
 import logging
 from datetime import date
-from decimal import Decimal
 from io import BytesIO
 from typing import TYPE_CHECKING
 
@@ -26,16 +23,26 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Map ZUGFeRDProfile enum names → XMP ConformanceLevel strings
+# [Unverified: confirm ConformanceLevel values from FeRD ZUGFeRD 2.3 spec]
+_PROFILE_CONFORMANCE: dict[str, str] = {
+    "MINIMUM":   "MINIMUM",
+    "BASIC_WL":  "BASIC WL",
+    "BASIC":     "BASIC",
+    "EN_16931":  "EN 16931",
+    "EXTENDED":  "EXTENDED",
+    "XRECHNUNG": "XRECHNUNG",
+}
+
 
 def generate_pdf_invoice(invoice: "ZUGFeRDInvoice") -> bytes:
-    """
-    Generate a human-readable PDF invoice using reportlab.
+    """Generate a human-readable PDF invoice using reportlab.
 
-    Returns raw PDF bytes (not yet PDF/A-3 conformant).
-    Call :func:`embed_xml_in_pdf` afterwards to attach the XML and
-    set PDF/A-3 metadata.
+    Returns raw PDF bytes (not yet PDF/A-3 conformant — use embed_xml_in_pdf
+    afterwards to attach the ZUGFeRD XML and update the PDF/A-3 metadata).
 
-    [NEED: implement full PDF layout matching typical German invoice format]
+    [NEED: implement full invoice layout (sender/recipient blocks, line items
+     table, tax breakdown, payment instructions, footer with legal notices)]
     """
     try:
         from reportlab.lib.pagesizes import A4
@@ -54,47 +61,52 @@ def generate_pdf_invoice(invoice: "ZUGFeRDInvoice") -> bytes:
     story = []
 
     # TODO: implement full invoice layout
-    # - Sender block (top-right)
-    # - Recipient block
-    # - Invoice header (number, date, due date)
-    # - Line items table
-    # - Tax breakdown table
-    # - Total amounts
-    # - Payment instructions
-    # - Footer with legal notices
-
     story.append(Paragraph(f"Rechnung {invoice.invoice_number}", styles["Title"]))
     story.append(Spacer(1, 0.5 * cm))
     story.append(
         Paragraph(
-            f"Rechnungsdatum: {invoice.invoice_date.strftime('%d.%m.%Y')}", styles["Normal"]
+            f"Rechnungsdatum: {invoice.invoice_date.strftime('%d.%m.%Y')}",
+            styles["Normal"],
         )
     )
     story.append(
-        Paragraph(f"Gesamtbetrag: {invoice.tax_inclusive_amount} {invoice.currency_code}", styles["Normal"])
+        Paragraph(
+            f"Gesamtbetrag: {invoice.tax_inclusive_amount} {invoice.currency_code}",
+            styles["Normal"],
+        )
     )
 
     doc.build(story)
     return buffer.getvalue()
 
 
-def embed_xml_in_pdf(pdf_bytes: bytes, xml_bytes: bytes, profile_name: str = "EN 16931") -> bytes:
-    """
-    Embed *xml_bytes* into *pdf_bytes* as a PDF/A-3 attachment.
+def embed_xml_in_pdf(
+    pdf_bytes: bytes,
+    xml_bytes: bytes,
+    profile_name: str = "EN_16931",
+) -> bytes:
+    """Embed ZUGFeRD XML into a PDF as a PDF/A-3 named attachment.
 
-    The XML is attached with filename 'factur-x.xml' and AFRelationship
-    set per ZUGFeRD 2.3 specification.
+    Delegates to mcp_einvoicing_core.pdf.PDFEmbedder.  Requires pikepdf
+    (install with: pip install pikepdf  or  pip install mcp-einvoicing-de[pdf]).
 
-    [NEED: implement PDF/A-3 conformant embedding]
-    [NEED: determine correct AFRelationship for each ZUGFeRD profile]
-    [NEED: evaluate PyMuPDF vs pikepdf for PDF/A-3 conformance]
+    Args:
+        pdf_bytes:    Source PDF bytes (from generate_pdf_invoice or any PDF).
+        xml_bytes:    ZUGFeRD CII XML bytes to attach.
+        profile_name: ZUGFeRDProfile enum name (e.g. "EN_16931", "XRECHNUNG").
+                      Used to set the Factur-X XMP ConformanceLevel.
+
+    Returns:
+        PDF/A-3 bytes with the XML attachment and updated XMP metadata.
     """
-    # TODO: implement PDF/A-3 embedding
-    # Option A: PyMuPDF (fitz) — requires pymupdf extra
-    # Option B: pikepdf — pure Python, simpler PDF/A metadata handling
-    # Option C: reportlab + manual xref injection
-    raise NotImplementedError(
-        "PDF/A-3 XML embedding is not yet implemented. "
-        "Tracked in roadmap v0.2.0. "
-        "[NEED: choose and implement PDF/A-3 embedding library]"
+    from mcp_einvoicing_core.pdf import PDFEmbedder
+
+    xmp_profile = _PROFILE_CONFORMANCE.get(profile_name.upper(), profile_name)
+
+    return PDFEmbedder.embed(
+        pdf_bytes=pdf_bytes,
+        xml_bytes=xml_bytes,
+        filename="factur-x.xml",
+        afrelationship="Alternative",
+        xmp_profile=xmp_profile,
     )
