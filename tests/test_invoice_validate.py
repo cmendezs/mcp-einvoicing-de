@@ -7,14 +7,13 @@ import json
 
 import pytest
 
+from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
+from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 from mcp_einvoicing_de.tools.invoice_validate import (
     InvoiceValidateInput,
     handle_invoice_validate,
 )
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
-from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
-from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
-
 
 # ── Unit tests — input model ──────────────────────────────────────────────────
 

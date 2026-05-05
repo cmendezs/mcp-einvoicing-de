@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from lxml import etree
 
-from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
+from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 
 # Namespace maps for CII and UBL
 _NS_CII_RSM = "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"

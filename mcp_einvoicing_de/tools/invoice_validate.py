@@ -20,12 +20,10 @@ import os
 from typing import Any
 
 import mcp.types as types
-from pydantic import BaseModel, Field, field_validator
-
 from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
-from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
-from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
+from pydantic import BaseModel, Field, field_validator
+
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 from mcp_einvoicing_de.validators.kosit import KoSITValidator
 from mcp_einvoicing_de.validators.schematron import SchematronValidator, ValidationResult

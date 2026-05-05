@@ -22,8 +22,8 @@ from typing import Any
 import mcp.types as types
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
-from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice, XRechnungSyntax
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,6 @@ The Factur-X XMP ConformanceLevel is derived from the invoice profile name.
 from __future__ import annotations
 
 import logging
-from datetime import date
 from io import BytesIO
 from typing import TYPE_CHECKING
 
@@ -35,7 +34,7 @@ _PROFILE_CONFORMANCE: dict[str, str] = {
 }
 
 
-def generate_pdf_invoice(invoice: "ZUGFeRDInvoice") -> bytes:
+def generate_pdf_invoice(invoice: ZUGFeRDInvoice) -> bytes:
     """Generate a human-readable PDF invoice using reportlab.
 
     Returns raw PDF bytes (not yet PDF/A-3 conformant — use embed_xml_in_pdf
@@ -48,7 +47,7 @@ def generate_pdf_invoice(invoice: "ZUGFeRDInvoice") -> bytes:
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet
         from reportlab.lib.units import cm
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
     except ImportError as exc:
         raise ImportError(
             "reportlab is required for PDF generation. "

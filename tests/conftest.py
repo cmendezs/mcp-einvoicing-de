@@ -66,7 +66,7 @@ def minimal_cii_xml() -> bytes:
 
     [NEED: replace with a real minimal ZUGFeRD MINIMUM CII XML]
     """
-    return """<?xml version="1.0" encoding="UTF-8"?>
+    return b"""<?xml version="1.0" encoding="UTF-8"?>
 <rsm:CrossIndustryInvoice
     xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
     xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
@@ -98,4 +98,4 @@ def minimal_cii_xml() -> bytes:
       </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
     </ram:ApplicableHeaderTradeSettlement>
   </rsm:SupplyChainTradeTransaction>
-</rsm:CrossIndustryInvoice>""".encode("utf-8")
+</rsm:CrossIndustryInvoice>"""

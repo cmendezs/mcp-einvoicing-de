@@ -6,16 +6,15 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from pydantic import ValidationError
 
+from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice, XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import (
-    GermanTaxCategory,
     ZUGFeRDAddress,
     ZUGFeRDInvoice,
     ZUGFeRDParty,
     ZUGFeRDProfile,
-    ZUGFeRDTax,
 )
-from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice, XRechnungSyntax
 
 
 class TestZUGFeRDAddress:
@@ -24,7 +23,7 @@ class TestZUGFeRDAddress:
         assert addr.country_code == "DE"
 
     def test_country_code_length_validation(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             ZUGFeRDAddress(line_one="Str. 1", city="Paris", postcode="75001", country_code="FRA")
 
 
@@ -35,7 +34,7 @@ class TestZUGFeRDInvoice:
         assert minimal_invoice.tax_inclusive_amount == Decimal("119.00")
 
     def test_tax_lines_required(self) -> None:
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             ZUGFeRDInvoice(
                 profile=ZUGFeRDProfile.MINIMUM,
                 invoice_number="X",

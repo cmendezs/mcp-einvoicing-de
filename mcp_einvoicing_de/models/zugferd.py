@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, field_validator
 # from mcp_einvoicing_core.models import BaseInvoice, BaseParty, BaseTax
 
 
-class ZUGFeRDProfile(str, Enum):
+class ZUGFeRDProfile(StrEnum):
     """ZUGFeRD 2.x profile identifiers (URN from FeRD specification)."""
 
     MINIMUM = "urn:factur-x.eu:1p0:minimum"
@@ -28,7 +28,7 @@ class ZUGFeRDProfile(str, Enum):
     XRECHNUNG = "urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_2.3"
 
 
-class GermanTaxCategory(str, Enum):
+class GermanTaxCategory(StrEnum):
     """EN 16931 VAT category codes relevant in Germany."""
 
     STANDARD = "S"  # Regelsteuersatz (19 %)

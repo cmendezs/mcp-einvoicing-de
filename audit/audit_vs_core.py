@@ -28,7 +28,7 @@ import json
 import sys
 import textwrap
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -195,9 +195,8 @@ def _version_in_range(version: str, spec: str) -> bool:
         elif part.startswith("~="):
             # Compatible release: ~=X.Y means >=X.Y,<X+1
             base = _parse_version(part[2:].strip())
-            if len(base) >= 2:
-                if v < base or v[0] != base[0]:
-                    return False
+            if len(base) >= 2 and (v < base or v[0] != base[0]):
+                return False
     return True
 
 
@@ -720,7 +719,7 @@ def render_summary_table(report: AuditReport) -> str:
     sep = "─" * 80
 
     lines.append(sep)
-    lines.append(f"  mcp-einvoicing-de  Pre-publish Audit Report")
+    lines.append("  mcp-einvoicing-de  Pre-publish Audit Report")
     lines.append(f"  Generated : {report.generated_at}")
     lines.append(f"  DE version: {report.de_version}")
     lines.append(f"  Core ver  : {report.core_version or 'not installed'}")
@@ -778,7 +777,7 @@ def run_audit() -> AuditReport:
             core_compat = _version_in_range(core_version, spec)
 
     report = AuditReport(
-        generated_at=datetime.now(timezone.utc).isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
         de_version=de_version,
         core_version=core_version,
         core_version_compatible=core_compat,

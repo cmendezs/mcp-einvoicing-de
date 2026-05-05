@@ -10,14 +10,14 @@ KoSIT specification: [NEED: direct URL to XRechnung 3.x specification PDF]
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import Field
 
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 
 
-class XRechnungSyntax(str, Enum):
+class XRechnungSyntax(StrEnum):
     """XRechnung 3.x XML syntax bindings."""
 
     CII = "CII"  # UN/CEFACT Cross Industry Invoice (same as ZUGFeRD CII)

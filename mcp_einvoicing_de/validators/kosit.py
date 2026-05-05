@@ -16,7 +16,6 @@ import os
 from typing import Any
 
 import httpx
-
 from mcp_einvoicing_core.schematron import ValidationMessage, ValidationResult
 
 logger = logging.getLogger(__name__)
