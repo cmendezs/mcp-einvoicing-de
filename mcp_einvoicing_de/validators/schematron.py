@@ -26,9 +26,8 @@ from pathlib import Path
 # (validators/kosit.py and tools/invoice_validate.py import these from here)
 from mcp_einvoicing_core.schematron import (  # noqa: F401  (re-export)
     SchematronValidator as _CoreSchematronValidator,
-    ValidationMessage,
-    ValidationResult,
 )
+from mcp_einvoicing_core.schematron import ValidationMessage, ValidationResult  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
