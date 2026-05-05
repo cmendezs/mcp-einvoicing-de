@@ -1,7 +1,7 @@
 # mcp-einvoicing-de 🇩🇪
 <!-- mcp-name: io.github.cmendezs/mcp-einvoicing-de -->
 
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
 [![PyPI version](https://img.shields.io/pypi/v/mcp-einvoicing-de.svg)](https://pypi.org/project/mcp-einvoicing-de/)
 [![Python](https://img.shields.io/pypi/pyversions/mcp-einvoicing-de.svg)](https://pypi.org/project/mcp-einvoicing-de/)
 [![mcp-einvoicing-de MCP server](https://glama.ai/mcp/servers/cmendezs/mcp-einvoicing-de/badges/score.svg)](https://glama.ai/mcp/servers/cmendezs/mcp-einvoicing-de)
@@ -12,7 +12,7 @@ MCP-Server (Model Context Protocol) in Python für die **deutsche elektronische 
 
 ## English summary
 
-This is a **Model Context Protocol (MCP)** server for **German electronic invoicing**. It exposes **6 tools** covering the full lifecycle of a ZUGFeRD or XRechnung invoice: creation (CII/UBL XML), validation against EN 16931 and KoSIT Schematron rules (BR-DE-*), parsing of existing invoice files, profile and syntax conversion, Peppol participant registration lookup (AS4), and German VAT rules (Steuerklassen, §13b UStG reverse charge, exemptions). Supports all ZUGFeRD 2.x profiles (MINIMUM through EXTENDED) and XRechnung 3.x (CII and UBL syntax). Licensed under **MIT**.
+This is a **Model Context Protocol (MCP)** server for **German electronic invoicing**. It exposes **6 tools** covering the full lifecycle of a ZUGFeRD or XRechnung invoice: creation (CII/UBL XML), validation against EN 16931 and KoSIT Schematron rules (BR-DE-*), parsing of existing invoice files, profile and syntax conversion, Peppol participant registration lookup (AS4), and German VAT rules (Steuerklassen, §13b UStG reverse charge, exemptions). Supports all ZUGFeRD 2.x profiles (MINIMUM through EXTENDED) and XRechnung 3.x (CII and UBL syntax). Licensed under **Apache 2.0**.
 
 ## Aufgebaut auf
 
@@ -294,7 +294,7 @@ make audit
 
 ## 📄 Lizenz
 
-Dieses Projekt steht unter der **MIT-Lizenz**.  
+Dieses Projekt steht unter der **Apache-2.0-Lizenz**.  
 Einzelheiten finden Sie in der Datei [LICENSE](LICENSE).
 
 Copyright 2026 cmendezs
