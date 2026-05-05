@@ -1,0 +1,34 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.cmendezs/mcp-einvoicing-de",
+  "description": "German e-invoicing MCP server: ZUGFeRD 2.x, XRechnung 3.x, EN 16931, KoSIT validation, Peppol.",
+  "repository": {
+    "url": "https://github.com/cmendezs/mcp-einvoicing-de",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "mcp-einvoicing-de",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "EINVOICING_DE_LOG_LEVEL",
+          "description": "Logging level: DEBUG, INFO (default), WARNING, or ERROR",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
+          "name": "EINVOICING_DE_KOSIT_VALIDATOR_URL",
+          "description": "URL of a self-hosted KoSIT validation tool REST endpoint (e.g. http://localhost:8080/api/v1/validate). When set, remote KoSIT validation is enabled; when absent, local Schematron validation is used.",
+          "isRequired": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
