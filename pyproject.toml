@@ -65,9 +65,6 @@ Homepage = "https://github.com/cmendezs/mcp-einvoicing-de"
 Repository = "https://github.com/cmendezs/mcp-einvoicing-de"
 Issues = "https://github.com/cmendezs/mcp-einvoicing-de/issues"
 
-[tool.uv.sources]
-mcp-einvoicing-core = { workspace = true }
-
 [tool.hatch.build.targets.wheel]
 packages = ["mcp_einvoicing_de"]
 
