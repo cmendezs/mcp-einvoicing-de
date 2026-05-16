@@ -4,9 +4,11 @@ Wraps the KoSIT Validierungstool REST API for remote validation of
 XRechnung invoices. This is the official German government validator.
 
 Official tool: https://github.com/itplr-kosit/validationtool
-Online demo: [NEED: confirm whether KoSIT provides a public REST endpoint]
 Self-hosted: docker pull ghcr.io/itplr-kosit/validationtool
-[NEED: official Docker image name and run instructions]
+[NEED: confirm KoSIT official Docker image name and recommended run instructions]
+
+Security: the URL is validated at construction time. Plain HTTP is only
+allowed for localhost; all non-localhost targets must use HTTPS.
 """
 
 from __future__ import annotations
@@ -14,22 +16,78 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
+from mcp_einvoicing_core.exceptions import PlatformError
 from mcp_einvoicing_core.schematron import ValidationMessage, ValidationResult
 
 logger = logging.getLogger(__name__)
 
+# Known KoSIT self-hosted and government hostnames.  Update when new official
+# endpoints are published.  Extend via EINVOICING_KOSIT_ALLOWLIST (comma-separated).
+_KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset({
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "validationtool",        # common docker-compose service name
+    "kosit-validator",       # alternative docker-compose service name
+})
+
 _DEFAULT_KOSIT_URL = os.environ.get(
     "EINVOICING_DE_KOSIT_VALIDATOR_URL",
-    # [NEED: confirm KoSIT self-hosted default port and path]
+    # Localhost default — must switch to https:// for remote/production endpoints.
     "http://localhost:8080/api/v1/validate",
 )
 
 
-class KoSITValidator:
+def _validate_kosit_url(url: str) -> str:
+    """Validate and return the KoSIT URL, or raise PlatformError.
+
+    Rules:
+    - Must use ``https://`` unless the host is localhost / 127.0.0.1 / ::1.
+    - Host must be in the built-in allowlist or ``EINVOICING_KOSIT_ALLOWLIST``.
     """
-    Remote validator using the KoSIT Validierungstool REST API.
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    scheme = parsed.scheme.lower()
+
+    extra_hosts = frozenset(
+        h.strip().lower()
+        for h in os.environ.get("EINVOICING_KOSIT_ALLOWLIST", "").split(",")
+        if h.strip()
+    )
+    allowed_hosts = _KOSIT_ALLOWLIST_DEFAULT | extra_hosts
+
+    is_localhost = host in {"localhost", "127.0.0.1", "::1"}
+
+    if scheme == "http" and not is_localhost:
+        raise PlatformError(
+            status_code=0,
+            message=(
+                f"KoSIT validator URL uses plain HTTP for non-localhost host {host!r}. "
+                "Set EINVOICING_DE_KOSIT_VALIDATOR_URL to an https:// URL. "
+                "Plain HTTP is only allowed for localhost."
+            ),
+        )
+    if scheme not in ("http", "https"):
+        raise PlatformError(
+            status_code=0,
+            message=f"KoSIT validator URL has unsupported scheme {scheme!r}. Use https://.",
+        )
+    if host not in allowed_hosts:
+        raise PlatformError(
+            status_code=0,
+            message=(
+                f"KoSIT validator host {host!r} is not in the allowlist. "
+                "Add it to EINVOICING_KOSIT_ALLOWLIST if this is a trusted endpoint."
+            ),
+        )
+    return url
+
+
+class KoSITValidator:
+    """Remote validator using the KoSIT Validierungstool REST API.
 
     Prefer this over local Schematron for production use — the KoSIT tool
     applies the full suite of XRechnung rules including those that require
@@ -40,7 +98,7 @@ class KoSITValidator:
     """
 
     def __init__(self, base_url: str = _DEFAULT_KOSIT_URL, timeout: float = 30.0) -> None:
-        self._base_url = base_url.rstrip("/")
+        self._base_url = _validate_kosit_url(base_url).rstrip("/")
         self._timeout = timeout
 
     async def validate(self, xml_bytes: bytes, filename: str = "invoice.xml") -> ValidationResult:
