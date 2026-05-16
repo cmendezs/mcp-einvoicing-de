@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from lxml import etree
+from mcp_einvoicing_core.xml_utils import safe_fromstring
 
 from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
@@ -19,7 +20,7 @@ _PROFILE_URN_MAP: dict[str, ZUGFeRDProfile] = {p.value: p for p in ZUGFeRDProfil
 def detect_invoice_syntax(xml_bytes: bytes) -> XRechnungSyntax:
     """Detect whether *xml_bytes* uses CII or UBL syntax."""
     try:
-        root = etree.fromstring(xml_bytes)
+        root = safe_fromstring(xml_bytes)
     except etree.XMLSyntaxError as exc:
         raise ValueError(f"Invalid XML: {exc}") from exc
 
