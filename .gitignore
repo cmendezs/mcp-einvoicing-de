@@ -71,4 +71,5 @@ tests/fixtures/*.pdf
 audit/report.json
 
 # Schematron XSLT resources (downloaded at runtime, not committed)
-mcp_einvoicing_de/resources/
+# The directory is tracked (with .gitkeep); only the downloaded XSLT files are ignored.
+mcp_einvoicing_de/resources/schematron/*.xslt
