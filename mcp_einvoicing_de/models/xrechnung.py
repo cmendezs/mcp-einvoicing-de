@@ -30,7 +30,7 @@ class XRechnungInvoice(ZUGFeRDInvoice):
 
     Extends ZUGFeRDInvoice with XRechnung-specific constraints:
     - buyer_reference (Leitweg-ID / BT-10) is MANDATORY
-    - profile is fixed to ZUGFeRDProfile.XRECHNUNG
+    - profile defaults to ZUGFeRDProfile.XRECHNUNG
     - syntax selects CII or UBL output
     - seller vat_id OR tax_number is MANDATORY
 
@@ -40,6 +40,10 @@ class XRechnungInvoice(ZUGFeRDInvoice):
     [NEED: full list of BR-DE-* rules from XRechnung 3.x spec]
     """
 
+    profile: ZUGFeRDProfile = Field(  # type: ignore[assignment]
+        ZUGFeRDProfile.XRECHNUNG,
+        description="XRechnung profile URN (BT-24) — always XRECHNUNG",
+    )
     syntax: XRechnungSyntax = Field(
         XRechnungSyntax.CII,
         description="XML syntax binding for XRechnung output",
@@ -48,6 +52,6 @@ class XRechnungInvoice(ZUGFeRDInvoice):
     model_config = {"populate_by_name": True}
 
     def model_post_init(self, __context: object) -> None:
-        # Force profile to XRECHNUNG regardless of input
+        # Enforce XRECHNUNG regardless of any caller-supplied profile value.
         object.__setattr__(self, "profile", ZUGFeRDProfile.XRECHNUNG)
 

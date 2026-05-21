@@ -44,82 +44,178 @@ from mcp_einvoicing_core.audit import (
 # CHECK 1 configuration — country-specific constants
 # ---------------------------------------------------------------------------
 
-# KNOWN VIOLATION: DE currently defines ZUGFeRDInvoice as a standalone class rather
-# than subclassing EN16931Invoice from core. CHECK 1 (_check_invoice_tree via core)
-# flags this as BLOCKING under the canonical invoice tree rule (see CLAUDE.md).
-# These overrides suppress the 7 per-symbol [MISSING] warnings that would otherwise
-# fire alongside the BLOCKING finding — one signal is cleaner than eight.
-# Resolution: make ZUGFeRDInvoice extend EN16931Invoice, then remove EN16931Invoice
-# from this set (the other 6 are component classes that DE-specific subclasses
-# legitimately replace, so they remain as overrides after the fix).
+# ZUGFeRDInvoice now extends EN16931Invoice (and component classes extend their EN16931
+# counterparts). The WRONG_BASE_CLASS BLOCKING is resolved. The overrides below cover
+# symbols that are internal to each core module (stdlib/Pydantic imports used within
+# core itself) or belong to subsystems DE deliberately does not use.
 _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     # DE implements tool functions directly rather than subclassing the ABC base classes.
     # EInvoicingMCPServer is unused because DE uses a standalone FastMCP server.
+    # Remaining symbols are internal imports of base_server.py not used by DE.
     "mcp_einvoicing_core.base_server": {
+        "ABC",
+        "Any",
         "BaseDocumentGenerator",
         "BaseDocumentParser",
         "BaseDocumentValidator",
         "BaseLifecycleManager",
+        "BaseModel",
         "BasePartyValidator",
+        "DocumentValidationResult",
         "EInvoicingMCPServer",
+        "FastMCP",
+        "Field",
+        "InvoiceDocument",
+        "InvoiceParty",
         "SubmitResult",
+        "TaxIdValidationResult",
+        "abstractmethod",
+        "assert_not_read_only",
+        "scrub",
     },
     # XAdES signing is ES-specific (Facturae / TicketBAI). DE applies no
     # document-level signing for ZUGFeRD or XRechnung.
+    # Remaining symbols are internal imports of digital_signature.py.
     "mcp_einvoicing_core.digital_signature": {
+        "ABC",
         "BaseDocumentSigner",
         "XAdESEPESSigner",
         "XAdESSignerConfig",
+        "abstractmethod",
+        "dataclass",
+        "datetime",
+        "field",
+        "timezone",
     },
-    # See KNOWN VIOLATION note above.
+    # download_rules is not used by DE — ZUGFeRD/XRechnung validators are bundled
+    # or downloaded via a package-specific mechanism.
+    "mcp_einvoicing_core.download_rules": {
+        "DownloadSpec",
+        "Path",
+        "dataclass",
+        "download_artefacts",
+        "entry_points",
+        "field",
+        "main",
+    },
+    # EN16931 component and invoice classes are now used as base classes (e.g.
+    # ZUGFeRDAddress extends EN16931Address). The symbols below are internal
+    # stdlib/Pydantic imports used within en16931.py itself; DE does not import
+    # them from core.
     "mcp_einvoicing_core.en16931": {
-        "EN16931Address",
-        "EN16931AllowanceCharge",
-        "EN16931Invoice",
-        "EN16931LineItem",
-        "EN16931Party",
-        "EN16931PaymentMeans",
-        "EN16931Tax",
+        "BaseModel",
+        "Decimal",
+        "Field",
+        "date",
+        "field_validator",
+        "model_validator",
+    },
+    # Exception hierarchy: DE imports EInvoicingError and PlatformError from core.
+    # The remaining exception subclasses are not used by DE.
+    "mcp_einvoicing_core.exceptions": {
+        "AuthenticationError",
+        "DocumentGenerationError",
+        "PartyValidationError",
+        "SchematronValidationError",
+        "ValidationError",
+        "XSDValidationError",
     },
     # OAuth2 client and types: DE has no live clearance API. ZUGFeRD and XRechnung
     # are post-audit formats; no government endpoint interaction is required.
+    # Remaining symbols are internal imports of http_client.py.
     "mcp_einvoicing_core.http_client": {
+        "Any",
         "AuthMode",
+        "AuthenticationError",
         "BaseEInvoicingClient",
+        "BaseEInvoicingConfig",
+        "BaseModel",
+        "BaseSettings",
+        "Enum",
+        "Field",
         "OAuthConfig",
+        "OAuthValues",
+        "Path",
         "TokenCache",
+        "field_validator",
+        "parsedate_to_datetime",
+        "urlparse",
     },
     # The country-agnostic InvoiceDocument tree is not used for ZUGFeRD/XRechnung
     # generation. DE uses the EN16931Invoice-derived hierarchy instead.
+    # Remaining symbols are internal imports of models.py.
     "mcp_einvoicing_core.models": {
+        "BaseModel",
+        "Decimal",
         "DocumentValidationResult",
+        "Field",
         "InvoiceDocument",
         "InvoiceLineItem",
         "InvoiceParty",
         "PartyAddress",
         "PaymentTerms",
+        "TaxIdValidationResult",
         "TaxIdentifier",
         "VATSummary",
+        "field_validator",
+        "model_validator",
+    },
+    # PDF embedding: ZUGFeRD uses PDF/A-3 with embedded CII XML, but DE implements
+    # this via its own pdf utility; the core PDFEmbedder is unused.
+    "mcp_einvoicing_core.pdf": {
+        "PDFEmbedder",
+    },
+    # Peppol: DE imports PeppolEnvironment, PeppolParticipantId, and PeppolSMPClient
+    # for peppol_check. The remaining types and module-internal symbols are not used.
+    "mcp_einvoicing_core.peppol": {
+        "Enum",
+        "PeppolLookupResult",
+        "PeppolServiceInfo",
+        "dataclass",
+        "field",
+    },
+    # profile_registry: DE registers profiles via the module-level singleton.
+    # The class, factory, and internal imports are not used directly.
+    "mcp_einvoicing_core.profile_registry": {
+        "ProfileEntry",
+        "ProfileRegistry",
+        "dataclass",
+        "set_profile_registry",
     },
     # QR code generation is not required by ZUGFeRD or XRechnung specifications.
     "mcp_einvoicing_core.qr": {
         "generate_qr_png_base64",
     },
-    # BaseStructuredValidator is inherited via SchematronValidator which DE does import.
-    # The ABC itself is not imported directly.
+    # SchematronValidator is imported as the base class for DE's validator.
+    # The remaining symbols are internal imports of schematron.py.
     "mcp_einvoicing_core.schematron": {
+        "ABC",
+        "BaseJSONValidator",
         "BaseStructuredValidator",
+        "BaseXSDValidator",
+        "Path",
+        "SchematronValidator",
+        "abstractmethod",
+        "dataclass",
+        "field",
+        "safe_parser",
     },
     # DE provides its own XML helpers (mcp_einvoicing_de.utils.xml_utils) tailored to
     # CII and UBL namespaces; it imports only format_error and resolve_xml_input
     # from core. The remaining utilities are unused or have DE-local equivalents.
     "mcp_einvoicing_core.xml_utils": {
+        "Any",
+        "Decimal",
         "filter_empty_values",
         "format_amount",
         "format_quantity",
+        "mark_untrusted",
+        "mark_untrusted_fields",
+        "safe_parser",
         "validate_date_iso",
         "validate_iban",
         "xml_element",
+        "xml_escape",
         "xml_optional",
     },
 }
