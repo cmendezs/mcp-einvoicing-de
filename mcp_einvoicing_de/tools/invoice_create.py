@@ -4,13 +4,6 @@ Produces:
 - CII XML for ZUGFeRD (all profiles) and XRechnung CII
 - UBL XML for XRechnung UBL
 - PDF/A-3 hybrid (ZUGFeRD) when output_format='pdf' (roadmap v0.2.0)
-
-CII schema reference:
-  [NEED: link to UN/CEFACT CII D16B XSD]
-UBL schema reference:
-  [NEED: link to OASIS UBL 2.1 Invoice XSD]
-ZUGFeRD 2.3 CII mapping:
-  [NEED: FeRD mapping table PDF URL]
 """
 
 from __future__ import annotations
@@ -24,6 +17,7 @@ from pydantic import BaseModel, Field
 
 from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
+from mcp_einvoicing_de.serializers import XRechnungUBLSerializer, ZUGFeRDCIISerializer
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +96,6 @@ async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextCon
         return [types.TextContent(type="text", text=json.dumps({"error": f"Invoice validation failed: {exc}"}))]
 
     if params.output_format == "pdf":
-        # TODO: implement PDF/A-3 hybrid generation (v0.2.0)
         return [
             types.TextContent(
                 type="text",
@@ -115,28 +108,27 @@ async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextCon
             )
         ]
 
-    # TODO: implement CII XML serialisation
-    # Steps:
-    #   1. Build lxml ElementTree from ZUGFeRDInvoice model
-    #   2. Set GuidelineSpecifiedDocumentContextParameter/ID to profile URN
-    #   3. Map each model field to the correct CII XPath
-    #   4. For UBL syntax: apply XRechnung UBL mapping instead
-    #   5. Optionally pretty-print
-    # [NEED: implement _build_cii_xml(invoice) in utils/xml_utils.py]
-    # [NEED: implement _build_ubl_xml(invoice) in utils/xml_utils.py]
-    # [NEED: verify if mcp-einvoicing-core provides CII/UBL serialisers]
+    try:
+        if params.syntax == "UBL":
+            if not isinstance(invoice, XRechnungInvoice):
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": "UBL syntax is only supported for XRechnung invoices."}
+                        ),
+                    )
+                ]
+            xml_bytes = XRechnungUBLSerializer().serialize(invoice, pretty_print=params.pretty_print)
+        else:
+            xml_bytes = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=params.pretty_print)
+    except Exception as exc:
+        return [types.TextContent(type="text", text=json.dumps({"error": f"Serialization failed: {exc}"}))]
 
-    return [
-        types.TextContent(
-            type="text",
-            text=json.dumps(
-                {
-                    "error": "XML generation not yet implemented.",
-                    "invoice_number": invoice.invoice_number,
-                    "profile": invoice.profile.name,
-                    "syntax": params.syntax,
-                    "hint": "TODO: implement CII/UBL XML serialiser",
-                }
-            ),
-        )
-    ]
+    output = InvoiceCreateOutput(
+        xml_content=xml_bytes.decode("utf-8"),
+        profile=invoice.profile.name,
+        syntax=params.syntax,
+        invoice_number=invoice.invoice_number,
+    )
+    return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]

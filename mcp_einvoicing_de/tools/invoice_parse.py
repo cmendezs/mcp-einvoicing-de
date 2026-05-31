@@ -6,8 +6,6 @@ Accepts:
 - Base64-encoded PDF (ZUGFeRD hybrid — extracts embedded XML attachment)
 
 Returns a structured JSON representation matching the ZUGFeRDInvoice schema.
-
-[NEED: verify if mcp-einvoicing-core provides a base CII/UBL parser to extend]
 """
 
 from __future__ import annotations
@@ -22,6 +20,7 @@ from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_de.serializers import XRechnungUBLParser, ZUGFeRDCIIParser
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 
 logger = logging.getLogger(__name__)
@@ -87,55 +86,15 @@ TOOL_INVOICE_PARSE = types.Tool(
 
 
 def _extract_xml_from_pdf(pdf_bytes: bytes) -> bytes:
-    """
-    Extract the ZUGFeRD XML attachment from a PDF/A-3 file.
+    """Extract the ZUGFeRD XML attachment from a PDF/A-3 file.
 
-    [NEED: implement PDF attachment extraction]
+    [NEED: implement PDF/A-3 attachment extraction using PyMuPDF or pikepdf]
     [NEED: confirm attachment filename — 'factur-x.xml' or 'ZUGFeRD-invoice.xml']
-    [NEED: verify if mcp-einvoicing-core provides a PDF extraction utility]
     """
-    # TODO: implement using PyMuPDF (fitz) or pikepdf
-    # fitz approach:
-    #   import fitz
-    #   doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    #   for i in range(doc.embfile_count()):
-    #       info = doc.embfile_info(i)
-    #       if info['filename'] in ('factur-x.xml', 'ZUGFeRD-invoice.xml', 'xrechnung.xml'):
-    #           return doc.embfile_get(i)
     raise NotImplementedError(
         "PDF extraction not yet implemented. "
-        "Provide xml_content or xml_base64 directly. "
-        "[NEED: implement PDF/A-3 attachment extraction]"
+        "Provide xml_content or xml_base64 directly."
     )
-
-
-def _parse_cii_xml(xml_bytes: bytes) -> dict[str, Any]:
-    """
-    Parse CII XML into a dict matching ZUGFeRDInvoice schema.
-
-    [NEED: implement full CII XPath extraction]
-    [NEED: verify if mcp-einvoicing-core provides a CII deserialiser]
-    """
-    # TODO: implement CII parsing
-    # Key XPaths (abbreviated):
-    # - Invoice number:  //rsm:ExchangedDocument/ram:ID
-    # - Invoice date:    //rsm:ExchangedDocument/ram:IssueDateTime/udt:DateTimeString
-    # - Seller name:     //ram:SellerTradeParty/ram:Name
-    # - Buyer name:      //ram:BuyerTradeParty/ram:Name
-    # - Total with VAT:  //ram:GrandTotalAmount
-    # [NEED: full namespace map and XPath list for all EN 16931 BT-* elements in CII]
-    return {"_TODO": "CII parser not implemented"}
-
-
-def _parse_ubl_xml(xml_bytes: bytes) -> dict[str, Any]:
-    """
-    Parse UBL XML into a dict matching ZUGFeRDInvoice schema.
-
-    [NEED: implement full UBL XPath extraction]
-    [NEED: verify if mcp-einvoicing-core provides a UBL deserialiser]
-    """
-    # TODO: implement UBL parsing
-    return {"_TODO": "UBL parser not implemented"}
 
 
 async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextContent]:
@@ -165,14 +124,24 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
     except ValueError as exc:
         return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
-    if syntax == "CII" or syntax.value == "CII":
-        invoice_data = _parse_cii_xml(xml_bytes)
-    else:
-        invoice_data = _parse_ubl_xml(xml_bytes)
+    try:
+        if syntax.value == "CII":
+            invoice = ZUGFeRDCIIParser().parse(xml_bytes)
+        else:
+            invoice = XRechnungUBLParser().parse(xml_bytes)
+    except Exception as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
+    invoice_data = invoice.model_dump(mode="json")
     output = InvoiceParseOutput(
-        profile=profile.name if profile else "UNKNOWN",
-        syntax=syntax.value if hasattr(syntax, "value") else str(syntax),
+        profile=profile.name if profile else (invoice.profile.name if hasattr(invoice.profile, "name") else str(invoice.profile)),
+        syntax=syntax.value,
+        invoice_number=invoice.invoice_number,
+        invoice_date=str(invoice.invoice_date),
+        seller_name=invoice.seller.name if invoice.seller else None,
+        buyer_name=invoice.buyer.name if invoice.buyer else None,
+        tax_inclusive_amount=str(invoice.tax_inclusive_amount),
+        currency_code=invoice.currency_code,
         invoice_data=invoice_data,
         raw_xml=xml_bytes.decode("utf-8", errors="replace") if params.include_raw_xml else None,
     )
