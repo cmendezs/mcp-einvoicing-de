@@ -48,6 +48,16 @@ class XRechnungInvoice(ZUGFeRDInvoice):
         XRechnungSyntax.CII,
         description="XML syntax binding for XRechnung output",
     )
+    # BR-DE-15: Buyer reference (BT-10) is mandatory for XRechnung.
+    # EN16931Invoice declares this Optional[str] = None; we override it as
+    # required here so Pydantic enforces the rule at construction time.
+    buyer_reference: str = Field(  # type: ignore[assignment]
+        ...,
+        description=(
+            "Leitweg-ID or buyer-assigned routing reference (BT-10). "
+            "Mandatory for all XRechnung invoices (BR-DE-15)."
+        ),
+    )
 
     model_config = {"populate_by_name": True}
 

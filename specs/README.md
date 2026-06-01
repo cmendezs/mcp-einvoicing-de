@@ -54,7 +54,7 @@ specs/
 | BASIC | `urn:factur-x.eu:1p0:basic` |
 | EN 16931 (COMFORT) | `urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931` |
 | EXTENDED | `urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended` |
-| XRechnung 3.0 (CIUS) | `urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_3.0` |
+| XRechnung 3.0 (CIUS) | `urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0` |
 
 ## Schematron stylesheet keys (used by invoice_validate tool)
 

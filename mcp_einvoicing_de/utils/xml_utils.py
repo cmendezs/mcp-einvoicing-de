@@ -50,7 +50,7 @@ def detect_zugferd_profile(xml_bytes: bytes) -> ZUGFeRDProfile | None:
     [NEED: confirm exact XPath for UBL profile ID in XRechnung UBL]
     """
     try:
-        root = etree.fromstring(xml_bytes)
+        root = safe_fromstring(xml_bytes)
     except etree.XMLSyntaxError:
         return None
 

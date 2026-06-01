@@ -30,7 +30,7 @@ class ZUGFeRDProfile(StrEnum):
     BASIC = "urn:factur-x.eu:1p0:basic"
     EN_16931 = "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931"
     EXTENDED = "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended"
-    XRECHNUNG = "urn:cen.eu:en16931:2017#compliant#urn:xoev-de:kosit:standard:xrechnung_2.3"
+    XRECHNUNG = "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0"
 
 
 class GermanTaxCategory(StrEnum):
