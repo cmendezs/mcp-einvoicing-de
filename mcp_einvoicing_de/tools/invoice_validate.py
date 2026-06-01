@@ -168,12 +168,15 @@ TOOL_INVOICE_VALIDATE = types.Tool(
 # ── Implementation ────────────────────────────────────────────────────────────
 
 _PROFILE_TO_STYLESHEET: dict[str, dict[str, str]] = {
-    # Maps (profile_enum_name, syntax) → stylesheet key
-    "MINIMUM": {"CII": "en16931_cii"},
-    "BASIC_WL": {"CII": "en16931_cii"},
-    "BASIC": {"CII": "en16931_cii"},
-    "EN_16931": {"CII": "en16931_cii", "UBL": "en16931_ubl"},
-    "EXTENDED": {"CII": "en16931_cii"},
+    # Maps (profile_enum_name, syntax) → stylesheet key (see validators/schematron.py).
+    # Each profile uses its own FeRD compiled Schematron so that rules permitting
+    # optional fields in lower profiles (MINIMUM, BASIC-WL) are not incorrectly
+    # applied as errors by the stricter EN 16931 ruleset.
+    "MINIMUM":   {"CII": "zugferd_minimum_cii"},
+    "BASIC_WL":  {"CII": "zugferd_basicwl_cii"},
+    "BASIC":     {"CII": "zugferd_basic_cii"},
+    "EN_16931":  {"CII": "en16931_cii", "UBL": "en16931_ubl"},
+    "EXTENDED":  {"CII": "zugferd_extended_cii"},
     "XRECHNUNG": {"CII": "xrechnung_cii", "UBL": "xrechnung_ubl"},
 }
 
@@ -248,6 +251,36 @@ async def _validate_local(
                     rule_id="STYLESHEET-MISSING",
                     location="/",
                     text=str(exc),
+                )
+            ],
+            profile=profile_name,
+            syntax=syntax,
+        )
+    except ValueError as exc:
+        # lxml/libxslt supports XSLT 1.0 only. The bundled FeRD Schematron
+        # XSLTs use xs:decimal() and other XPath 2.0 constructs that libxslt
+        # cannot compile.  Return a structured error rather than propagating
+        # the exception; users requiring full FeRD rule execution should run
+        # the KoSIT validator (use_remote_kosit=True) or a Java XSLT 2.0
+        # processor.
+        # [GAP id=DE-XSLT2-1 description="FeRD XSLT uses XPath 2.0 (xs:decimal); lxml/libxslt (XSLT 1.0 only) cannot compile — requires Saxon or equivalent"]
+        logger.warning("XSLT parse error for key=%s: %s", stylesheet_key, exc)
+        from mcp_einvoicing_de.validators.schematron import ValidationMessage
+
+        return ValidationResult(
+            is_valid=False,
+            errors=[
+                ValidationMessage(
+                    severity="error",
+                    rule_id="STYLESHEET-XSLT2-INCOMPATIBLE",
+                    location="/",
+                    text=(
+                        f"Schematron stylesheet {stylesheet_key!r} uses XPath 2.0 "
+                        "constructs (xs:decimal, cast as) that lxml/libxslt (XSLT 1.0) "
+                        "cannot compile. Use use_remote_kosit=True for full rule "
+                        "execution, or install a Java-based XSLT 2.0 processor. "
+                        f"Detail: {exc}"
+                    ),
                 )
             ],
             profile=profile_name,

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 
@@ -60,6 +60,26 @@ class XRechnungInvoice(ZUGFeRDInvoice):
     )
 
     model_config = {"populate_by_name": True}
+
+    @field_validator("buyer_reference", mode="after")
+    @classmethod
+    def validate_buyer_reference_leitweg(cls, v: str) -> str:
+        """Validate Leitweg-ID format and check digit when the reference looks like one.
+
+        XRechnung buyer_reference may be a Leitweg-ID (B2G) or a free-form
+        buyer reference string (B2B purchase order number, etc.).  Format and
+        check-digit validation is applied only when the value matches the
+        Leitweg-ID pattern so that legitimate non-Leitweg-ID references are
+        not rejected.
+        """
+        from mcp_einvoicing_de.utils.leitweg import (  # noqa: PLC0415
+            looks_like_leitweg_id,
+            validate_leitweg_id,
+        )
+
+        if looks_like_leitweg_id(v):
+            validate_leitweg_id(v)
+        return v
 
     def model_post_init(self, __context: object) -> None:
         # Enforce XRECHNUNG regardless of any caller-supplied profile value.

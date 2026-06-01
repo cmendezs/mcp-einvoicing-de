@@ -65,9 +65,20 @@ class ZUGFeRDParty(EN16931Party):
         None,
         description=(
             "Leitweg-ID for public-sector buyers (BT-49). "
-            "Format: <Verwaltungsebene>-<Instanzkennzeichen>-<Prüfziffer>"
+            "Format: <Verwaltungsebene>[-<Instanzkennzeichen>]-<Prüfziffer>"
         ),
     )
+
+    @field_validator("leitweg_id", mode="after")
+    @classmethod
+    def validate_leitweg_id_field(cls, v: str | None) -> str | None:
+        if v is not None:
+            # Deferred import avoids circular: zugferd → utils.leitweg →
+            # utils/__init__ → utils.xml_utils → models.xrechnung → zugferd
+            from mcp_einvoicing_de.utils.leitweg import validate_leitweg_id  # noqa: PLC0415
+
+            validate_leitweg_id(v)
+        return v
 
 
 class ZUGFeRDTax(EN16931Tax):

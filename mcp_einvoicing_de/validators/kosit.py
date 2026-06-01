@@ -102,15 +102,17 @@ class KoSITValidator:
         self._timeout = timeout
 
     async def validate(self, xml_bytes: bytes, filename: str = "invoice.xml") -> ValidationResult:
-        """
-        Submit *xml_bytes* to the KoSIT validator and return structured results.
+        """Submit *xml_bytes* to the KoSIT validator and return structured results.
 
-        [NEED: confirm multipart field names expected by KoSIT REST API]
+        Uses multipart/form-data with field name ``file``, requests JSON via
+        ``Accept: application/json``.  Compatible with KoSIT validationtool
+        v1.5+ REST endpoint ``/api/v1/validate``.
         """
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
                 response = await client.post(
                     self._base_url,
+                    headers={"Accept": "application/json"},
                     files={"file": (filename, xml_bytes, "application/xml")},
                 )
                 response.raise_for_status()
@@ -130,30 +132,65 @@ class KoSITValidator:
             )
 
     def _parse_response(self, data: dict[str, Any]) -> ValidationResult:
-        """
-        Parse KoSIT JSON response into ValidationResult.
+        """Parse KoSIT JSON response into ValidationResult.
 
-        [NEED: actual KoSIT response JSON schema to implement this correctly]
+        KoSIT validationtool v1.5+ REST API (``/api/v1/validate``) returns:
+        ``{"valid": bool, "violations": [{"type": "error|warning|information",
+        "context": "xpath", "test": "expression", "text": "message"}],
+        "notices": [...], ...}``.
+
+        Fail-safe contract:
+        - If the ``valid`` key is absent, treat the document as **invalid**.
+        - If the response body matches neither the ``violations`` shape nor
+          contains ``valid``, return ``is_valid=False`` with a diagnostic
+          message rather than silently succeeding.
         """
-        # TODO: implement once KoSIT REST API schema is confirmed
+        if "valid" not in data and "violations" not in data:
+            logger.error(
+                "KoSIT response did not contain expected keys ('valid', 'violations'). "
+                "Received keys: %s",
+                list(data.keys()),
+            )
+            return ValidationResult(
+                is_valid=False,
+                errors=[
+                    ValidationMessage(
+                        severity="error",
+                        rule_id="KOSIT-UNEXPECTED-RESPONSE",
+                        location="/",
+                        text=(
+                            "KoSIT validator returned an unrecognised response shape. "
+                            f"Top-level keys: {sorted(data.keys())}. "
+                            "Treating document as invalid (fail-safe)."
+                        ),
+                    )
+                ],
+            )
+
         errors: list[ValidationMessage] = []
         warnings: list[ValidationMessage] = []
 
-        for item in data.get("reports", []):
-            for finding in item.get("findings", []):
-                msg = ValidationMessage(
-                    severity=finding.get("severity", "error").lower(),
-                    rule_id=finding.get("ruleId", ""),
-                    location=finding.get("location", ""),
-                    text=finding.get("message", ""),
-                )
-                if msg.severity in ("error", "fatal"):
-                    errors.append(msg)
-                else:
-                    warnings.append(msg)
+        for violation in data.get("violations", []):
+            vtype = violation.get("type", "error").lower()
+            msg = ValidationMessage(
+                severity=vtype,
+                # KoSIT embeds the rule ID in the "test" expression; use the
+                # first 80 chars as a stable short identifier.
+                rule_id=violation.get("test", "")[:80],
+                location=violation.get("context", "/"),
+                text=violation.get("text", ""),
+            )
+            if vtype in ("error", "fatal"):
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
+        # Fail-safe: if "valid" is absent, default to False — never assume
+        # a document is valid just because no violations were parsed.
+        is_valid: bool = data.get("valid", False)
 
         return ValidationResult(
-            is_valid=data.get("valid", len(errors) == 0),
+            is_valid=is_valid,
             errors=errors,
             warnings=warnings,
         )
