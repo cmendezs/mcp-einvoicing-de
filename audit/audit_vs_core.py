@@ -81,6 +81,11 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "BaseDocumentSigner",
         "XAdESEPESSigner",
         "XAdESSignerConfig",
+        # OVERRIDE-REASON: XMLDSigSigner/XMLDSigSignerConfig (core v1.4.0) is
+        # the BR NF-e plain enveloped XML-DSig signer; not applicable to
+        # ZUGFeRD/XRechnung, which use XAdES-EPES
+        "XMLDSigSigner",
+        "XMLDSigSignerConfig",
         "abstractmethod",
         "dataclass",
         "datetime",
