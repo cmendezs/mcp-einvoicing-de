@@ -83,6 +83,7 @@ ignore = ["E501"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
