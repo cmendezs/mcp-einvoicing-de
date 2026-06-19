@@ -1,4 +1,7 @@
 # mcp-einvoicing-de 🇩🇪
+
+[English](README.md) | [Deutsch](README.de.md)
+
 <!-- mcp-name: io.github.cmendezs/mcp-einvoicing-de -->
 
 ![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)
@@ -6,35 +9,31 @@
 [![Python](https://img.shields.io/pypi/pyversions/mcp-einvoicing-de.svg)](https://pypi.org/project/mcp-einvoicing-de/)
 [![mcp-einvoicing-de MCP server](https://glama.ai/mcp/servers/cmendezs/mcp-einvoicing-de/badges/score.svg)](https://glama.ai/mcp/servers/cmendezs/mcp-einvoicing-de)
 
-MCP-Server (Model Context Protocol) in Python für die **deutsche elektronische Rechnung** in den Formaten **ZUGFeRD 2.x** und **XRechnung 3.x** (EN 16931, FeRD, KoSIT). Ermöglicht KI-Agenten (Claude, IDEs) das Erstellen, Validieren, Parsen und Konvertieren von E-Rechnungen, die vollständig dem deutschen B2B-E-Rechnungsmandat (gültig ab 2025, schrittweise Durchsetzung bis 2027–2028) und der europäischen Norm EN 16931 entsprechen.
+MCP server (Model Context Protocol) in Python for **German electronic invoicing** in **ZUGFeRD 2.x** and **XRechnung 3.x** formats (EN 16931, FeRD, KoSIT). Enables AI agents (Claude, IDEs) to create, validate, parse, and convert e-invoices that are fully compliant with the German B2B e-invoicing mandate (effective from 2025, phased enforcement through 2027 to 2028) and the European standard EN 16931.
 
 ---
 
-## English summary
+## 🏗️ Built on
 
-This is a **Model Context Protocol (MCP)** server for **German electronic invoicing**. It exposes **6 tools** covering the full lifecycle of a ZUGFeRD or XRechnung invoice: creation (CII/UBL XML), validation against EN 16931 and KoSIT Schematron rules (BR-DE-*), parsing of existing invoice files, profile and syntax conversion, Peppol participant registration lookup (AS4), and German VAT rules (Steuerklassen, §13b UStG reverse charge, exemptions). Supports all ZUGFeRD 2.x profiles (MINIMUM through EXTENDED) and XRechnung 3.x (CII and UBL syntax). Licensed under **Apache 2.0**.
+This package is built on [**mcp-einvoicing-core**](https://github.com/cmendezs/mcp-einvoicing-core), a shared base library for European e-invoicing MCP servers. It provides shared models, validation abstractions, XML utilities, and the exception hierarchy.
 
-## Aufgebaut auf
+`mcp-einvoicing-core` is automatically installed as a transitive dependency, no additional step required.
 
-Dieses Paket basiert auf [**mcp-einvoicing-core**](https://github.com/cmendezs/mcp-einvoicing-core), einer gemeinsamen Basisbibliothek für europäische E-Rechnungs-MCP-Server. Sie stellt gemeinsame Modelle, Validierungsabstraktionen, XML-Hilfsfunktionen und die Ausnahmehierarchie bereit.
-
-`mcp-einvoicing-core` wird automatisch als transitive Abhängigkeit installiert — kein zusätzlicher Schritt erforderlich.
-
-> **Für Entwickler:** `pip install -e ".[dev]"` installiert das Basispaket automatisch aus PyPI.
+> **For developers:** `pip install -e ".[dev]"` installs the base package automatically from PyPI.
 
 ---
 
-## 🏗️ Architektur
+## 🏗️ Architecture
 
 ```
-mcp-einvoicing-de (dieses Paket — eigenständiger MCP-Server)
-├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic-Modelle (alle Profile)
-├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* Regeln
-├── KoSITValidator                     ← Remote-Validierungstool (optional)
+mcp-einvoicing-de (this package, standalone MCP server)
+├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic models (all profiles)
+├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* rules
+├── KoSITValidator                     ← Remote validation tool (optional)
 └── Tools: create / validate / parse / convert / peppol_check / tax_rules
 
-        ↑ erweitert
-mcp-einvoicing-core (gemeinsame Basis, als Abhängigkeit installiert)
+        ↑ extends
+mcp-einvoicing-core (shared base, installed as dependency)
 ├── BaseDocumentGenerator / Validator / Parser
 ├── BaseInvoice, BaseParty … (Pydantic)
 ├── xml_utils, exceptions
@@ -45,19 +44,19 @@ mcp-einvoicing-core (gemeinsame Basis, als Abhängigkeit installiert)
 
 ## 🚀 Installation
 
-### Über PyPI (empfohlen)
+### Via PyPI (recommended)
 
 ```bash
 pip install mcp-einvoicing-de
 ```
 
-Ohne vorherige Installation mit `uvx`:
+Without prior installation, using `uvx`:
 
 ```bash
 uvx mcp-einvoicing-de
 ```
 
-### Aus den Quellen
+### From source
 
 ```bash
 git clone https://github.com/cmendezs/mcp-einvoicing-de.git
@@ -71,35 +70,20 @@ pip install -e ".[dev]"
 
 ---
 
-## ⚙️ Konfiguration
+## ⚙️ Configuration
 
-Der Server benötigt in v0.1.0 keine externen Zugangsdaten. Verfügbare Umgebungsvariablen:
+The server does not require any external credentials in v0.1.0. Available environment variables:
 
-| Variable | Beschreibung | Standard |
+| Variable | Description | Default |
 |----------|-------------|---------|
-| `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL des KoSIT-Validierungstools (optional, für Remote-Validierung) | — |
-| `EINVOICING_DE_PEPPOL_SMP_URL` | Peppol-SMP-Lookup-URL (optional) | — |
-| `EINVOICING_DE_PDF_ENGINE` | PDF-Generierungsmodul (`reportlab` oder `pymupdf`) | `reportlab` |
+| `EINVOICING_DE_LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of the KoSIT validation tool (optional, for remote validation) | |
+| `EINVOICING_DE_PEPPOL_SMP_URL` | Peppol SMP lookup URL (optional) | |
+| `EINVOICING_DE_PDF_ENGINE` | PDF generation engine (`reportlab` or `pymupdf`) | `reportlab` |
 
-### 🤖 Integration Claude Desktop
+### 🤖 Claude Desktop integration
 
-Eintrag in die Datei `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "einvoicing-de": {
-      "command": "uvx",
-      "args": ["mcp-einvoicing-de"]
-    }
-  }
-}
-```
-
-### ⌨️ Integration Cursor
-
-Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverzeichnis):
+Add the following entry to `claude_desktop_config.json`:
 
 ```json
 {
@@ -112,7 +96,22 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 }
 ```
 
-### 🪐 Integration Kiro
+### ⌨️ Cursor integration
+
+Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project directory):
+
+```json
+{
+  "mcpServers": {
+    "einvoicing-de": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-de"]
+    }
+  }
+}
+```
+
+### 🪐 Kiro integration
 
 ```json
 {
@@ -129,26 +128,26 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 ---
 
-## 🧰 Verfügbare MCP-Werkzeuge
+## 🧰 Available MCP tools
 
-| Werkzeug | Beschreibung |
-|----------|-------------|
-| `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen; PDF/A-3-Hybrid geplant (v0.2.0) |
-| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Schematron-Regeln (BR-DE-\*) prüfen |
-| `invoice_parse` | Strukturierte Daten aus einer bestehenden ZUGFeRD- oder XRechnung-Datei extrahieren |
-| `invoice_convert` | Zwischen ZUGFeRD-Profilen oder ZUGFeRD ↔ XRechnung konvertieren |
-| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens prüfen (AS4) |
-| `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Steuerklassen, §13b UStG, Befreiungen) |
+| Tool | Description |
+|------|-------------|
+| `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL); PDF/A-3 hybrid planned (v0.2.0) |
+| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT Schematron rules (BR-DE-\*) |
+| `invoice_parse` | Extract structured data from an existing ZUGFeRD or XRechnung file |
+| `invoice_convert` | Convert between ZUGFeRD profiles or ZUGFeRD ↔ XRechnung |
+| `peppol_check` | Check Peppol participant registration of a German company (AS4) |
+| `tax_rules` | Query German VAT rules (tax categories, §13b UStG reverse charge, exemptions) |
 
 ---
 
-## Verwendungsbeispiele
+## Usage examples
 
-### Beispiel 1 — Rechnung validieren
+### Example 1: Validate an invoice
 
 ```
 1. invoice_validate(
-     xml_base64="...",   # Base64-kodiertes ZUGFeRD-XML
+     xml_base64="...",   # Base64-encoded ZUGFeRD XML
      strict=True
    )
    → {
@@ -163,7 +162,7 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
      }
 ```
 
-### Beispiel 2 — Deutsche Steuerregeln abfragen
+### Example 2: Query German tax rules
 
 ```
 2. tax_rules(query="reverse_charge", context="Bauleistungen")
@@ -180,7 +179,7 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
      }
 ```
 
-### Beispiel 3 — Peppol-Registrierung prüfen
+### Example 3: Check Peppol registration
 
 ```
 3. peppol_check(
@@ -196,7 +195,7 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
      }
 ```
 
-### Beispiel 4 — Rechnungsdaten parsen
+### Example 4: Parse invoice data
 
 ```
 4. invoice_parse(xml_base64="...", include_raw_xml=False)
@@ -214,22 +213,22 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 ---
 
-## 📚 Unterstützte Standards
+## 📚 Supported standards
 
-| Standard | Version | Profile / Syntax |
-|----------|---------|-----------------|
+| Standard | Version | Profiles / Syntax |
+|----------|---------|-------------------|
 | ZUGFeRD | 2.3 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
 | XRechnung | 3.x | CII (Cross Industry Invoice), UBL (Universal Business Language) |
-| EN 16931 | — | Europäisches Kerndatenmodell für die elektronische Rechnung |
+| EN 16931 | | European core data model for electronic invoicing |
 | Peppol BIS | 3.0 | Billing 3.0 (DE PINT) |
 
-> **Hinweis:** ZUGFeRD 2.x und XRechnung 3.x teilen auf Profilebene EN 16931 dieselbe CII-XML-Syntax. Eine Konvertierung zwischen beiden Formaten ist daher ohne Datenverlust möglich. Das EXTENDED-Profil ist ZUGFeRD-spezifisch und hat kein XRechnung-Äquivalent.
+> **Note:** ZUGFeRD 2.x and XRechnung 3.x share the same CII XML syntax at the EN 16931 profile level. Conversion between both formats is therefore possible without data loss. The EXTENDED profile is specific to ZUGFeRD and has no XRechnung equivalent.
 
-| Ressource | Link |
-|-----------|------|
-| FeRD ZUGFeRD-Spezifikation | [ferd-net.de](https://www.ferd-net.de) |
+| Resource | Link |
+|----------|------|
+| FeRD ZUGFeRD specification | [ferd-net.de](https://www.ferd-net.de) |
 | KoSIT XRechnung | [xeinkauf.de](https://xeinkauf.de/xrechnung/) |
-| KoSIT Validierungstool | [github.com/itplr-kosit/validationtool](https://github.com/itplr-kosit/validationtool) |
+| KoSIT validation tool | [github.com/itplr-kosit/validationtool](https://github.com/itplr-kosit/validationtool) |
 | EN 16931-1:2017 | [CEN](https://www.cen.eu/) |
 | Peppol BIS Billing 3.0 | [docs.peppol.eu](https://docs.peppol.eu/poacc/billing/3.0/) |
 
@@ -238,16 +237,16 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 ## 🧪 Tests
 
 ```bash
-# Entwicklungsabhängigkeiten installieren
+# Install development dependencies
 pip install -e ".[dev]"
 
-# Gesamte Testsuite ausführen
+# Run the full test suite
 pytest tests/ -v
 
-# Mit Abdeckungsbericht
+# With coverage report
 pytest --cov=mcp_einvoicing_de --cov-report=term-missing
 
-# Nur Modell-Tests
+# Model tests only
 pytest tests/test_models.py -v
 ```
 
@@ -255,20 +254,20 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
-| Version | Funktionen |
-|---------|-----------|
-| **v0.1.0** (aktuell) | Werkzeuge: create, validate, parse, convert, peppol_check, tax_rules |
-| **v0.2.0** | PDF/A-3-Einbettung (ZUGFeRD-Hybrid) via `reportlab` / `PyMuPDF` |
-| **v0.3.0** | KoSIT-Online-Validator vollständig integriert |
-| **v0.4.0** | Peppol AS4 Direktübermittlung |
-| **v0.5.0** | DATEV-Exportformat |
-| **v1.0.0** | Produktionsreif, vollständige EN 16931-Abdeckung |
+| Version | Features |
+|---------|----------|
+| **v0.1.0** (current) | Tools: create, validate, parse, convert, peppol_check, tax_rules |
+| **v0.2.0** | PDF/A-3 embedding (ZUGFeRD hybrid) via `reportlab` / `PyMuPDF` |
+| **v0.3.0** | KoSIT online validator fully integrated |
+| **v0.4.0** | Peppol AS4 direct submission |
+| **v0.5.0** | DATEV export format |
+| **v1.0.0** | Production-ready, full EN 16931 coverage |
 
 ---
 
-## Mitwirken
+## Contributing
 
-Beiträge sind willkommen. Bitte öffnen Sie ein Issue, bevor Sie einen Pull Request für wesentliche Änderungen einreichen.
+Contributions are welcome. Please open an issue before submitting a pull request for significant changes.
 
 ```bash
 git clone https://github.com/cmendezs/mcp-einvoicing-de.git
@@ -295,13 +294,13 @@ make audit
 
 ---
 
-## 📄 Lizenz
+## 📄 License
 
-Dieses Projekt steht unter der **Apache-2.0-Lizenz**.  
-Einzelheiten finden Sie in der Datei [LICENSE](LICENSE).
+This project is licensed under the **Apache 2.0 License**.  
+See the [LICENSE](LICENSE) file for details.
 
 Copyright 2026 cmendezs
 
 ---
 
-*Projekt gepflegt von [cmendezs](https://github.com/cmendezs). Für Fragen zur Implementierung der ZUGFeRD- oder XRechnung-Spezifikation bitte ein Issue eröffnen.*
+*Project maintained by [cmendezs](https://github.com/cmendezs). For questions about the ZUGFeRD or XRechnung specification implementation, please open an issue.*
