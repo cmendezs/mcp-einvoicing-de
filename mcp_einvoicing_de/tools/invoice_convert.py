@@ -1,16 +1,17 @@
-"""MCP tool: invoice_convert — convert between ZUGFeRD profiles or ZUGFeRD ↔ XRechnung.
+"""MCP tool: invoice_convert — convert between ZUGFeRD profiles and to / from XRechnung.
 
-Supported conversions:
-- ZUGFeRD profile upgrade: MINIMUM → BASIC_WL → BASIC → EN_16931 → EXTENDED
-- ZUGFeRD profile downgrade (data loss risk — flagged in output)
-- ZUGFeRD EN_16931 ↔ XRechnung CII (same CII syntax, different profile URN + BR-DE rules)
-- ZUGFeRD EN_16931 → XRechnung UBL (syntax transformation)
-- XRechnung UBL → XRechnung CII (syntax transformation)
+v0.3.0 supports the same-syntax cases that reduce to a profile URN rewrite plus
+optional line-item pruning for the MINIMUM and BASIC_WL profiles:
 
-Conversions from EXTENDED to any other profile will result in data loss for
-EXTENDED-only elements. These are flagged as warnings in the output.
+- ZUGFeRD profile upgrade in CII syntax: MINIMUM → BASIC_WL → BASIC → EN_16931 → EXTENDED
+- ZUGFeRD profile downgrade in CII syntax (line items removed for MINIMUM / BASIC_WL;
+  requires allow_data_loss=True)
+- ZUGFeRD EN_16931 / EXTENDED ↔ XRechnung in CII syntax (URN swap)
+- XRechnung UBL → XRechnung UBL profile URN swap
 
-[NEED: verify if mcp-einvoicing-core provides a ConversionEngine base class]
+Cross-syntax CII ↔ UBL transformation is not yet implemented; it requires a full
+field-by-field mapping that is deferred to a later sprint. Calls that request a
+cross-syntax conversion return a structured error.
 """
 
 from __future__ import annotations
@@ -24,7 +25,31 @@ from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field
 
+from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice, XRechnungSyntax
+from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
+from mcp_einvoicing_de.serializers import (
+    XRechnungUBLParser,
+    XRechnungUBLSerializer,
+    ZUGFeRDCIIParser,
+    ZUGFeRDCIISerializer,
+)
+from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
+
 logger = logging.getLogger(__name__)
+
+# Ordering used to detect downgrades. Index 0 is the most reduced profile.
+_PROFILE_ORDER: tuple[ZUGFeRDProfile, ...] = (
+    ZUGFeRDProfile.MINIMUM,
+    ZUGFeRDProfile.BASIC_WL,
+    ZUGFeRDProfile.BASIC,
+    ZUGFeRDProfile.EN_16931,
+    ZUGFeRDProfile.EXTENDED,
+)
+
+# Profiles that omit invoice lines per EN 16931 / FeRD.
+_LINE_FREE_PROFILES: frozenset[ZUGFeRDProfile] = frozenset(
+    {ZUGFeRDProfile.MINIMUM, ZUGFeRDProfile.BASIC_WL}
+)
 
 
 class InvoiceConvertInput(BaseModel):
@@ -93,6 +118,16 @@ TOOL_INVOICE_CONVERT = types.Tool(
 )
 
 
+def _resolve_target_profile(name: str) -> ZUGFeRDProfile:
+    return ZUGFeRDProfile[name.upper()]
+
+
+def _is_downgrade(source: ZUGFeRDProfile, target: ZUGFeRDProfile) -> bool:
+    if source not in _PROFILE_ORDER or target not in _PROFILE_ORDER:
+        return False
+    return _PROFILE_ORDER.index(target) < _PROFILE_ORDER.index(source)
+
+
 async def handle_invoice_convert(arguments: dict[str, Any]) -> list[types.TextContent]:
     """MCP handler for invoice_convert."""
     try:
@@ -101,32 +136,136 @@ async def handle_invoice_convert(arguments: dict[str, Any]) -> list[types.TextCo
         return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
     try:
-        resolve_xml_input(params.xml_content, params.xml_base64)
+        xml_bytes = resolve_xml_input(params.xml_content, params.xml_base64)
     except (ValueError, EInvoicingError) as exc:
         return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
-    # TODO: implement conversion pipeline
-    # Steps:
-    #   1. Parse source XML → ZUGFeRDInvoice model (via invoice_parse logic)
-    #   2. Detect source profile and syntax
-    #   3. Validate conversion path (upgrade vs. downgrade, data loss check)
-    #   4. Apply profile-specific field pruning for downgrades
-    #   5. Update GuidelineID URN to target profile
-    #   6. Re-serialise to CII or UBL XML
-    #   7. Collect data_loss_warnings and conversion_notes
-    # [NEED: define conversion matrix (which fields are mandatory per profile)]
-    # [NEED: verify if mcp-einvoicing-core provides a profile compatibility matrix]
+    try:
+        source_syntax = detect_invoice_syntax(xml_bytes)
+    except ValueError as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
-    return [
-        types.TextContent(
-            type="text",
-            text=json.dumps(
-                {
-                    "error": "Conversion not yet implemented.",
-                    "target_profile": params.target_profile,
-                    "target_syntax": params.target_syntax,
-                    "hint": "TODO: implement conversion pipeline",
-                }
-            ),
+    source_profile = detect_zugferd_profile(xml_bytes)
+    if source_profile is None:
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(
+                    format_error(
+                        "Could not detect source profile from GuidelineID / CustomizationID. "
+                        "Provide a ZUGFeRD or XRechnung invoice with a recognised profile URN."
+                    )
+                ),
+            )
+        ]
+
+    try:
+        target_profile = _resolve_target_profile(params.target_profile)
+    except KeyError as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(f"Unknown target_profile: {exc}")))]
+
+    try:
+        target_syntax = XRechnungSyntax(params.target_syntax.upper())
+    except ValueError as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(f"Unknown target_syntax: {exc}")))]
+
+    if target_syntax == XRechnungSyntax.UBL and target_profile != ZUGFeRDProfile.XRECHNUNG:
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(
+                    format_error(
+                        "UBL syntax is only defined for the XRECHNUNG profile. "
+                        "Use target_syntax='CII' for ZUGFeRD profiles."
+                    )
+                ),
+            )
+        ]
+
+    # v0.3.0 limitation: cross-syntax transformation is not yet implemented.
+    if source_syntax.value != target_syntax.value:
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(
+                    format_error(
+                        f"Cross-syntax conversion {source_syntax.value} -> {target_syntax.value} "
+                        "is not yet implemented (target sprint: v0.4.0). Re-issue the source "
+                        "invoice in the desired syntax instead."
+                    )
+                ),
+            )
+        ]
+
+    # Parse the source invoice into the typed model.
+    notes: list[str] = []
+    data_loss: list[str] = []
+    try:
+        if source_syntax == XRechnungSyntax.CII:
+            invoice = ZUGFeRDCIIParser().parse(xml_bytes)
+        else:
+            invoice = XRechnungUBLParser().parse(xml_bytes)
+    except Exception as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(f"Parse failed: {exc}")))]
+
+    # Detect downgrade and handle line-free target profiles.
+    downgrade = _is_downgrade(source_profile, target_profile)
+    if downgrade:
+        if target_profile in _LINE_FREE_PROFILES and invoice.line_items:
+            if not params.allow_data_loss:
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=json.dumps(
+                            format_error(
+                                f"Downgrade to {target_profile.name} would drop "
+                                f"{len(invoice.line_items)} line item(s). Re-run with "
+                                "allow_data_loss=True to permit this."
+                            )
+                        ),
+                    )
+                ]
+            data_loss.append(
+                f"Dropped {len(invoice.line_items)} line item(s); {target_profile.name} "
+                "omits BG-25 invoice lines per FeRD profile rules."
+            )
+            invoice.line_items = []
+        notes.append(
+            f"Profile downgrade {source_profile.name} -> {target_profile.name}. Document-level "
+            "totals are preserved unchanged."
         )
-    ]
+    elif source_profile != target_profile:
+        notes.append(
+            f"Profile change {source_profile.name} -> {target_profile.name}. The GuidelineID "
+            "URN is rewritten; no field pruning was needed."
+        )
+
+    # Rewrite the profile URN. The XRechnung syntax flag is also kept in sync.
+    invoice.profile = target_profile
+    if isinstance(invoice, XRechnungInvoice):
+        invoice.syntax = target_syntax
+    elif target_profile == ZUGFeRDProfile.XRECHNUNG:
+        # Convert ZUGFeRDInvoice to XRechnungInvoice when the target is XRechnung so that
+        # the XRechnung serializer can pick up the CustomizationID URN.
+        invoice = XRechnungInvoice.model_validate({**invoice.model_dump(), "syntax": target_syntax})
+
+    # Re-serialize in the target syntax.
+    try:
+        if target_syntax == XRechnungSyntax.UBL:
+            assert isinstance(invoice, XRechnungInvoice)
+            xml_out = XRechnungUBLSerializer().serialize(invoice, pretty_print=True)
+        else:
+            xml_out = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=True)
+    except Exception as exc:
+        return [types.TextContent(type="text", text=json.dumps(format_error(f"Serialise failed: {exc}")))]
+
+    output = InvoiceConvertOutput(
+        xml_content=xml_out.decode("utf-8"),
+        source_profile=source_profile.name,
+        source_syntax=source_syntax.value,
+        target_profile=target_profile.name,
+        target_syntax=target_syntax.value,
+        data_loss_warnings=data_loss,
+        conversion_notes=notes,
+    )
+    return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]

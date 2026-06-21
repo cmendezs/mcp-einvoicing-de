@@ -45,9 +45,16 @@ def detect_zugferd_profile(xml_bytes: bytes) -> ZUGFeRDProfile | None:
     Extract the ZUGFeRD / XRechnung profile URN from the GuidelineID element.
 
     Returns None if no recognised profile URN is found.
-    CII path: //rsm:ExchangedDocumentContext/ram:GuidelineSpecifiedDocumentContextParameter/ram:ID
-    UBL path: //cbc:CustomizationID
-    [NEED: confirm exact XPath for UBL profile ID in XRechnung UBL]
+
+    CII path: /rsm:CrossIndustryInvoice/rsm:ExchangedDocumentContext
+              /ram:GuidelineSpecifiedDocumentContextParameter/ram:ID
+    UBL path: /ubl:Invoice/cbc:CustomizationID
+              or /ubl:CreditNote/cbc:CustomizationID
+
+    The UBL XPath was verified against the KoSIT validator-configuration-xrechnung
+    v2026-01-31 scenarios.xml, which uses
+    `exists(/invoice:Invoice/cbc:CustomizationID[ . = '<urn>'])` and the
+    equivalent `/creditnote:CreditNote` match for credit notes.
     """
     try:
         root = safe_fromstring(xml_bytes)
@@ -68,7 +75,7 @@ def detect_zugferd_profile(xml_bytes: bytes) -> ZUGFeRDProfile | None:
     if el is not None and el.text:
         return _PROFILE_URN_MAP.get(el.text.strip())
 
-    # Try UBL
+    # Try UBL (cbc:CustomizationID is a direct child of Invoice or CreditNote)
     ubl_customization = root.find(f"{{{ns_cbc}}}CustomizationID")
     if ubl_customization is not None and ubl_customization.text:
         return _PROFILE_URN_MAP.get(ubl_customization.text.strip())

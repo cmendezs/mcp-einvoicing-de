@@ -6,6 +6,7 @@ EN16931UBLSerializer, and EN16931UBLParser from core into the DE package.
 
 from __future__ import annotations
 
+from lxml import etree
 from mcp_einvoicing_core.wire_formats import (
     EN16931CIIParser,
     EN16931CIISerializer,
@@ -16,6 +17,11 @@ from mcp_einvoicing_core.wire_formats import (
 from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice, XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 
+# CII namespaces used for BG-11 injection. Kept locally to avoid importing private
+# constants from mcp_einvoicing_core.wire_formats.
+_RAM = "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+_RSM = "urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+
 
 class ZUGFeRDCIISerializer(EN16931CIISerializer):
     """Serialize a ZUGFeRDInvoice to CII UN/CEFACT XML.
@@ -23,11 +29,45 @@ class ZUGFeRDCIISerializer(EN16931CIISerializer):
     ZUGFeRDInvoice is a subclass of EN16931Invoice; the base serializer handles
     all field mapping. The profile URN in the output is taken from
     ZUGFeRDInvoice.profile (a ZUGFeRDProfile enum value).
+
+    Extends the base CII builder to emit BG-11 SellerTaxRepresentativeTradeParty
+    when the invoice carries a `tax_representative`.
     """
 
     def serialize(self, invoice: ZUGFeRDInvoice, pretty_print: bool = True) -> bytes:  # type: ignore[override]
         root = self._build_root(invoice)
+        if invoice.tax_representative is not None:
+            self._inject_tax_representative(root, invoice)
         return self._to_bytes(root, pretty_print=pretty_print)
+
+    def _inject_tax_representative(
+        self, root: etree._Element, invoice: ZUGFeRDInvoice
+    ) -> None:
+        """Insert ram:SellerTaxRepresentativeTradeParty (BG-11) into the CII tree.
+
+        Per CII D22B HeaderTradeAgreementType sequence, BG-11 follows BuyerTradeParty
+        and precedes BuyerOrderReferencedDocument and later siblings.
+        """
+        agreement = root.find(
+            f"{{{_RSM}}}SupplyChainTradeTransaction"
+            f"/{{{_RAM}}}ApplicableHeaderTradeAgreement"
+        )
+        if agreement is None:
+            return
+        buyer = agreement.find(f"{{{_RAM}}}BuyerTradeParty")
+        if buyer is None:
+            return
+        # Build the tax representative party using the same builder used for seller / buyer
+        # so all party fields (name, VAT id, address, contact, electronic address) are
+        # emitted consistently.
+        self._build_party_cii(
+            agreement, "SellerTaxRepresentativeTradeParty", invoice.tax_representative
+        )
+        # `_build_party_cii` appends at the end of `agreement`. Move the new element to
+        # the correct position immediately after BuyerTradeParty.
+        new_party = agreement[-1]
+        agreement.remove(new_party)
+        buyer.addnext(new_party)
 
 
 class XRechnungUBLSerializer(EN16931UBLSerializer):

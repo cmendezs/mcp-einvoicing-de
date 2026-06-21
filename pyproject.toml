@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-einvoicing-de"
-version = "0.2.0"
+version = "0.3.0"
 description = "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -45,6 +45,9 @@ dependencies = [
 [project.optional-dependencies]
 pdf = ["pikepdf>=8.0.0"]
 pymupdf = ["PyMuPDF>=1.24.0"]
+# Saxon-HE for XPath 2.0 / 3.0 Schematron execution (FeRD Factur-X stylesheets).
+# saxonche bundles the Saxon-HE C/C++ runtime as a Python wheel.
+xslt2 = ["saxonche>=12.4.0"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",

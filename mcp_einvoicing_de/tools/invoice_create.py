@@ -42,6 +42,18 @@ class InvoiceCreateInput(BaseModel):
         description="XML syntax: 'CII' (default) or 'UBL' (XRechnung only).",
     )
     pretty_print: bool = Field(True, description="Pretty-print the XML output.")
+    transitional_period_opt_in: bool = Field(
+        False,
+        description=(
+            "Acknowledge the Wachstumschancengesetz transitional period (2025-2026) "
+            "and explicitly permit non-XML output for a German VAT-registered buyer. "
+            "Set to True only when the buyer has agreed in writing to receive PDF or "
+            "another non-structured format. From 2027 the transitional grace ends for "
+            "large businesses; from 2028 all B2B invoices to German VAT-registered "
+            "buyers must be in a structured EN 16931 format. Source: §14 Abs. 2 UStG, "
+            "Wachstumschancengesetz of 27 March 2024 (BGBl. I Nr. 108)."
+        ),
+    )
 
 
 class InvoiceCreateOutput(BaseModel):
@@ -62,7 +74,11 @@ TOOL_INVOICE_CREATE = types.Tool(
         "Generate a ZUGFeRD 2.x or XRechnung 3.x invoice in XML (CII or UBL) format. "
         "Supports all ZUGFeRD profiles: MINIMUM, BASIC_WL, BASIC, EN_16931, EXTENDED. "
         "For XRechnung, set profile to XRECHNUNG and choose CII or UBL syntax. "
-        "PDF/A-3 hybrid output is planned for v0.2.0."
+        "When the buyer is a German VAT-registered business (DE-prefixed VAT id), the "
+        "Wachstumschancengesetz B2B mandate (effective 2025-01-01, §14 Abs. 2 UStG) "
+        "requires a structured EN 16931 invoice. Non-XML output is rejected unless "
+        "transitional_period_opt_in is set to True (allowed only 2025-2026 with the "
+        "buyer's written consent)."
     ),
     inputSchema={
         "type": "object",
@@ -72,9 +88,30 @@ TOOL_INVOICE_CREATE = types.Tool(
             "output_format": {"type": "string", "enum": ["xml", "pdf"], "default": "xml"},
             "syntax": {"type": "string", "enum": ["CII", "UBL"], "default": "CII"},
             "pretty_print": {"type": "boolean", "default": True},
+            "transitional_period_opt_in": {"type": "boolean", "default": False},
         },
     },
 )
+
+
+_DE_B2B_MANDATE_NOTE = (
+    "Germany E-Rechnungsgesetz / Wachstumschancengesetz (effective 2025-01-01) requires "
+    "a structured EN 16931 invoice (ZUGFeRD 2.x or XRechnung) for B2B transactions where "
+    "the buyer is registered for German VAT (DE-prefixed UStIdNr). Reference: §14 Abs. 2 "
+    "UStG, as amended by the Wachstumschancengesetz of 27 March 2024 (BGBl. I Nr. 108). "
+    "Transitional rules: 2025-2026 PDF or other non-structured formats are permitted with "
+    "the buyer's consent; 2027 the grace period ends for issuers with turnover above "
+    "EUR 800,000; from 2028 structured EN 16931 output is mandatory for all B2B issuers. "
+    "Set transitional_period_opt_in=True to acknowledge the transition rules and emit a "
+    "non-XML format during the 2025-2026 window."
+)
+
+
+def _buyer_requires_de_b2b_mandate(buyer_vat_id: str | None) -> bool:
+    """Return True when the buyer is registered for German VAT (BT-48 starts with DE)."""
+    if not buyer_vat_id:
+        return False
+    return buyer_vat_id.strip().upper().startswith("DE")
 
 
 async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextContent]:
@@ -95,14 +132,52 @@ async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextCon
     except Exception as exc:
         return [types.TextContent(type="text", text=json.dumps({"error": f"Invoice validation failed: {exc}"}))]
 
+    # B2B mandate check — reject non-XML output for German VAT-registered buyers unless
+    # the caller explicitly opts in to the 2025-2026 transitional period.
+    if (
+        params.output_format != "xml"
+        and _buyer_requires_de_b2b_mandate(invoice.buyer.vat_id)
+        and not params.transitional_period_opt_in
+    ):
+        return [
+            types.TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": (
+                            "DE B2B mandate: a structured EN 16931 invoice is required for a "
+                            "German VAT-registered buyer. Use output_format='xml', or set "
+                            "transitional_period_opt_in=True after confirming the buyer's "
+                            "written consent to receive a non-structured format under the "
+                            "Wachstumschancengesetz 2025-2026 transitional rules."
+                        ),
+                        "mandate_note": _DE_B2B_MANDATE_NOTE,
+                        "buyer_vat_id": invoice.buyer.vat_id,
+                    }
+                ),
+            )
+        ]
+
     if params.output_format == "pdf":
         return [
             types.TextContent(
                 type="text",
                 text=json.dumps(
                     {
-                        "error": "PDF output is not yet implemented (planned for v0.2.0).",
-                        "hint": "Use output_format='xml' and embed manually with invoice_convert.",
+                        "error": (
+                            "PDF (ZUGFeRD hybrid) output is gated as experimental and is not "
+                            "yet emitted by invoice_create. The current generate_pdf_invoice "
+                            "applies PDF/A-3 XMP metadata (pdfaid:part=3, pdfaid:conformance=B) "
+                            "but does not yet embed an OutputIntent / sRGB ICC profile or "
+                            "embed fonts, which ISO 19005-3 level B requires. Tracked as "
+                            "DE-SH-2 follow-up."
+                        ),
+                        "hint": (
+                            "Use output_format='xml' for now. For an interim hybrid PDF, "
+                            "generate the XML here and pass it together with a "
+                            "separately-produced PDF/A-3 conformant carrier through "
+                            "mcp_einvoicing_de.utils.pdf.embed_xml_in_pdf."
+                        ),
                     }
                 ),
             )

@@ -153,6 +153,14 @@ class ZUGFeRDInvoice(EN16931Invoice):
         default_factory=list,
         description="Invoice lines (BG-25). Required for BASIC, EN_16931, EXTENDED profiles.",
     )
+    tax_representative: ZUGFeRDParty | None = Field(
+        None,
+        description=(
+            "Seller tax representative (BG-11). Mandatory when a non-resident seller "
+            "appoints a German fiscal representative under §22a UStG. When present, the "
+            "representative's VAT identifier (BT-63) is required by EN 16931 BR-18."
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------

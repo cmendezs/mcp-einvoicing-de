@@ -257,14 +257,11 @@ async def _validate_local(
             syntax=syntax,
         )
     except ValueError as exc:
-        # lxml/libxslt supports XSLT 1.0 only. The bundled FeRD Schematron
-        # XSLTs use xs:decimal() and other XPath 2.0 constructs that libxslt
-        # cannot compile.  Return a structured error rather than propagating
-        # the exception; users requiring full FeRD rule execution should run
-        # the KoSIT validator (use_remote_kosit=True) or a Java XSLT 2.0
-        # processor.
-        # [GAP id=DE-XSLT2-1 description="FeRD XSLT uses XPath 2.0 (xs:decimal); lxml/libxslt (XSLT 1.0 only) cannot compile — requires Saxon or equivalent"]
-        logger.warning("XSLT parse error for key=%s: %s", stylesheet_key, exc)
+        # The DE factory in validators/schematron.py dispatches to the
+        # XSLT 2.0 Saxon backend for FeRD Factur-X stylesheets. When the optional
+        # ``saxonche`` extra is not installed, the factory raises ValueError with
+        # an install hint. Return a structured error so callers can present it.
+        logger.warning("Schematron backend unavailable for key=%s: %s", stylesheet_key, exc)
         from mcp_einvoicing_de.validators.schematron import ValidationMessage
 
         return ValidationResult(
@@ -272,13 +269,13 @@ async def _validate_local(
             errors=[
                 ValidationMessage(
                     severity="error",
-                    rule_id="STYLESHEET-XSLT2-INCOMPATIBLE",
+                    rule_id="STYLESHEET-XSLT2-BACKEND-MISSING",
                     location="/",
                     text=(
-                        f"Schematron stylesheet {stylesheet_key!r} uses XPath 2.0 "
-                        "constructs (xs:decimal, cast as) that lxml/libxslt (XSLT 1.0) "
-                        "cannot compile. Use use_remote_kosit=True for full rule "
-                        "execution, or install a Java-based XSLT 2.0 processor. "
+                        f"Schematron stylesheet {stylesheet_key!r} requires an "
+                        "XSLT 2.0 backend. Install the optional extra with "
+                        "`pip install mcp-einvoicing-de[xslt2]`, or set "
+                        "use_remote_kosit=True to use the KoSIT cloud validator. "
                         f"Detail: {exc}"
                     ),
                 )

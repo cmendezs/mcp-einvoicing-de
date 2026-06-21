@@ -85,15 +85,44 @@ TOOL_INVOICE_PARSE = types.Tool(
 )
 
 
-def _extract_xml_from_pdf(pdf_bytes: bytes) -> bytes:
-    """Extract the ZUGFeRD XML attachment from a PDF/A-3 file.
+_ZUGFERD_ATTACHMENT_FILENAMES: tuple[str, ...] = (
+    # Factur-X / ZUGFeRD 2.x — current Factur-X 1.0+ default
+    "factur-x.xml",
+    # ZUGFeRD 1.x legacy filename, still encountered in older hybrid PDFs
+    "ZUGFeRD-invoice.xml",
+    "zugferd-invoice.xml",
+    # XRechnung hybrid (when distributed inside a PDF/A-3 envelope)
+    "xrechnung.xml",
+)
 
-    [NEED: implement PDF/A-3 attachment extraction using PyMuPDF or pikepdf]
-    [NEED: confirm attachment filename — 'factur-x.xml' or 'ZUGFeRD-invoice.xml']
+
+def _extract_xml_from_pdf(pdf_bytes: bytes) -> bytes:
+    """Extract the ZUGFeRD / Factur-X XML attachment from a PDF/A-3 file.
+
+    Delegates to mcp_einvoicing_core.pdf.PDFEmbedder.extract. Tries the well-known
+    Factur-X / ZUGFeRD attachment filenames in order. Returns the XML bytes of the
+    first match.
+
+    The filename order follows FeRD ZUGFeRD 2.x §3.4 (factur-x.xml is canonical
+    for Factur-X 1.0+; ZUGFeRD-invoice.xml is the ZUGFeRD 1.x legacy name).
+
+    Raises:
+        EInvoicingError: If no known ZUGFeRD attachment is present in the PDF.
+        ImportError:     If pikepdf is not installed
+                         (install with `pip install mcp-einvoicing-de[pdf]`).
     """
-    raise NotImplementedError(
-        "PDF extraction not yet implemented. "
-        "Provide xml_content or xml_base64 directly."
+    from mcp_einvoicing_core.exceptions import EInvoicingError
+    from mcp_einvoicing_core.pdf import PDFEmbedder
+
+    for filename in _ZUGFERD_ATTACHMENT_FILENAMES:
+        xml_bytes = PDFEmbedder.extract(pdf_bytes, filename=filename)
+        if xml_bytes:
+            logger.debug("Extracted ZUGFeRD attachment %r (%d bytes)", filename, len(xml_bytes))
+            return xml_bytes
+
+    raise EInvoicingError(
+        "No ZUGFeRD / Factur-X XML attachment found in the PDF. "
+        f"Looked for: {', '.join(_ZUGFERD_ATTACHMENT_FILENAMES)}."
     )
 
 
@@ -109,9 +138,16 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
     if params.pdf_base64 is not None:
         try:
             pdf_bytes = base64.b64decode(params.pdf_base64)
+        except (ValueError, TypeError) as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(f"Invalid base64 PDF input: {exc}")))]
+        try:
             xml_bytes = _extract_xml_from_pdf(pdf_bytes)
-        except (NotImplementedError, EInvoicingError, Exception) as exc:
+        except ImportError as exc:
             return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+        except EInvoicingError as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+        except Exception as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(f"PDF extraction failed: {exc}")))]
     else:
         try:
             xml_bytes = resolve_xml_input(params.xml_content, params.xml_base64)

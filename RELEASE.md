@@ -41,6 +41,45 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.3.0] - 2026-06-21
+#### Added
+- **[DE-XSLT2-1] MEDIUM:** `validators/schematron.py` now dispatches to a Saxon-HE
+  backend (`SaxonSchematronValidator`) when the optional `[xslt2]` extra is installed.
+  All bundled FeRD Factur-X 1.08 and KoSIT XRechnung 3.0.2 stylesheets are XSLT 2.0
+  and now execute locally end-to-end. Install with
+  `pip install mcp-einvoicing-de[xslt2]`.
+- **[DE-B2B-1] MEDIUM:** `invoice_create` enforces the Wachstumschancengesetz
+  structured-format mandate for German VAT-registered buyers (DE-prefixed BT-48).
+  Non-XML output is rejected unless `transitional_period_opt_in=True` is set.
+  Reference: §14 Abs. 2 UStG, BGBl. I Nr. 108.
+- **[DE-LC-2] MEDIUM:** `invoice_convert` now implements a real conversion pipeline
+  for same-syntax ZUGFeRD profile changes and ZUGFeRD ↔ XRechnung CII swaps with
+  data-loss gating. Cross-syntax CII ↔ UBL is structurally rejected pending v0.4.0.
+- **[DE-TL-2] MEDIUM:** `tax_rules` Kleinunternehmer entry updated to the
+  Jahressteuergesetz 2024 thresholds (€25,000 preceding-year / €100,000 current-year,
+  effective 2025-01-01) with verified citation.
+- **[DE-TL-3] LOW:** `ZUGFeRDInvoice.tax_representative` (BG-11) field added.
+  `ZUGFeRDCIISerializer` emits `ram:SellerTaxRepresentativeTradeParty` after
+  `BuyerTradeParty` in the CII tree per HeaderTradeAgreementType sequence.
+- **[DE-SH-2] MEDIUM:** `generate_pdf_invoice` now wraps the reportlab output with
+  PDF/A-3 XMP identifier metadata (`pdfaid:part="3"`, `pdfaid:conformance="B"`)
+  via pikepdf. OutputIntent / sRGB ICC and font embedding remain a follow-up;
+  `output_format='pdf'` is documented as experimental and still gated.
+- **[DE-LC-3] LOW:** `_extract_xml_from_pdf` implemented via
+  `mcp_einvoicing_core.pdf.PDFEmbedder.extract`; tries the canonical Factur-X
+  / ZUGFeRD attachment filenames (`factur-x.xml`, `ZUGFeRD-invoice.xml`,
+  `zugferd-invoice.xml`, `xrechnung.xml`) in order.
+- **[DE-SC-4] LOW:** UBL profile detection XPath verified against the KoSIT
+  `validator-configuration-xrechnung v2026-01-31 scenarios.xml`. `[NEED]` marker
+  removed; tests added for `XRechnung-UBL` Invoice and CreditNote roots.
+#### Removed
+- Stale `[NEED:]` markers in `tax_rules.py`, `pdf.py`, `utils/xml_utils.py`,
+  and `invoice_validate.py` resolved by the verified replacements above.
+#### Notes
+- 73 tests passing (20 new). Audit gate PASS (0 blocking, 0 warnings).
+- `saxonche` (XSLT 2.0 backend) is opt-in via the `[xslt2]` extra; the wheel
+  is large (~40 MB) and shipping it as a hard dependency was rejected.
+
 ### [0.2.0] - 2026-06-01
 #### Fixed / Added
 - **[DE-LC-1] BLOCKING:** `_parse_response` in `validators/kosit.py` rewritten for the

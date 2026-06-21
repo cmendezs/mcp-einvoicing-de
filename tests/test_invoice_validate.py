@@ -86,6 +86,26 @@ class TestDetectZUGFeRDProfile:
         profile = detect_zugferd_profile(b"not xml")
         assert profile is None
 
+    def test_detects_xrechnung_ubl_invoice(self) -> None:
+        ubl_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</cbc:CustomizationID>
+  <cbc:ID>TEST-001</cbc:ID>
+</Invoice>"""
+        profile = detect_zugferd_profile(ubl_xml)
+        assert profile == ZUGFeRDProfile.XRECHNUNG
+
+    def test_detects_xrechnung_ubl_creditnote(self) -> None:
+        ubl_xml = b"""<?xml version="1.0" encoding="UTF-8"?>
+<CreditNote xmlns="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"
+            xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</cbc:CustomizationID>
+  <cbc:ID>CN-001</cbc:ID>
+</CreditNote>"""
+        profile = detect_zugferd_profile(ubl_xml)
+        assert profile == ZUGFeRDProfile.XRECHNUNG
+
 
 # ── Integration tests — handle_invoice_validate ───────────────────────────────
 

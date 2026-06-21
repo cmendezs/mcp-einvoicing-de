@@ -9,12 +9,9 @@ Provides structured information about:
 - Common exemption reason codes (VATEX)
 
 Legal references:
-- Umsatzsteuergesetz (UStG): [NEED: link to current consolidated UStG text]
-- BMF circulars on e-invoicing: [NEED: link to relevant BMF circulars]
+- Umsatzsteuergesetz (UStG): https://www.gesetze-im-internet.de/ustg_1980/
+- Bundesministerium der Finanzen circulars: https://www.bundesfinanzministerium.de
 - EN 16931-1:2017 Annex — VAT category codes
-
-[NEED: verify current rates — rates may change; this is data as of 2025-01]
-[NEED: verify if mcp-einvoicing-core provides a tax_rules base or registry]
 """
 
 from __future__ import annotations
@@ -121,9 +118,17 @@ _EXEMPTIONS: list[dict[str, Any]] = [
     {
         "paragraph": "§19 UStG",
         "category": "E",
-        "description_en": "Kleinunternehmerregelung (small business exemption, turnover < €22,000/year)",
+        "description_en": (
+            "Kleinunternehmerregelung (small business exemption). "
+            "Effective 2025-01-01 (Jahressteuergesetz 2024): preceding calendar year "
+            "turnover must not exceed €25,000 and current calendar year turnover must "
+            "not exceed €100,000."
+        ),
         "vatex_code": "VATEX-EU-O",
-        # [NEED: verify 2024 threshold — raised from €17,500 to €22,000]
+        "threshold_preceding_year_eur": 25000,
+        "threshold_current_year_eur": 100000,
+        "effective_from": "2025-01-01",
+        "source": "https://www.gesetze-im-internet.de/ustg_1980/__19.html",
     },
 ]
 
@@ -230,7 +235,12 @@ async def handle_tax_rules(arguments: dict[str, Any]) -> list[types.TextContent]
         )
         results = list(_GERMAN_VAT_RATES.values())
 
-    notes.append("Data reflects German VAT law as of 2025-01-01. [NEED: implement rule versioning]")
+    notes.append(
+        "Data reflects German VAT law as consolidated 2026-06. "
+        "Sources: UStG §12 (rates), §13b (reverse charge), §4 (exemptions), §19 "
+        "(Kleinunternehmer, raised to €25,000/€100,000 by Jahressteuergesetz 2024 "
+        "effective 2025-01-01)."
+    )
 
     output = TaxRulesOutput(query=params.query, results=results, notes=notes)
     return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
