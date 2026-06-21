@@ -69,10 +69,7 @@ Repository = "https://github.com/cmendezs/mcp-einvoicing-de"
 Issues = "https://github.com/cmendezs/mcp-einvoicing-de/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["mcp_einvoicing_de"]
-# mcp_einvoicing_de/rules/ is a sub-package (has __init__.py) so hatchling
-# includes it automatically.  The XSLT files within it are bundled in the
-# wheel without any additional artifact-include configuration.
+packages = ["src/mcp_einvoicing_de"]
 
 [tool.ruff]
 target-version = "py311"
