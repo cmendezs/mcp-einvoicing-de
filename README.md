@@ -68,18 +68,25 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
+### Optional extras
+
+| Extra | Purpose | Install |
+|-------|---------|---------|
+| `[xslt2]` | Saxon-HE backend for XSLT 2.0 Schematron stylesheets (FeRD Factur-X 1.08 and KoSIT XRechnung 3.0.2). Required for local Schematron validation; lxml supports XSLT 1.0 only. | `pip install mcp-einvoicing-de[xslt2]` |
+| `[pdf]` | PDF/A-3 hybrid invoice generation and embedded XML extraction (uses `pikepdf`). | `pip install mcp-einvoicing-de[pdf]` |
+| `[pymupdf]` | Alternative PDF engine (uses `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
+| `[dev]` | Development tools (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
+
 ---
 
 ## ⚙️ Configuration
 
-The server does not require any external credentials in v0.1.0. Available environment variables:
+The server does not require external credentials. Available environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of the KoSIT validation tool (optional, for remote validation) | |
-| `EINVOICING_DE_PEPPOL_SMP_URL` | Peppol SMP lookup URL (optional) | |
-| `EINVOICING_DE_PDF_ENGINE` | PDF generation engine (`reportlab` or `pymupdf`) | `reportlab` |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint (optional, enables remote validation when set) | |
 
 ### 🤖 Claude Desktop integration
 
@@ -132,12 +139,12 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 
 | Tool | Description |
 |------|-------------|
-| `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL); PDF/A-3 hybrid planned (v0.2.0) |
-| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT Schematron rules (BR-DE-\*) |
-| `invoice_parse` | Extract structured data from an existing ZUGFeRD or XRechnung file |
-| `invoice_convert` | Convert between ZUGFeRD profiles or ZUGFeRD ↔ XRechnung |
-| `peppol_check` | Check Peppol participant registration of a German company (AS4) |
-| `tax_rules` | Query German VAT rules (tax categories, §13b UStG reverse charge, exemptions) |
+| `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL). Enforces the §14 Abs. 2 UStG B2B mandate: non-XML output is rejected for DE-prefixed VAT buyers unless `transitional_period_opt_in=True` is set. PDF/A-3 hybrid via experimental `output_format='pdf'` ships XMP `pdfaid` metadata; full ISO 19005-3 level B (OutputIntent + ICC + fonts) is a v0.4.0 follow-up. |
+| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT Schematron rules (BR-DE-\*). XSLT 2.0 FeRD and KoSIT stylesheets execute via Saxon-HE when the `[xslt2]` extra is installed. |
+| `invoice_parse` | Extract structured data from ZUGFeRD or XRechnung XML, or from a PDF/A-3 hybrid invoice with embedded `factur-x.xml` / `zugferd-invoice.xml` (requires `[pdf]` extra). |
+| `invoice_convert` | Convert between ZUGFeRD profiles or swap ZUGFeRD CII and XRechnung CII headers. Cross-syntax CII to UBL transformation is rejected pending v0.4.0. |
+| `peppol_check` | Check Peppol participant registration of a German company. Lookup only; AS4 outbound transmission is tracked as DE-PEPPOL-1 for v0.5.0. |
+| `tax_rules` | Query German VAT rules (rates, §13b UStG reverse charge codes, §19 UStG Kleinunternehmer thresholds at JStG 2024 values of €25,000 preceding year / €100,000 current year, exemptions). |
 
 ---
 
@@ -217,10 +224,10 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 
 | Standard | Version | Profiles / Syntax |
 |----------|---------|-------------------|
-| ZUGFeRD | 2.3 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
-| XRechnung | 3.x | CII (Cross Industry Invoice), UBL (Universal Business Language) |
-| EN 16931 | | European core data model for electronic invoicing |
-| Peppol BIS | 3.0 | Billing 3.0 (DE PINT) |
+| ZUGFeRD | 2.3.2 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
+| XRechnung | 3.0.2 | CII (Cross Industry Invoice), UBL (Universal Business Language) |
+| EN 16931 | 2017 | European core data model for electronic invoicing |
+| Peppol BIS | 3.0 | Billing 3.0 (EN 16931-compliant) |
 
 > **Note:** ZUGFeRD 2.x and XRechnung 3.x share the same CII XML syntax at the EN 16931 profile level. Conversion between both formats is therefore possible without data loss. The EXTENDED profile is specific to ZUGFeRD and has no XRechnung equivalent.
 
@@ -256,12 +263,12 @@ pytest tests/test_models.py -v
 
 | Version | Features |
 |---------|----------|
-| **v0.1.0** (current) | Tools: create, validate, parse, convert, peppol_check, tax_rules |
-| **v0.2.0** | PDF/A-3 embedding (ZUGFeRD hybrid) via `reportlab` / `PyMuPDF` |
-| **v0.3.0** | KoSIT online validator fully integrated |
-| **v0.4.0** | Peppol AS4 direct submission |
-| **v0.5.0** | DATEV export format |
-| **v1.0.0** | Production-ready, full EN 16931 coverage |
+| **v0.1.x** | Initial tools: create, validate, parse, convert, peppol_check, tax_rules; XRechnung URN namespace correction (`xeinkauf.de`); XXE hardening; BR-DE-15 enforcement |
+| **v0.2.0** | KoSIT validator REST JSON rewrite; FeRD + KoSIT Schematron stylesheets bundled in the wheel; ISO 7064 Leitweg-ID validator; profile-specific Schematron dispatch |
+| **v0.3.0 / v0.3.1** (current) | Sprint 4: Saxon-HE XSLT 2.0 backend (`[xslt2]` extra); §14 Abs. 2 UStG B2B mandate gate in `invoice_create`; same-syntax conversion pipeline in `invoice_convert`; JStG 2024 Kleinunternehmer thresholds; BG-11 `SellerTaxRepresentativeTradeParty`; PDF/A-3 XMP metadata wrap (`[pdf]` extra); PDF embedded XML extraction; KoSIT UBL profile XPath verified against `scenarios.xml v2026-01-31` |
+| **v0.4.0** | Full ISO 19005-3 level B in `generate_pdf_invoice` (sRGB OutputIntent + ICC + TTF fonts); cross-syntax CII to UBL transformation in `invoice_convert`; default-on KoSIT cloud validation with retry and structured fallback; audit gate reconciliation of country-reference `[NEED:]` markers |
+| **v0.5.0** | Peppol AS4 outbound transmission (DE-PEPPOL-1); DATEV import format export (DE-DATEV-1) |
+| **v1.0.0** | Production-ready: full EN 16931 coverage, KoSIT cloud canary corpus, performance benchmarks, 95% line coverage with mutation tests, end-to-end integration test against the cloud validator |
 
 ---
 
