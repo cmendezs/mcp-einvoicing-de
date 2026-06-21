@@ -68,18 +68,25 @@ source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
+### Optionale Extras
+
+| Extra | Zweck | Installation |
+|-------|-------|--------------|
+| `[xslt2]` | Saxon-HE-Backend für XSLT-2.0-Schematron-Stylesheets (FeRD Factur-X 1.08 und KoSIT XRechnung 3.0.2). Erforderlich für lokale Schematron-Validierung; lxml unterstützt nur XSLT 1.0. | `pip install mcp-einvoicing-de[xslt2]` |
+| `[pdf]` | PDF/A-3-Hybridrechnungsgenerierung und Extraktion eingebetteter XML-Dateien (verwendet `pikepdf`). | `pip install mcp-einvoicing-de[pdf]` |
+| `[pymupdf]` | Alternative PDF-Engine (verwendet `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
+| `[dev]` | Entwicklungswerkzeuge (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
+
 ---
 
 ## ⚙️ Konfiguration
 
-Der Server benötigt in v0.1.0 keine externen Zugangsdaten. Verfügbare Umgebungsvariablen:
+Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen:
 
 | Variable | Beschreibung | Standard |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL des KoSIT-Validierungstools (optional, für Remote-Validierung) | |
-| `EINVOICING_DE_PEPPOL_SMP_URL` | Peppol-SMP-Lookup-URL (optional) | |
-| `EINVOICING_DE_PDF_ENGINE` | PDF-Generierungsmodul (`reportlab` oder `pymupdf`) | `reportlab` |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts (optional, aktiviert Remote-Validierung, wenn gesetzt) | |
 
 ### 🤖 Integration Claude Desktop
 
@@ -132,12 +139,12 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 | Werkzeug | Beschreibung |
 |----------|-------------|
-| `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen; PDF/A-3-Hybrid geplant (v0.2.0) |
-| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Schematron-Regeln (BR-DE-\*) prüfen |
-| `invoice_parse` | Strukturierte Daten aus einer bestehenden ZUGFeRD- oder XRechnung-Datei extrahieren |
-| `invoice_convert` | Zwischen ZUGFeRD-Profilen oder ZUGFeRD ↔ XRechnung konvertieren |
-| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens prüfen (AS4) |
-| `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Steuerklassen, §13b UStG, Befreiungen) |
+| `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen. Erzwingt das B2B-Mandat nach §14 Abs. 2 UStG: Nicht-XML-Ausgaben werden für deutsche Rechnungsempfänger mit USt-IdNr. (DE-Präfix) abgelehnt, sofern nicht `transitional_period_opt_in=True` gesetzt ist. PDF/A-3-Hybrid über experimentelles `output_format='pdf'` liefert XMP-`pdfaid`-Metadaten; vollständige ISO-19005-3-Stufe B (OutputIntent + ICC + Schriften) ist ein Folge-Item für v0.4.0. |
+| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Schematron-Regeln (BR-DE-\*) prüfen. XSLT-2.0-FeRD- und KoSIT-Stylesheets werden über Saxon-HE ausgeführt, wenn das Extra `[xslt2]` installiert ist. |
+| `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml` (erfordert Extra `[pdf]`). |
+| `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren oder ZUGFeRD-CII- und XRechnung-CII-Header tauschen. Cross-Syntax-Transformation CII zu UBL wird abgelehnt, geplant für v0.4.0. |
+| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens prüfen. Nur Lookup; AS4-Übermittlung als DE-PEPPOL-1 für v0.5.0 vorgesehen. |
+| `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Sätze, §13b-UStG-Reverse-Charge-Codes, §19-UStG-Kleinunternehmerschwellen nach JStG 2024 mit 25.000 € Vorjahr / 100.000 € laufendes Jahr, Befreiungen). |
 
 ---
 
@@ -217,10 +224,10 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 | Standard | Version | Profile / Syntax |
 |----------|---------|-----------------|
-| ZUGFeRD | 2.3 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
-| XRechnung | 3.x | CII (Cross Industry Invoice), UBL (Universal Business Language) |
-| EN 16931 | | Europäisches Kerndatenmodell für die elektronische Rechnung |
-| Peppol BIS | 3.0 | Billing 3.0 (DE PINT) |
+| ZUGFeRD | 2.3.2 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
+| XRechnung | 3.0.2 | CII (Cross Industry Invoice), UBL (Universal Business Language) |
+| EN 16931 | 2017 | Europäisches Kerndatenmodell für die elektronische Rechnung |
+| Peppol BIS | 3.0 | Billing 3.0 (EN-16931-konform) |
 
 > **Hinweis:** ZUGFeRD 2.x und XRechnung 3.x teilen auf Profilebene EN 16931 dieselbe CII-XML-Syntax. Eine Konvertierung zwischen beiden Formaten ist daher ohne Datenverlust möglich. Das EXTENDED-Profil ist ZUGFeRD-spezifisch und hat kein XRechnung-Äquivalent.
 
@@ -254,14 +261,15 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
+Aktuelle Version: **v0.3.1**. Geplante Releases:
+
 | Version | Funktionen |
 |---------|-----------|
-| **v0.1.0** (aktuell) | Werkzeuge: create, validate, parse, convert, peppol_check, tax_rules |
-| **v0.2.0** | PDF/A-3-Einbettung (ZUGFeRD-Hybrid) via `reportlab` / `PyMuPDF` |
-| **v0.3.0** | KoSIT-Online-Validator vollständig integriert |
-| **v0.4.0** | Peppol AS4 Direktübermittlung |
-| **v0.5.0** | DATEV-Exportformat |
-| **v1.0.0** | Produktionsreif, vollständige EN 16931-Abdeckung |
+| **v0.4.0** | Vollständige ISO-19005-3-Stufe B in `generate_pdf_invoice` (sRGB OutputIntent + ICC + TTF-Schriften); Cross-Syntax-Transformation CII zu UBL in `invoice_convert`; standardmäßig aktivierte KoSIT-Cloud-Validierung mit Retry und strukturiertem Fallback; Audit-Gate-Abgleich der `[NEED:]`-Marker in der Länderreferenz |
+| **v0.5.0** | Peppol-AS4-Ausgangsübermittlung (DE-PEPPOL-1); DATEV-Importformat-Export (DE-DATEV-1) |
+| **v1.0.0** | Produktionsreif: vollständige EN-16931-Abdeckung, KoSIT-Cloud-Canary-Corpus, Performance-Benchmarks, 95 % Zeilenabdeckung mit Mutationstests, End-to-End-Integrationstest gegen den Cloud-Validator |
+
+Die Historie früherer Releases finden Sie in [RELEASE.md](RELEASE.md).
 
 ---
 

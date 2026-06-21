@@ -261,14 +261,15 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
+Current version: **v0.3.1**. Upcoming releases:
+
 | Version | Features |
 |---------|----------|
-| **v0.1.x** | Initial tools: create, validate, parse, convert, peppol_check, tax_rules; XRechnung URN namespace correction (`xeinkauf.de`); XXE hardening; BR-DE-15 enforcement |
-| **v0.2.0** | KoSIT validator REST JSON rewrite; FeRD + KoSIT Schematron stylesheets bundled in the wheel; ISO 7064 Leitweg-ID validator; profile-specific Schematron dispatch |
-| **v0.3.0 / v0.3.1** (current) | Sprint 4: Saxon-HE XSLT 2.0 backend (`[xslt2]` extra); §14 Abs. 2 UStG B2B mandate gate in `invoice_create`; same-syntax conversion pipeline in `invoice_convert`; JStG 2024 Kleinunternehmer thresholds; BG-11 `SellerTaxRepresentativeTradeParty`; PDF/A-3 XMP metadata wrap (`[pdf]` extra); PDF embedded XML extraction; KoSIT UBL profile XPath verified against `scenarios.xml v2026-01-31` |
 | **v0.4.0** | Full ISO 19005-3 level B in `generate_pdf_invoice` (sRGB OutputIntent + ICC + TTF fonts); cross-syntax CII to UBL transformation in `invoice_convert`; default-on KoSIT cloud validation with retry and structured fallback; audit gate reconciliation of country-reference `[NEED:]` markers |
 | **v0.5.0** | Peppol AS4 outbound transmission (DE-PEPPOL-1); DATEV import format export (DE-DATEV-1) |
 | **v1.0.0** | Production-ready: full EN 16931 coverage, KoSIT cloud canary corpus, performance benchmarks, 95% line coverage with mutation tests, end-to-end integration test against the cloud validator |
+
+For the history of past releases, see [RELEASE.md](RELEASE.md).
 
 ---
 
