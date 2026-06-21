@@ -3,14 +3,22 @@
 from __future__ import annotations
 
 import base64
+import importlib.util
 
 import pytest
 
 from mcp_einvoicing_de.tools.invoice_parse import _extract_xml_from_pdf
 from mcp_einvoicing_de.utils.pdf import generate_pdf_invoice
 
+_PIKEPDF_AVAILABLE = importlib.util.find_spec("pikepdf") is not None
+_pikepdf_required = pytest.mark.skipif(
+    not _PIKEPDF_AVAILABLE,
+    reason="pikepdf extra not installed (install with mcp-einvoicing-de[pdf])",
+)
+
 
 class TestGeneratePdfInvoice:
+    @_pikepdf_required
     def test_pdf_carries_pdfaid_xmp_metadata(self, minimal_invoice) -> None:
         pdf_bytes = generate_pdf_invoice(minimal_invoice)
         # The minimal PDF/A-3 metadata block is injected as XMP and stays in the
@@ -19,7 +27,14 @@ class TestGeneratePdfInvoice:
         assert b"pdfaid:part" in pdf_bytes
         assert b"pdfaid:conformance" in pdf_bytes
 
+    def test_pdf_generation_succeeds_without_pikepdf(self, minimal_invoice) -> None:
+        # Even without the pikepdf extra, the reportlab base PDF is returned;
+        # the wrapping helper is a no-op and logs a warning.
+        pdf_bytes = generate_pdf_invoice(minimal_invoice)
+        assert b"%PDF-" in pdf_bytes[:10]
 
+
+@_pikepdf_required
 class TestExtractXmlFromPdf:
     def test_round_trip_via_pdf_embedder(self, minimal_invoice) -> None:
         from mcp_einvoicing_de.utils.pdf import embed_xml_in_pdf
@@ -38,6 +53,7 @@ class TestExtractXmlFromPdf:
             _extract_xml_from_pdf(pdf_base)
 
 
+@_pikepdf_required
 class TestParsePdfBase64Branch:
     @pytest.mark.asyncio
     async def test_pdf_branch_returns_structured_error_on_missing_attachment(

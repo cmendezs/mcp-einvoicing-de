@@ -41,6 +41,12 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.3.1] - 2026-06-21
+#### Fixed
+- CI publish workflow: install the `[pdf]` and `[xslt2]` extras alongside `[dev]`
+  so the new pikepdf and saxonche-backed tests can actually run; tests skip
+  cleanly when the extras are absent locally.
+
 ### [0.3.0] - 2026-06-21
 #### Added
 - **[DE-XSLT2-1] MEDIUM:** `validators/schematron.py` now dispatches to a Saxon-HE
