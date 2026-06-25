@@ -52,7 +52,9 @@ xslt2 = ["saxonche>=12.4.0"]
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "pytest-benchmark>=4.0.0",
     "pytest-cov>=5.0.0",
+    "mutmut>=2.4.0",
     "ruff>=0.4.0",
     "mypy>=1.10.0",
     "lxml-stubs>=0.5.0",
@@ -94,3 +96,7 @@ addopts = "--cov=mcp_einvoicing_de --cov-report=term-missing"
 [tool.coverage.run]
 source = ["mcp_einvoicing_de"]
 omit = ["tests/*"]
+
+[tool.mutmut]
+paths_to_mutate = "src/mcp_einvoicing_de/"
+tests_dir = "tests/"

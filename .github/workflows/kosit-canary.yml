@@ -1,0 +1,20 @@
+name: KoSIT canary corpus
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # nightly at 03:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --all-extras
+      - name: Run KoSIT canary corpus
+        env:
+          EINVOICING_DE_INTEGRATION_TESTS: "1"
+        run: uv run pytest tests/test_kosit_canary.py -v --tb=short
