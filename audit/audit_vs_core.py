@@ -263,12 +263,12 @@ _PYPROJECT = Path(__file__).parent.parent / "pyproject.toml"
 # ---------------------------------------------------------------------------
 
 _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
-    "invoice_create":   "Generate ZUGFeRD / XRechnung XML or PDF",
+    "invoice_create": "Generate ZUGFeRD / XRechnung XML or PDF",
     "invoice_validate": "Validate against EN 16931 + KoSIT Schematron",
-    "invoice_parse":    "Extract structured data from an invoice file",
-    "invoice_convert":  "Convert between profiles or syntaxes",
-    "peppol_check":     "Verify Peppol participant registration",
-    "tax_rules":        "German VAT rules helper",
+    "invoice_parse": "Extract structured data from an invoice file",
+    "invoice_convert": "Convert between profiles or syntaxes",
+    "peppol_check": "Verify Peppol participant registration",
+    "tax_rules": "German VAT rules helper",
 }
 
 
@@ -276,12 +276,12 @@ def _collect_registered_tools() -> set[str]:
     registered: set[str] = set()
     try:
         tool_modules = [
-            ("mcp_einvoicing_de.tools.invoice_create",   "TOOL_INVOICE_CREATE"),
+            ("mcp_einvoicing_de.tools.invoice_create", "TOOL_INVOICE_CREATE"),
             ("mcp_einvoicing_de.tools.invoice_validate", "TOOL_INVOICE_VALIDATE"),
-            ("mcp_einvoicing_de.tools.invoice_parse",    "TOOL_INVOICE_PARSE"),
-            ("mcp_einvoicing_de.tools.invoice_convert",  "TOOL_INVOICE_CONVERT"),
-            ("mcp_einvoicing_de.tools.peppol_check",     "TOOL_PEPPOL_CHECK"),
-            ("mcp_einvoicing_de.tools.tax_rules",        "TOOL_TAX_RULES"),
+            ("mcp_einvoicing_de.tools.invoice_parse", "TOOL_INVOICE_PARSE"),
+            ("mcp_einvoicing_de.tools.invoice_convert", "TOOL_INVOICE_CONVERT"),
+            ("mcp_einvoicing_de.tools.peppol_check", "TOOL_PEPPOL_CHECK"),
+            ("mcp_einvoicing_de.tools.tax_rules", "TOOL_TAX_RULES"),
         ]
         for mod_path, attr in tool_modules:
             mod, _ = _try_import(mod_path)
@@ -300,27 +300,39 @@ def run_check_2() -> CheckResult:
 
     for tool_name, description in _REQUIRED_TOOL_CATEGORIES.items():
         if tool_name in registered:
-            result.findings.append(CheckFinding(
-                check_id="CHECK_2", tag="[OK]", severity=SEVERITY_OK,
-                symbol=tool_name,
-                message=f"Tool '{tool_name}' is registered. ({description})",
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_2",
+                    tag="[OK]",
+                    severity=SEVERITY_OK,
+                    symbol=tool_name,
+                    message=f"Tool '{tool_name}' is registered. ({description})",
+                )
+            )
         else:
-            result.findings.append(CheckFinding(
-                check_id="CHECK_2", tag="[MISSING_TOOL]", severity=SEVERITY_BLOCKING,
-                symbol=tool_name,
-                message=(
-                    f"Required tool '{tool_name}' ({description}) is not registered "
-                    "in the MCP server. Add it to server.py _ALL_TOOLS and _TOOL_HANDLERS."
-                ),
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_2",
+                    tag="[MISSING_TOOL]",
+                    severity=SEVERITY_BLOCKING,
+                    symbol=tool_name,
+                    message=(
+                        f"Required tool '{tool_name}' ({description}) is not registered "
+                        "in the MCP server. Add it to server.py _ALL_TOOLS and _TOOL_HANDLERS."
+                    ),
+                )
+            )
 
     for tool_name in sorted(registered - set(_REQUIRED_TOOL_CATEGORIES)):
-        result.findings.append(CheckFinding(
-            check_id="CHECK_2", tag="[EXTRA]", severity=SEVERITY_OK,
-            symbol=tool_name,
-            message=f"Tool '{tool_name}' is registered but not in the required tool spec.",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_2",
+                tag="[EXTRA]",
+                severity=SEVERITY_OK,
+                symbol=tool_name,
+                message=f"Tool '{tool_name}' is registered but not in the required tool spec.",
+            )
+        )
 
     return result
 
@@ -332,17 +344,17 @@ def run_check_2() -> CheckResult:
 # Fallback when mcp-einvoicing-core is not installed.
 # Derived from EN16931Invoice fields that carry no default value (Pydantic required).
 _CORE_MANDATORY_FIELDS_FALLBACK: dict[str, str] = {
-    "profile":                   "GuidelineID / profile URN (BT-24)",
-    "invoice_number":            "Invoice number (BT-1)",
-    "invoice_date":              "Invoice issue date (BT-2)",
-    "seller":                    "Seller / supplier (BG-4)",
-    "buyer":                     "Buyer / customer (BG-7)",
-    "sum_of_line_net_amounts":   "Sum of invoice line net amounts (BT-106)",
-    "tax_exclusive_amount":      "Invoice total without VAT (BT-109)",
-    "tax_total":                 "Total VAT amount (BT-110)",
-    "tax_inclusive_amount":      "Invoice total with VAT (BT-112)",
-    "amount_due":                "Amount due for payment (BT-115)",
-    "tax_lines":                 "VAT breakdown lines (BG-23)",
+    "profile": "GuidelineID / profile URN (BT-24)",
+    "invoice_number": "Invoice number (BT-1)",
+    "invoice_date": "Invoice issue date (BT-2)",
+    "seller": "Seller / supplier (BG-4)",
+    "buyer": "Buyer / customer (BG-7)",
+    "sum_of_line_net_amounts": "Sum of invoice line net amounts (BT-106)",
+    "tax_exclusive_amount": "Invoice total without VAT (BT-109)",
+    "tax_total": "Total VAT amount (BT-110)",
+    "tax_inclusive_amount": "Invoice total with VAT (BT-112)",
+    "amount_due": "Amount due for payment (BT-115)",
+    "tax_lines": "VAT breakdown lines (BG-23)",
 }
 
 # Fields present in core that are deprecated (update when core adds deprecation markers).
@@ -376,11 +388,15 @@ def run_check_3() -> CheckResult:
 
     zugferd_cls = getattr(mod, "ZUGFeRDInvoice", None)
     if zugferd_cls is None:
-        result.findings.append(CheckFinding(
-            check_id="CHECK_3", tag="[MISSING]", severity=SEVERITY_BLOCKING,
-            symbol="ZUGFeRDInvoice",
-            message="ZUGFeRDInvoice class not found in mcp_einvoicing_de.models.zugferd.",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_3",
+                tag="[MISSING]",
+                severity=SEVERITY_BLOCKING,
+                symbol="ZUGFeRDInvoice",
+                message="ZUGFeRDInvoice class not found in mcp_einvoicing_de.models.zugferd.",
+            )
+        )
         return result
 
     model_fields = set(zugferd_cls.model_fields.keys())
@@ -388,29 +404,37 @@ def run_check_3() -> CheckResult:
     for field_name, description in _get_mandatory_fields().items():
         tag = "[OK]" if field_name in model_fields else "[FIELD_MISSING]"
         sev = SEVERITY_OK if field_name in model_fields else SEVERITY_BLOCKING
-        result.findings.append(CheckFinding(
-            check_id="CHECK_3", tag=tag, severity=sev,
-            symbol=f"ZUGFeRDInvoice.{field_name}",
-            message=(
-                f"Mandatory field present. {description}"
-                if field_name in model_fields
-                else (
-                    f"Mandatory EN 16931 field '{field_name}' ({description}) "
-                    "is absent from ZUGFeRDInvoice."
-                )
-            ),
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_3",
+                tag=tag,
+                severity=sev,
+                symbol=f"ZUGFeRDInvoice.{field_name}",
+                message=(
+                    f"Mandatory field present. {description}"
+                    if field_name in model_fields
+                    else (
+                        f"Mandatory EN 16931 field '{field_name}' ({description}) "
+                        "is absent from ZUGFeRDInvoice."
+                    )
+                ),
+            )
+        )
 
     for dep_field in _DEPRECATED_CORE_FIELDS:
         if dep_field in model_fields:
-            result.findings.append(CheckFinding(
-                check_id="CHECK_3", tag="[DEPRECATED_IN_USE]", severity=SEVERITY_WARNING,
-                symbol=f"ZUGFeRDInvoice.{dep_field}",
-                message=(
-                    f"Field '{dep_field}' is marked deprecated in mcp-einvoicing-core "
-                    "but is still present in ZUGFeRDInvoice."
-                ),
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_3",
+                    tag="[DEPRECATED_IN_USE]",
+                    severity=SEVERITY_WARNING,
+                    symbol=f"ZUGFeRDInvoice.{dep_field}",
+                    message=(
+                        f"Field '{dep_field}' is marked deprecated in mcp-einvoicing-core "
+                        "but is still present in ZUGFeRDInvoice."
+                    ),
+                )
+            )
 
     return result
 
@@ -419,6 +443,7 @@ def run_check_3() -> CheckResult:
 # CHECK 5 — DE-specific structural checks
 # ---------------------------------------------------------------------------
 
+
 def run_check_5() -> CheckResult:
     """CHECK 5 — DE-specific structural and completeness checks."""
     result = CheckResult(check_id="CHECK_5", name="DE-specific structural checks")
@@ -426,24 +451,32 @@ def run_check_5() -> CheckResult:
     # 5a: Verify server.py exports _ALL_TOOLS and _TOOL_HANDLERS
     server_mod, err = _try_import("mcp_einvoicing_de.server")
     if server_mod is None:
-        result.findings.append(CheckFinding(
-            check_id="CHECK_5", tag="[MISSING]", severity=SEVERITY_BLOCKING,
-            symbol="mcp_einvoicing_de.server",
-            message=f"Could not import server module: {err}",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_5",
+                tag="[MISSING]",
+                severity=SEVERITY_BLOCKING,
+                symbol="mcp_einvoicing_de.server",
+                message=f"Could not import server module: {err}",
+            )
+        )
     else:
         for attr in ("_ALL_TOOLS", "_TOOL_HANDLERS", "main"):
             tag = "[OK]" if hasattr(server_mod, attr) else "[MISSING]"
             sev = SEVERITY_OK if hasattr(server_mod, attr) else SEVERITY_BLOCKING
-            result.findings.append(CheckFinding(
-                check_id="CHECK_5", tag=tag, severity=sev,
-                symbol=f"server.{attr}",
-                message=(
-                    f"server.{attr} is present."
-                    if hasattr(server_mod, attr)
-                    else f"server.{attr} is missing — required for MCP server operation."
-                ),
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag=tag,
+                    severity=sev,
+                    symbol=f"server.{attr}",
+                    message=(
+                        f"server.{attr} is present."
+                        if hasattr(server_mod, attr)
+                        else f"server.{attr} is missing — required for MCP server operation."
+                    ),
+                )
+            )
 
         # 5b: _ALL_TOOLS and _TOOL_HANDLERS must be in sync
         all_tools = getattr(server_mod, "_ALL_TOOLS", [])
@@ -452,45 +485,68 @@ def run_check_5() -> CheckResult:
         tool_names_from_handlers = set(all_handlers.keys())
 
         for name in sorted(tool_names_from_list - tool_names_from_handlers):
-            result.findings.append(CheckFinding(
-                check_id="CHECK_5", tag="[MISSING_HANDLER]", severity=SEVERITY_BLOCKING,
-                symbol=f"_TOOL_HANDLERS[{name!r}]",
-                message=f"Tool '{name}' is in _ALL_TOOLS but has no handler in _TOOL_HANDLERS.",
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag="[MISSING_HANDLER]",
+                    severity=SEVERITY_BLOCKING,
+                    symbol=f"_TOOL_HANDLERS[{name!r}]",
+                    message=f"Tool '{name}' is in _ALL_TOOLS but has no handler in _TOOL_HANDLERS.",
+                )
+            )
         for name in sorted(tool_names_from_handlers - tool_names_from_list):
-            result.findings.append(CheckFinding(
-                check_id="CHECK_5", tag="[MISSING_REGISTRATION]", severity=SEVERITY_WARNING,
-                symbol=f"_ALL_TOOLS[{name!r}]",
-                message=f"Handler '{name}' is in _TOOL_HANDLERS but not listed in _ALL_TOOLS.",
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag="[MISSING_REGISTRATION]",
+                    severity=SEVERITY_WARNING,
+                    symbol=f"_ALL_TOOLS[{name!r}]",
+                    message=f"Handler '{name}' is in _TOOL_HANDLERS but not listed in _ALL_TOOLS.",
+                )
+            )
         if not (tool_names_from_list - tool_names_from_handlers) and not (
             tool_names_from_handlers - tool_names_from_list
         ):
-            result.findings.append(CheckFinding(
-                check_id="CHECK_5", tag="[OK]", severity=SEVERITY_OK,
-                symbol="_ALL_TOOLS ↔ _TOOL_HANDLERS",
-                message=f"All {len(all_tools)} tools have matching handlers.",
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag="[OK]",
+                    severity=SEVERITY_OK,
+                    symbol="_ALL_TOOLS ↔ _TOOL_HANDLERS",
+                    message=f"All {len(all_tools)} tools have matching handlers.",
+                )
+            )
 
     # 5c: Verify ZUGFeRDProfile enum covers required profiles
     models_mod, _ = _try_import("mcp_einvoicing_de.models.zugferd")
     if models_mod:
         profile_cls = getattr(models_mod, "ZUGFeRDProfile", None)
         if profile_cls:
-            required_profiles = {"MINIMUM", "BASIC_WL", "BASIC", "EN_16931", "EXTENDED", "XRECHNUNG"}
+            required_profiles = {
+                "MINIMUM",
+                "BASIC_WL",
+                "BASIC",
+                "EN_16931",
+                "EXTENDED",
+                "XRECHNUNG",
+            }
             actual_profiles = {p.name for p in profile_cls}
             for p in sorted(required_profiles):
                 tag = "[OK]" if p in actual_profiles else "[MISSING_PROFILE]"
                 sev = SEVERITY_OK if p in actual_profiles else SEVERITY_BLOCKING
-                result.findings.append(CheckFinding(
-                    check_id="CHECK_5", tag=tag, severity=sev,
-                    symbol=f"ZUGFeRDProfile.{p}",
-                    message=(
-                        "Profile is defined."
-                        if p in actual_profiles
-                        else f"Required ZUGFeRD profile '{p}' is not defined in ZUGFeRDProfile enum."
-                    ),
-                ))
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag=tag,
+                        severity=sev,
+                        symbol=f"ZUGFeRDProfile.{p}",
+                        message=(
+                            "Profile is defined."
+                            if p in actual_profiles
+                            else f"Required ZUGFeRD profile '{p}' is not defined in ZUGFeRDProfile enum."
+                        ),
+                    )
+                )
 
     # 5d: Verify XRechnung syntax variants are defined
     xr_mod, _ = _try_import("mcp_einvoicing_de.models.xrechnung")
@@ -502,36 +558,48 @@ def run_check_5() -> CheckResult:
             for s in sorted(required_syntaxes):
                 tag = "[OK]" if s in actual_syntaxes else "[MISSING_SYNTAX]"
                 sev = SEVERITY_OK if s in actual_syntaxes else SEVERITY_BLOCKING
-                result.findings.append(CheckFinding(
-                    check_id="CHECK_5", tag=tag, severity=sev,
-                    symbol=f"XRechnungSyntax.{s}",
-                    message=(
-                        "Syntax variant defined."
-                        if s in actual_syntaxes
-                        else f"Syntax variant '{s}' missing from XRechnungSyntax."
-                    ),
-                ))
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag=tag,
+                        severity=sev,
+                        symbol=f"XRechnungSyntax.{s}",
+                        message=(
+                            "Syntax variant defined."
+                            if s in actual_syntaxes
+                            else f"Syntax variant '{s}' missing from XRechnungSyntax."
+                        ),
+                    )
+                )
 
     # 5e: Verify resources directory exists for Schematron stylesheets
     resources_dir = Path(__file__).parent.parent / "mcp_einvoicing_de" / "resources" / "schematron"
     if resources_dir.exists():
         xslt_files = list(resources_dir.glob("*.xslt"))
-        result.findings.append(CheckFinding(
-            check_id="CHECK_5", tag="[OK]", severity=SEVERITY_OK,
-            symbol="resources/schematron/",
-            message=f"Schematron resources directory found with {len(xslt_files)} XSLT file(s).",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_5",
+                tag="[OK]",
+                severity=SEVERITY_OK,
+                symbol="resources/schematron/",
+                message=f"Schematron resources directory found with {len(xslt_files)} XSLT file(s).",
+            )
+        )
     else:
-        result.findings.append(CheckFinding(
-            check_id="CHECK_5", tag="[MISSING_RESOURCES]", severity=SEVERITY_WARNING,
-            symbol="resources/schematron/",
-            message=(
-                "Schematron XSLT stylesheets directory not found at "
-                "mcp_einvoicing_de/resources/schematron/. "
-                "Validation will fall back to NO-STYLESHEET mode. "
-                "Bundle or download KoSIT + EN 16931 compiled XSLT files."
-            ),
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_5",
+                tag="[MISSING_RESOURCES]",
+                severity=SEVERITY_WARNING,
+                symbol="resources/schematron/",
+                message=(
+                    "Schematron XSLT stylesheets directory not found at "
+                    "mcp_einvoicing_de/resources/schematron/. "
+                    "Validation will fall back to NO-STYLESHEET mode. "
+                    "Bundle or download KoSIT + EN 16931 compiled XSLT files."
+                ),
+            )
+        )
 
     return result
 
@@ -544,42 +612,85 @@ def run_check_5() -> CheckResult:
 # to the core symbols that implement it. The scan searches country-package
 # source for functions or classes whose names mirror these core symbols.
 _CORE_CAPABILITIES: list[tuple[str, str, list[str]]] = [
-    ("cii_ubl_conversion", "mcp_einvoicing_core.convert", [
-        "convert_wire_format",
-    ]),
-    ("peppol_participant_lookup", "mcp_einvoicing_core.peppol", [
-        "PeppolSMPClient",
-    ]),
-    ("en16931_cii_parsing", "mcp_einvoicing_core.wire_formats", [
-        "EN16931CIIParser", "EN16931CIISerializer",
-    ]),
-    ("en16931_ubl_parsing", "mcp_einvoicing_core.wire_formats", [
-        "EN16931UBLParser", "EN16931UBLSerializer",
-    ]),
-    ("schematron_validation", "mcp_einvoicing_core.schematron", [
-        "SchematronValidator",
-    ]),
-    ("xades_xmldsig_signing", "mcp_einvoicing_core.digital_signature", [
-        "XAdESEPESSigner", "XMLDSigSigner",
-    ]),
-    ("http_client", "mcp_einvoicing_core.http_client", [
-        "BaseEInvoicingClient",
-    ]),
-    ("routing_identifier_validation", "mcp_einvoicing_core.routing", [
-        "RoutingIdentifier",
-    ]),
-    ("peppol_as4_transport", "mcp_einvoicing_core.peppol.transport", [
-        "AS4MessageEnvelope", "AS4TransportClient", "PeppolTransmitter",
-    ]),
+    (
+        "cii_ubl_conversion",
+        "mcp_einvoicing_core.convert",
+        [
+            "convert_wire_format",
+        ],
+    ),
+    (
+        "peppol_participant_lookup",
+        "mcp_einvoicing_core.peppol",
+        [
+            "PeppolSMPClient",
+        ],
+    ),
+    (
+        "en16931_cii_parsing",
+        "mcp_einvoicing_core.wire_formats",
+        [
+            "EN16931CIIParser",
+            "EN16931CIISerializer",
+        ],
+    ),
+    (
+        "en16931_ubl_parsing",
+        "mcp_einvoicing_core.wire_formats",
+        [
+            "EN16931UBLParser",
+            "EN16931UBLSerializer",
+        ],
+    ),
+    (
+        "schematron_validation",
+        "mcp_einvoicing_core.schematron",
+        [
+            "SchematronValidator",
+        ],
+    ),
+    (
+        "xades_xmldsig_signing",
+        "mcp_einvoicing_core.digital_signature",
+        [
+            "XAdESEPESSigner",
+            "XMLDSigSigner",
+        ],
+    ),
+    (
+        "http_client",
+        "mcp_einvoicing_core.http_client",
+        [
+            "BaseEInvoicingClient",
+        ],
+    ),
+    (
+        "routing_identifier_validation",
+        "mcp_einvoicing_core.routing",
+        [
+            "RoutingIdentifier",
+        ],
+    ),
+    (
+        "peppol_as4_transport",
+        "mcp_einvoicing_core.peppol.transport",
+        [
+            "AS4MessageEnvelope",
+            "AS4TransportClient",
+            "PeppolTransmitter",
+        ],
+    ),
 ]
 
 # Country packages may intentionally maintain a parallel implementation
 # when justified. Each entry maps (capability_tag, symbol_name) to a
 # justification string. Entries here suppress the CHECK_6 WARNING.
 _INTENTIONAL_PARALLEL_IMPLEMENTATIONS: dict[tuple[str, str], str] = {
-    ("schematron_validation", "SchematronValidator"):
-        "DE SchematronValidator subclasses core SchematronValidator, adding "
-        "ZUGFeRD/XRechnung profile-specific stylesheet dispatch and XSLT 2.0 backend support.",
+    (
+        "schematron_validation",
+        "SchematronValidator",
+    ): "DE SchematronValidator subclasses core SchematronValidator, adding "
+    "ZUGFeRD/XRechnung profile-specific stylesheet dispatch and XSLT 2.0 backend support.",
 }
 
 
@@ -597,11 +708,15 @@ def run_check_6() -> CheckResult:
 
     pkg_root = Path(__file__).parent.parent / "src" / "mcp_einvoicing_de"
     if not pkg_root.is_dir():
-        result.findings.append(CheckFinding(
-            check_id="CHECK_6", tag="[SKIP]", severity=SEVERITY_OK,
-            symbol="mcp_einvoicing_de",
-            message="Package source directory not found; skipping parallel-implementation scan.",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_6",
+                tag="[SKIP]",
+                severity=SEVERITY_OK,
+                symbol="mcp_einvoicing_de",
+                message="Package source directory not found; skipping parallel-implementation scan.",
+            )
+        )
         return result
 
     # Collect all defined names from the country package source
@@ -623,35 +738,47 @@ def run_check_6() -> CheckResult:
 
             override_key = (cap_tag, symbol)
             if override_key in _INTENTIONAL_PARALLEL_IMPLEMENTATIONS:
-                result.findings.append(CheckFinding(
-                    check_id="CHECK_6", tag="[OVERRIDE]", severity=SEVERITY_OK,
-                    symbol=symbol,
-                    message=(
-                        f"Parallel implementation of {symbol} ({cap_tag}) in "
-                        f"{defined_names[symbol]} is intentional: "
-                        f"{_INTENTIONAL_PARALLEL_IMPLEMENTATIONS[override_key]}"
-                    ),
-                ))
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_6",
+                        tag="[OVERRIDE]",
+                        severity=SEVERITY_OK,
+                        symbol=symbol,
+                        message=(
+                            f"Parallel implementation of {symbol} ({cap_tag}) in "
+                            f"{defined_names[symbol]} is intentional: "
+                            f"{_INTENTIONAL_PARALLEL_IMPLEMENTATIONS[override_key]}"
+                        ),
+                    )
+                )
                 continue
 
             found_any = True
-            result.findings.append(CheckFinding(
-                check_id="CHECK_6", tag="[PARALLEL]", severity=SEVERITY_WARNING,
-                symbol=symbol,
-                message=(
-                    f"Country package defines {symbol!r} in {defined_names[symbol]}, "
-                    f"which mirrors core capability {cap_tag!r} from {core_module}. "
-                    "Delegate to the core symbol or register in "
-                    "_INTENTIONAL_PARALLEL_IMPLEMENTATIONS with a justification."
-                ),
-            ))
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_6",
+                    tag="[PARALLEL]",
+                    severity=SEVERITY_WARNING,
+                    symbol=symbol,
+                    message=(
+                        f"Country package defines {symbol!r} in {defined_names[symbol]}, "
+                        f"which mirrors core capability {cap_tag!r} from {core_module}. "
+                        "Delegate to the core symbol or register in "
+                        "_INTENTIONAL_PARALLEL_IMPLEMENTATIONS with a justification."
+                    ),
+                )
+            )
 
     if not found_any and not result.findings:
-        result.findings.append(CheckFinding(
-            check_id="CHECK_6", tag="[OK]", severity=SEVERITY_OK,
-            symbol="*",
-            message="No parallel implementations of core capabilities detected.",
-        ))
+        result.findings.append(
+            CheckFinding(
+                check_id="CHECK_6",
+                tag="[OK]",
+                severity=SEVERITY_OK,
+                symbol="*",
+                message="No parallel implementations of core capabilities detected.",
+            )
+        )
 
     return result
 
@@ -660,23 +787,28 @@ def run_check_6() -> CheckResult:
 # Assembly
 # ---------------------------------------------------------------------------
 
+
 def run_audit() -> AuditReport:
     """Execute all checks and return the aggregated AuditReport. No side effects."""
     report = make_report("mcp-einvoicing-de", _PYPROJECT)
 
-    report.checks.append(run_check_core_coverage(
-        package_name="mcp-einvoicing-de",
-        package_modules=_DE_MODULES,
-        intentional_overrides=_INTENTIONAL_OVERRIDES,
-        is_en16931_family=_IS_EN16931_FAMILY,
-        primary_invoice_class=_PRIMARY_INVOICE_CLASS,
-    ))
+    report.checks.append(
+        run_check_core_coverage(
+            package_name="mcp-einvoicing-de",
+            package_modules=_DE_MODULES,
+            intentional_overrides=_INTENTIONAL_OVERRIDES,
+            is_en16931_family=_IS_EN16931_FAMILY,
+            primary_invoice_class=_PRIMARY_INVOICE_CLASS,
+        )
+    )
     report.checks.append(run_check_2())
     report.checks.append(run_check_3())
-    report.checks.append(run_check_version_compatibility(
-        package_name="mcp-einvoicing-de",
-        pyproject_path=_PYPROJECT,
-    ))
+    report.checks.append(
+        run_check_version_compatibility(
+            package_name="mcp-einvoicing-de",
+            pyproject_path=_PYPROJECT,
+        )
+    )
     report.checks.append(run_check_5())
     report.checks.append(run_check_6())
 
@@ -684,9 +816,7 @@ def run_audit() -> AuditReport:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = parse_audit_args(
-        "Pre-publish audit: mcp-einvoicing-de vs mcp-einvoicing-core", argv
-    )
+    args = parse_audit_args("Pre-publish audit: mcp-einvoicing-de vs mcp-einvoicing-core", argv)
     report = run_audit()
 
     output_path = Path(args.output) if args.output else Path("audit/report.json")
