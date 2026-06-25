@@ -537,6 +537,126 @@ def run_check_5() -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# CHECK 6 — Parallel-implementation detector (Phase 0a.2)
+# ---------------------------------------------------------------------------
+
+# Curated registry of core capabilities. Each entry maps a capability tag
+# to the core symbols that implement it. The scan searches country-package
+# source for functions or classes whose names mirror these core symbols.
+_CORE_CAPABILITIES: list[tuple[str, str, list[str]]] = [
+    ("cii_ubl_conversion", "mcp_einvoicing_core.convert", [
+        "convert_wire_format",
+    ]),
+    ("peppol_participant_lookup", "mcp_einvoicing_core.peppol", [
+        "PeppolSMPClient",
+    ]),
+    ("en16931_cii_parsing", "mcp_einvoicing_core.wire_formats", [
+        "EN16931CIIParser", "EN16931CIISerializer",
+    ]),
+    ("en16931_ubl_parsing", "mcp_einvoicing_core.wire_formats", [
+        "EN16931UBLParser", "EN16931UBLSerializer",
+    ]),
+    ("schematron_validation", "mcp_einvoicing_core.schematron", [
+        "SchematronValidator",
+    ]),
+    ("xades_xmldsig_signing", "mcp_einvoicing_core.digital_signature", [
+        "XAdESEPESSigner", "XMLDSigSigner",
+    ]),
+    ("http_client", "mcp_einvoicing_core.http_client", [
+        "BaseEInvoicingClient",
+    ]),
+    ("routing_identifier_validation", "mcp_einvoicing_core.routing", [
+        "RoutingIdentifier",
+    ]),
+    ("peppol_as4_transport", "mcp_einvoicing_core.peppol.transport", [
+        "AS4MessageEnvelope", "AS4TransportClient", "PeppolTransmitter",
+    ]),
+]
+
+# Country packages may intentionally maintain a parallel implementation
+# when justified. Each entry maps (capability_tag, symbol_name) to a
+# justification string. Entries here suppress the CHECK_6 WARNING.
+_INTENTIONAL_PARALLEL_IMPLEMENTATIONS: dict[tuple[str, str], str] = {
+    ("schematron_validation", "SchematronValidator"):
+        "DE SchematronValidator subclasses core SchematronValidator, adding "
+        "ZUGFeRD/XRechnung profile-specific stylesheet dispatch and XSLT 2.0 backend support.",
+}
+
+
+def run_check_6() -> CheckResult:
+    """CHECK 6 — Parallel-implementation scan.
+
+    Searches country-package source files for definitions that mirror core
+    capability symbols. Detects reimplementation of primitives that should
+    be delegated to core.
+    """
+    import ast
+    import importlib
+
+    result = CheckResult(check_id="CHECK_6", name="Parallel-implementation detector")
+
+    pkg_root = Path(__file__).parent.parent / "src" / "mcp_einvoicing_de"
+    if not pkg_root.is_dir():
+        result.findings.append(CheckFinding(
+            check_id="CHECK_6", tag="[SKIP]", severity=SEVERITY_OK,
+            symbol="mcp_einvoicing_de",
+            message="Package source directory not found; skipping parallel-implementation scan.",
+        ))
+        return result
+
+    # Collect all defined names from the country package source
+    defined_names: dict[str, str] = {}  # name -> file path
+    for py_file in pkg_root.rglob("*.py"):
+        try:
+            tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                defined_names[node.name] = str(py_file.relative_to(pkg_root.parent.parent))
+
+    found_any = False
+    for cap_tag, core_module, symbols in _CORE_CAPABILITIES:
+        for symbol in symbols:
+            if symbol not in defined_names:
+                continue
+
+            override_key = (cap_tag, symbol)
+            if override_key in _INTENTIONAL_PARALLEL_IMPLEMENTATIONS:
+                result.findings.append(CheckFinding(
+                    check_id="CHECK_6", tag="[OVERRIDE]", severity=SEVERITY_OK,
+                    symbol=symbol,
+                    message=(
+                        f"Parallel implementation of {symbol} ({cap_tag}) in "
+                        f"{defined_names[symbol]} is intentional: "
+                        f"{_INTENTIONAL_PARALLEL_IMPLEMENTATIONS[override_key]}"
+                    ),
+                ))
+                continue
+
+            found_any = True
+            result.findings.append(CheckFinding(
+                check_id="CHECK_6", tag="[PARALLEL]", severity=SEVERITY_WARNING,
+                symbol=symbol,
+                message=(
+                    f"Country package defines {symbol!r} in {defined_names[symbol]}, "
+                    f"which mirrors core capability {cap_tag!r} from {core_module}. "
+                    "Delegate to the core symbol or register in "
+                    "_INTENTIONAL_PARALLEL_IMPLEMENTATIONS with a justification."
+                ),
+            ))
+
+    if not found_any and not result.findings:
+        result.findings.append(CheckFinding(
+            check_id="CHECK_6", tag="[OK]", severity=SEVERITY_OK,
+            symbol="*",
+            message="No parallel implementations of core capabilities detected.",
+        ))
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Assembly
 # ---------------------------------------------------------------------------
 
@@ -558,6 +678,7 @@ def run_audit() -> AuditReport:
         pyproject_path=_PYPROJECT,
     ))
     report.checks.append(run_check_5())
+    report.checks.append(run_check_6())
 
     return report
 
