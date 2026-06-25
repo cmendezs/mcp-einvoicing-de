@@ -268,6 +268,8 @@ _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
     "invoice_parse": "Extract structured data from an invoice file",
     "invoice_convert": "Convert between profiles or syntaxes",
     "peppol_check": "Verify Peppol participant registration",
+    "peppol_send": "Send invoice via Peppol AS4",
+    "datev_export": "Export invoice to DATEV CSV format",
     "tax_rules": "German VAT rules helper",
 }
 
@@ -281,6 +283,8 @@ def _collect_registered_tools() -> set[str]:
             ("mcp_einvoicing_de.tools.invoice_parse", "TOOL_INVOICE_PARSE"),
             ("mcp_einvoicing_de.tools.invoice_convert", "TOOL_INVOICE_CONVERT"),
             ("mcp_einvoicing_de.tools.peppol_check", "TOOL_PEPPOL_CHECK"),
+            ("mcp_einvoicing_de.tools.peppol_send", "TOOL_PEPPOL_SEND"),
+            ("mcp_einvoicing_de.tools.datev_export", "TOOL_DATEV_EXPORT"),
             ("mcp_einvoicing_de.tools.tax_rules", "TOOL_TAX_RULES"),
         ]
         for mod_path, attr in tool_modules:
