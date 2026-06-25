@@ -35,10 +35,10 @@ jobs:
         run: pip install -e ".[dev,pdf,xslt2]"
 
       - name: Lint with ruff
-        run: ruff check mcp_einvoicing_de/ tests/ audit/
+        run: ruff check src/mcp_einvoicing_de/ tests/ audit/
 
       - name: Type-check with mypy
-        run: mypy mcp_einvoicing_de/
+        run: mypy src/mcp_einvoicing_de/
         continue-on-error: true  # Non-blocking until type stubs are complete
 
       - name: Run tests
