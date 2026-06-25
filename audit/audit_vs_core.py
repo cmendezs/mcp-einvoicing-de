@@ -706,7 +706,6 @@ def run_check_6() -> CheckResult:
     be delegated to core.
     """
     import ast
-    import importlib
 
     result = CheckResult(check_id="CHECK_6", name="Parallel-implementation detector")
 
