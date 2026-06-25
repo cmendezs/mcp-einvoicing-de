@@ -13,6 +13,7 @@ allowed for localhost; all non-localhost targets must use HTTPS.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from typing import Any
@@ -32,13 +33,15 @@ _KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset({
     "::1",
     "validationtool",        # common docker-compose service name
     "kosit-validator",       # alternative docker-compose service name
+    "validator.kosit.de",    # official KoSIT cloud validator
 })
 
 _DEFAULT_KOSIT_URL = os.environ.get(
     "EINVOICING_DE_KOSIT_VALIDATOR_URL",
-    # Localhost default — must switch to https:// for remote/production endpoints.
-    "http://localhost:8080/api/v1/validate",
+    "https://validator.kosit.de/api/v1/validate",
 )
+
+_RETRY_DELAYS = (1.0, 2.0, 4.0)
 
 
 def _validate_kosit_url(url: str) -> str:
@@ -107,29 +110,44 @@ class KoSITValidator:
         Uses multipart/form-data with field name ``file``, requests JSON via
         ``Accept: application/json``.  Compatible with KoSIT validationtool
         v1.5+ REST endpoint ``/api/v1/validate``.
+
+        Retries up to 3 times with exponential backoff (1s/2s/4s) on transient
+        HTTP errors before giving up.
         """
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(
-                    self._base_url,
-                    headers={"Accept": "application/json"},
-                    files={"file": (filename, xml_bytes, "application/xml")},
-                )
-                response.raise_for_status()
-                return self._parse_response(response.json())
-        except httpx.HTTPError as exc:
-            logger.error("KoSIT validator HTTP error: %s", exc)
-            return ValidationResult(
-                is_valid=False,
-                errors=[
-                    ValidationMessage(
-                        severity="error",
-                        rule_id="KOSIT-HTTP",
-                        location="/",
-                        text=f"KoSIT validator unreachable: {exc}",
+        last_error: Exception | None = None
+        for attempt, delay in enumerate((*_RETRY_DELAYS, None)):
+            try:
+                async with httpx.AsyncClient(timeout=self._timeout) as client:
+                    response = await client.post(
+                        self._base_url,
+                        headers={"Accept": "application/json"},
+                        files={"file": (filename, xml_bytes, "application/xml")},
                     )
-                ],
-            )
+                    response.raise_for_status()
+                    return self._parse_response(response.json())
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if delay is not None:
+                    logger.warning(
+                        "KoSIT validator attempt %d failed (%s), retrying in %.0fs",
+                        attempt + 1,
+                        exc,
+                        delay,
+                    )
+                    await asyncio.sleep(delay)
+
+        logger.error("KoSIT validator unreachable after %d attempts: %s", len(_RETRY_DELAYS) + 1, last_error)
+        return ValidationResult(
+            is_valid=False,
+            errors=[
+                ValidationMessage(
+                    severity="error",
+                    rule_id="KOSIT-HTTP",
+                    location="/",
+                    text=f"KoSIT validator unreachable after {len(_RETRY_DELAYS) + 1} attempts: {last_error}",
+                )
+            ],
+        )
 
     def _parse_response(self, data: dict[str, Any]) -> ValidationResult:
         """Parse KoSIT JSON response into ValidationResult.

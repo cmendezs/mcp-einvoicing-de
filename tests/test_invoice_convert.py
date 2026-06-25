@@ -71,13 +71,21 @@ class TestInvoiceConvertHandler:
         assert "allow_data_loss" in data["error"]
 
     @pytest.mark.asyncio
-    async def test_cross_syntax_is_rejected(self, en16931_cii_xml: bytes) -> None:
+    async def test_cross_syntax_cii_to_ubl(self, minimal_invoice: ZUGFeRDInvoice) -> None:
+        invoice = minimal_invoice.model_copy(
+            update={"profile": ZUGFeRDProfile.EN_16931, "buyer_reference": "BUYER-REF-001"}
+        )
+        cii_xml = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=False)
         result = await handle_invoice_convert(
             {
-                "xml_content": en16931_cii_xml.decode("utf-8"),
+                "xml_content": cii_xml.decode("utf-8"),
                 "target_profile": "XRECHNUNG",
                 "target_syntax": "UBL",
             }
         )
         data = json.loads(result[0].text)
-        assert "Cross-syntax conversion" in data["error"]
+        assert "error" not in data
+        assert data["target_syntax"] == "UBL"
+        assert data["target_profile"] == "XRECHNUNG"
+        assert data["xml_content"] is not None
+        assert "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" in data["xml_content"]

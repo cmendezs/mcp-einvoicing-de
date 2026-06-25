@@ -40,10 +40,11 @@ dependencies = [
     "reportlab>=4.0.0",
     "httpx>=0.27.0",
     "python-dateutil>=2.9.0",
+    "pikepdf>=8.0.0",
 ]
 
 [project.optional-dependencies]
-pdf = ["pikepdf>=8.0.0"]
+pdf = []
 pymupdf = ["PyMuPDF>=1.24.0"]
 # Saxon-HE for XPath 2.0 / 3.0 Schematron execution (FeRD Factur-X stylesheets).
 # saxonche bundles the Saxon-HE C/C++ runtime as a Python wheel.

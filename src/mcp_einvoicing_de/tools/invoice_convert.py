@@ -1,17 +1,12 @@
 """MCP tool: invoice_convert — convert between ZUGFeRD profiles and to / from XRechnung.
 
-v0.3.0 supports the same-syntax cases that reduce to a profile URN rewrite plus
-optional line-item pruning for the MINIMUM and BASIC_WL profiles:
+Supports:
 
-- ZUGFeRD profile upgrade in CII syntax: MINIMUM → BASIC_WL → BASIC → EN_16931 → EXTENDED
-- ZUGFeRD profile downgrade in CII syntax (line items removed for MINIMUM / BASIC_WL;
+- ZUGFeRD profile upgrade/downgrade in CII syntax (line items removed for MINIMUM / BASIC_WL;
   requires allow_data_loss=True)
 - ZUGFeRD EN_16931 / EXTENDED ↔ XRechnung in CII syntax (URN swap)
 - XRechnung UBL → XRechnung UBL profile URN swap
-
-Cross-syntax CII ↔ UBL transformation is not yet implemented; it requires a full
-field-by-field mapping that is deferred to a later sprint. Calls that request a
-cross-syntax conversion return a structured error.
+- Cross-syntax CII ↔ UBL transformation via core convert_wire_format (v0.4.0)
 """
 
 from __future__ import annotations
@@ -21,6 +16,7 @@ import logging
 from typing import Any
 
 import mcp.types as types
+from mcp_einvoicing_core.convert import Syntax, convert_wire_format
 from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field
@@ -97,7 +93,7 @@ TOOL_INVOICE_CONVERT = types.Tool(
     description=(
         "Convert a ZUGFeRD or XRechnung invoice to a different profile or syntax. "
         "Supports ZUGFeRD profile upgrades and downgrades, ZUGFeRD ↔ XRechnung conversion, "
-        "and CII ↔ UBL syntax transformation (XRechnung only). "
+        "and cross-syntax CII ↔ UBL transformation. "
         "Profile downgrades may result in data loss; set allow_data_loss=True to permit this."
     ),
     inputSchema={
@@ -182,20 +178,19 @@ async def handle_invoice_convert(arguments: dict[str, Any]) -> list[types.TextCo
             )
         ]
 
-    # v0.3.0 limitation: cross-syntax transformation is not yet implemented.
+    # Cross-syntax conversion: delegate to core convert_wire_format, then
+    # parse the result with the DE parser so DE-specific extensions are preserved.
     if source_syntax.value != target_syntax.value:
-        return [
-            types.TextContent(
-                type="text",
-                text=json.dumps(
-                    format_error(
-                        f"Cross-syntax conversion {source_syntax.value} -> {target_syntax.value} "
-                        "is not yet implemented (target sprint: v0.4.0). Re-issue the source "
-                        "invoice in the desired syntax instead."
-                    )
-                ),
+        try:
+            converted_bytes = convert_wire_format(
+                xml_bytes, target=Syntax(target_syntax.value)
             )
-        ]
+        except Exception as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(
+                f"Cross-syntax conversion failed: {exc}"
+            )))]
+        xml_bytes = converted_bytes
+        source_syntax = target_syntax
 
     # Parse the source invoice into the typed model.
     notes: list[str] = []

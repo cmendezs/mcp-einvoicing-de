@@ -13,6 +13,7 @@ import logging
 from typing import Any
 
 import mcp.types as types
+from mcp_einvoicing_core.xml_utils import format_error
 from pydantic import BaseModel, Field
 
 from mcp_einvoicing_de.models.xrechnung import XRechnungInvoice
@@ -159,29 +160,20 @@ async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextCon
         ]
 
     if params.output_format == "pdf":
-        return [
-            types.TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": (
-                            "PDF (ZUGFeRD hybrid) output is gated as experimental and is not "
-                            "yet emitted by invoice_create. The current generate_pdf_invoice "
-                            "applies PDF/A-3 XMP metadata (pdfaid:part=3, pdfaid:conformance=B) "
-                            "but does not yet embed an OutputIntent / sRGB ICC profile or "
-                            "embed fonts, which ISO 19005-3 level B requires. Tracked as "
-                            "DE-SH-2 follow-up."
-                        ),
-                        "hint": (
-                            "Use output_format='xml' for now. For an interim hybrid PDF, "
-                            "generate the XML here and pass it together with a "
-                            "separately-produced PDF/A-3 conformant carrier through "
-                            "mcp_einvoicing_de.utils.pdf.embed_xml_in_pdf."
-                        ),
-                    }
-                ),
-            )
-        ]
+        try:
+            import pikepdf  # noqa: F401
+        except ImportError:
+            return [
+                types.TextContent(
+                    type="text",
+                    text=json.dumps(
+                        format_error(
+                            "pikepdf is required for PDF output. "
+                            "Install it with: pip install pikepdf"
+                        )
+                    ),
+                )
+            ]
 
     try:
         if params.syntax == "UBL":
@@ -199,6 +191,25 @@ async def handle_invoice_create(arguments: dict[str, Any]) -> list[types.TextCon
             xml_bytes = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=params.pretty_print)
     except Exception as exc:
         return [types.TextContent(type="text", text=json.dumps({"error": f"Serialization failed: {exc}"}))]
+
+    if params.output_format == "pdf":
+        import base64
+
+        from mcp_einvoicing_de.utils.pdf import embed_xml_in_pdf, generate_pdf_invoice
+
+        try:
+            pdf_bytes = generate_pdf_invoice(invoice)
+            pdf_bytes = embed_xml_in_pdf(pdf_bytes, xml_bytes, invoice.profile.name)
+        except Exception as exc:
+            return [types.TextContent(type="text", text=json.dumps(format_error(f"PDF generation failed: {exc}")))]
+
+        output = InvoiceCreateOutput(
+            pdf_base64=base64.b64encode(pdf_bytes).decode("ascii"),
+            profile=invoice.profile.name,
+            syntax=params.syntax,
+            invoice_number=invoice.invoice_number,
+        )
+        return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
 
     output = InvoiceCreateOutput(
         xml_content=xml_bytes.decode("utf-8"),

@@ -26,11 +26,15 @@ from pydantic import BaseModel, Field, field_validator
 
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 from mcp_einvoicing_de.validators.kosit import KoSITValidator
-from mcp_einvoicing_de.validators.schematron import SchematronValidator, ValidationResult
+from mcp_einvoicing_de.validators.schematron import (
+    SchematronValidator,
+    ValidationMessage,
+    ValidationResult,
+)
 
 logger = logging.getLogger(__name__)
 
-_USE_KOSIT_REMOTE = os.environ.get("EINVOICING_DE_KOSIT_VALIDATOR_URL") is not None
+_KOSIT_DISABLED = os.environ.get("EINVOICING_DE_KOSIT_DISABLE", "").strip() == "1"
 
 
 # ── Input / Output schemas ────────────────────────────────────────────────────
@@ -67,11 +71,18 @@ class InvoiceValidateInput(BaseModel):
             "If omitted, auto-detected from the XML root element namespace."
         ),
     )
-    use_remote_kosit: bool = Field(
+    use_local_only: bool = Field(
         False,
         description=(
-            "If True, submit to the KoSIT remote validator instead of running local "
-            "Schematron. Requires EINVOICING_DE_KOSIT_VALIDATOR_URL to be set."
+            "If True, skip the KoSIT cloud validator and use only local Schematron. "
+            "By default KoSIT cloud validation is attempted first with Schematron fallback."
+        ),
+    )
+    kosit_strict: bool = Field(
+        False,
+        description=(
+            "If True, fail hard when the KoSIT cloud validator is unreachable instead "
+            "of falling back to local Schematron."
         ),
     )
     strict: bool = Field(
@@ -146,10 +157,15 @@ TOOL_INVOICE_VALIDATE = types.Tool(
                 "enum": ["CII", "UBL"],
                 "description": "Override syntax detection.",
             },
-            "use_remote_kosit": {
+            "use_local_only": {
                 "type": "boolean",
                 "default": False,
-                "description": "Submit to KoSIT remote validator.",
+                "description": "Skip KoSIT cloud; use only local Schematron.",
+            },
+            "kosit_strict": {
+                "type": "boolean",
+                "default": False,
+                "description": "Fail hard when KoSIT is unreachable (no fallback).",
             },
             "strict": {
                 "type": "boolean",
@@ -303,15 +319,32 @@ async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextC
     syntax = _resolve_syntax(params.syntax, xml_bytes)
 
     validator_used: str
-    if params.use_remote_kosit or _USE_KOSIT_REMOTE:
-        kosit = KoSITValidator()
-        result = await kosit.validate(xml_bytes)
-        result.profile = profile_name
-        result.syntax = syntax
-        validator_used = "kosit_remote"
-    else:
+    if params.use_local_only or _KOSIT_DISABLED:
         result = await _validate_local(xml_bytes, profile_name, syntax)
         validator_used = "local_schematron"
+    else:
+        kosit = KoSITValidator()
+        kosit_result = await kosit.validate(xml_bytes)
+        kosit_failed = any(
+            e.rule_id == "KOSIT-HTTP" for e in kosit_result.errors
+        )
+        if kosit_failed and not params.kosit_strict:
+            logger.warning("KoSIT cloud unreachable, falling back to local Schematron")
+            result = await _validate_local(xml_bytes, profile_name, syntax)
+            result.warnings.append(
+                ValidationMessage(
+                    severity="warning",
+                    rule_id="KOSIT-FALLBACK",
+                    location="/",
+                    text="KoSIT cloud validator was unreachable; results are from local Schematron.",
+                )
+            )
+            validator_used = "schematron_fallback"
+        else:
+            result = kosit_result
+            result.profile = profile_name
+            result.syntax = syntax
+            validator_used = "kosit_cloud"
 
     findings_errors = [
         ValidationFinding(

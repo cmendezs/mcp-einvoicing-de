@@ -62,11 +62,9 @@ class TestInvoiceCreateHandler:
         assert data["buyer_vat_id"] == "DE987654321"
 
     @pytest.mark.asyncio
-    async def test_pdf_output_with_opt_in_falls_through_to_unimplemented(
+    async def test_pdf_output_with_opt_in_succeeds(
         self, invoice_payload: dict
     ) -> None:
-        # transitional_period_opt_in bypasses the mandate check; PDF is still gated
-        # because PDF/A-3 conformance is not yet complete.
         result = await handle_invoice_create(
             {
                 "invoice": invoice_payload,
@@ -75,14 +73,11 @@ class TestInvoiceCreateHandler:
             }
         )
         data = json.loads(result[0].text)
-        assert "PDF" in data["error"]
-        assert "experimental" in data["error"]
+        assert "error" not in data
+        assert "pdf_base64" in data or "xml_content" in data
 
     @pytest.mark.asyncio
     async def test_pdf_output_allowed_for_non_de_buyer(self) -> None:
-        # Non-DE buyer is exempt from the structured-format mandate; the PDF path
-        # still rejects because PDF/A-3 conformance is incomplete, but it is the
-        # PDF gate, not the mandate gate, that fires.
         address = ZUGFeRDAddress(line_one="1 rue de la Paix", city="Paris", postcode="75001")
         seller = ZUGFeRDParty(name="Muster GmbH", address=address, vat_id="DE123456789")
         buyer = ZUGFeRDParty(name="Buyer SAS", address=address, vat_id="FR12345678901")
@@ -109,8 +104,8 @@ class TestInvoiceCreateHandler:
             {"invoice": invoice.model_dump(mode="json"), "output_format": "pdf"}
         )
         data = json.loads(result[0].text)
-        assert "DE B2B mandate" not in data.get("error", "")
-        assert "PDF" in data["error"]
+        assert "error" not in data
+        assert data["pdf_base64"] is not None
 
 
 class TestTaxRepresentativeEmission:
