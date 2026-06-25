@@ -43,8 +43,11 @@ def _invoice_with_lines(n_lines: int = 10) -> ZUGFeRDInvoice:
             line_id=str(i + 1),
             name=f"Item {i + 1}",
             quantity=Decimal("1"),
+            unit_code="C62",
             unit_price=Decimal("10.00"),
-            net_amount=Decimal("10.00"),
+            line_net_amount=Decimal("10.00"),
+            tax_category=GermanTaxCategory.STANDARD,
+            tax_rate=Decimal("19"),
         )
         for i in range(n_lines)
     ]
