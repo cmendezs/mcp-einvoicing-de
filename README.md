@@ -30,7 +30,7 @@ mcp-einvoicing-de (this package, standalone MCP server)
 ├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic models (all profiles)
 ├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* rules
 ├── KoSITValidator                     ← Remote validation tool (optional)
-└── Tools: create / validate / parse / convert / peppol_check / tax_rules
+└── Tools: create / validate / parse / convert / peppol_check / peppol_send / datev_export / tax_rules
 
         ↑ extends
 mcp-einvoicing-core (shared base, installed as dependency)
@@ -73,7 +73,7 @@ pip install -e ".[dev]"
 | Extra | Purpose | Install |
 |-------|---------|---------|
 | `[xslt2]` | Saxon-HE backend for XSLT 2.0 Schematron stylesheets (FeRD Factur-X 1.08 and KoSIT XRechnung 3.0.2). Required for local Schematron validation; lxml supports XSLT 1.0 only. | `pip install mcp-einvoicing-de[xslt2]` |
-| `[pdf]` | PDF/A-3 hybrid invoice generation and embedded XML extraction (uses `pikepdf`). | `pip install mcp-einvoicing-de[pdf]` |
+| `[pdf]` | Additional PDF utilities for embedded XML extraction (`pikepdf` is also a base dependency for PDF/A-3 generation). | `pip install mcp-einvoicing-de[pdf]` |
 | `[pymupdf]` | Alternative PDF engine (uses `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
 | `[dev]` | Development tools (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
 
@@ -86,7 +86,11 @@ The server does not require external credentials. Available environment variable
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint (optional, enables remote validation when set) | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint (overrides the default `https://validator.kosit.de`) | |
+| `EINVOICING_DE_KOSIT_DISABLE` | Set to `1` to disable KoSIT cloud validation entirely (local Schematron only) | |
+| `EINVOICING_DE_PEPPOL_CERT_PATH` | Path to the X.509 certificate for Peppol AS4 signing (PEM or DER) | |
+| `EINVOICING_DE_PEPPOL_KEY_PATH` | Path to the private key for Peppol AS4 signing (PEM or DER) | |
+| `EINVOICING_DE_PEPPOL_KEY_PASSWORD` | Password for the private key (if encrypted) | |
 
 ### 🤖 Claude Desktop integration
 
@@ -139,11 +143,13 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 
 | Tool | Description |
 |------|-------------|
-| `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL). Enforces the §14 Abs. 2 UStG B2B mandate: non-XML output is rejected for DE-prefixed VAT buyers unless `transitional_period_opt_in=True` is set. PDF/A-3 hybrid via experimental `output_format='pdf'` ships XMP `pdfaid` metadata; full ISO 19005-3 level B (OutputIntent + ICC + fonts) is a v0.4.0 follow-up. |
-| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT Schematron rules (BR-DE-\*). XSLT 2.0 FeRD and KoSIT stylesheets execute via Saxon-HE when the `[xslt2]` extra is installed. |
-| `invoice_parse` | Extract structured data from ZUGFeRD or XRechnung XML, or from a PDF/A-3 hybrid invoice with embedded `factur-x.xml` / `zugferd-invoice.xml` (requires `[pdf]` extra). |
-| `invoice_convert` | Convert between ZUGFeRD profiles or swap ZUGFeRD CII and XRechnung CII headers. Cross-syntax CII to UBL transformation is rejected pending v0.4.0. |
-| `peppol_check` | Check Peppol participant registration of a German company. Lookup only; AS4 outbound transmission is tracked as DE-PEPPOL-1 for v0.5.0. |
+| `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL). Enforces the §14 Abs. 2 UStG B2B mandate: non-XML output is rejected for DE-prefixed VAT buyers unless `transitional_period_opt_in=True` is set. `output_format='pdf'` produces a PDF/A-3 level B hybrid invoice with sRGB ICC profile, OutputIntent, embedded fonts, and deterministic /ID. |
+| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT rules (BR-DE-\*). KoSIT cloud validation (`validator.kosit.de`) is enabled by default with exponential backoff retry (1s/2s/4s) and automatic Schematron fallback. Disable with `EINVOICING_DE_KOSIT_DISABLE=1`. XSLT 2.0 local validation requires the `[xslt2]` extra. |
+| `invoice_parse` | Extract structured data from ZUGFeRD or XRechnung XML, or from a PDF/A-3 hybrid invoice with embedded `factur-x.xml` / `zugferd-invoice.xml`. |
+| `invoice_convert` | Convert between ZUGFeRD profiles, swap ZUGFeRD/XRechnung CII headers, or perform cross-syntax CII/UBL conversion via core `convert_wire_format`. |
+| `peppol_check` | Check Peppol participant registration of a German company via SMP/SML lookup. |
+| `peppol_send` | Send an invoice to a Peppol recipient via AS4 outbound transmission. Converts ZUGFeRD to XRechnung UBL (Peppol BIS 3.0 profile), signs with X.509 credentials, and returns the AS4 receipt. Requires `EINVOICING_DE_PEPPOL_CERT_PATH` and `EINVOICING_DE_PEPPOL_KEY_PATH`. |
+| `datev_export` | Export a ZUGFeRD invoice as a DATEV EXTF 700 Buchungsstapel CSV file for import into DATEV accounting software. Defaults to SKR 03 accounts (8400 revenue / 10000 receivable). |
 | `tax_rules` | Query German VAT rules (rates, §13b UStG reverse charge codes, §19 UStG Kleinunternehmer thresholds at JStG 2024 values of €25,000 preceding year / €100,000 current year, exemptions). |
 
 ---
@@ -261,13 +267,7 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
-Current version: **v0.3.1**. Upcoming releases:
-
-| Version | Features |
-|---------|----------|
-| **v0.4.0** | Full ISO 19005-3 level B in `generate_pdf_invoice` (sRGB OutputIntent + ICC + TTF fonts); cross-syntax CII to UBL transformation in `invoice_convert`; default-on KoSIT cloud validation with retry and structured fallback; audit gate reconciliation of country-reference `[NEED:]` markers |
-| **v0.5.0** | Peppol AS4 outbound transmission (DE-PEPPOL-1); DATEV import format export (DE-DATEV-1) |
-| **v1.0.0** | Production-ready: full EN 16931 coverage, KoSIT cloud canary corpus, performance benchmarks, 95% line coverage with mutation tests, end-to-end integration test against the cloud validator |
+Current version: **v0.6.0**.
 
 For the history of past releases, see [RELEASE.md](RELEASE.md).
 

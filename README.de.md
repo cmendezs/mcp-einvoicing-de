@@ -30,7 +30,7 @@ mcp-einvoicing-de (dieses Paket, eigenständiger MCP-Server)
 ├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic-Modelle (alle Profile)
 ├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* Regeln
 ├── KoSITValidator                     ← Remote-Validierungstool (optional)
-└── Tools: create / validate / parse / convert / peppol_check / tax_rules
+└── Tools: create / validate / parse / convert / peppol_check / peppol_send / datev_export / tax_rules
 
         ↑ erweitert
 mcp-einvoicing-core (gemeinsame Basis, als Abhängigkeit installiert)
@@ -73,7 +73,7 @@ pip install -e ".[dev]"
 | Extra | Zweck | Installation |
 |-------|-------|--------------|
 | `[xslt2]` | Saxon-HE-Backend für XSLT-2.0-Schematron-Stylesheets (FeRD Factur-X 1.08 und KoSIT XRechnung 3.0.2). Erforderlich für lokale Schematron-Validierung; lxml unterstützt nur XSLT 1.0. | `pip install mcp-einvoicing-de[xslt2]` |
-| `[pdf]` | PDF/A-3-Hybridrechnungsgenerierung und Extraktion eingebetteter XML-Dateien (verwendet `pikepdf`). | `pip install mcp-einvoicing-de[pdf]` |
+| `[pdf]` | Zusaetzliche PDF-Hilfsfunktionen fuer die Extraktion eingebetteter XML-Dateien (`pikepdf` ist auch eine Basisabhaengigkeit fuer die PDF/A-3-Generierung). | `pip install mcp-einvoicing-de[pdf]` |
 | `[pymupdf]` | Alternative PDF-Engine (verwendet `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
 | `[dev]` | Entwicklungswerkzeuge (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
 
@@ -86,7 +86,11 @@ Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen
 | Variable | Beschreibung | Standard |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts (optional, aktiviert Remote-Validierung, wenn gesetzt) | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts (ueberschreibt den Standard `https://validator.kosit.de`) | |
+| `EINVOICING_DE_KOSIT_DISABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung vollstaendig zu deaktivieren (nur lokales Schematron) | |
+| `EINVOICING_DE_PEPPOL_CERT_PATH` | Pfad zum X.509-Zertifikat fuer die Peppol-AS4-Signierung (PEM oder DER) | |
+| `EINVOICING_DE_PEPPOL_KEY_PATH` | Pfad zum privaten Schluessel fuer die Peppol-AS4-Signierung (PEM oder DER) | |
+| `EINVOICING_DE_PEPPOL_KEY_PASSWORD` | Passwort fuer den privaten Schluessel (falls verschluesselt) | |
 
 ### 🤖 Integration Claude Desktop
 
@@ -139,12 +143,14 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 | Werkzeug | Beschreibung |
 |----------|-------------|
-| `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen. Erzwingt das B2B-Mandat nach §14 Abs. 2 UStG: Nicht-XML-Ausgaben werden für deutsche Rechnungsempfänger mit USt-IdNr. (DE-Präfix) abgelehnt, sofern nicht `transitional_period_opt_in=True` gesetzt ist. PDF/A-3-Hybrid über experimentelles `output_format='pdf'` liefert XMP-`pdfaid`-Metadaten; vollständige ISO-19005-3-Stufe B (OutputIntent + ICC + Schriften) ist ein Folge-Item für v0.4.0. |
-| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Schematron-Regeln (BR-DE-\*) prüfen. XSLT-2.0-FeRD- und KoSIT-Stylesheets werden über Saxon-HE ausgeführt, wenn das Extra `[xslt2]` installiert ist. |
-| `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml` (erfordert Extra `[pdf]`). |
-| `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren oder ZUGFeRD-CII- und XRechnung-CII-Header tauschen. Cross-Syntax-Transformation CII zu UBL wird abgelehnt, geplant für v0.4.0. |
-| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens prüfen. Nur Lookup; AS4-Übermittlung als DE-PEPPOL-1 für v0.5.0 vorgesehen. |
-| `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Sätze, §13b-UStG-Reverse-Charge-Codes, §19-UStG-Kleinunternehmerschwellen nach JStG 2024 mit 25.000 € Vorjahr / 100.000 € laufendes Jahr, Befreiungen). |
+| `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen. Erzwingt das B2B-Mandat nach §14 Abs. 2 UStG: Nicht-XML-Ausgaben werden fuer deutsche Rechnungsempfaenger mit USt-IdNr. (DE-Praefix) abgelehnt, sofern nicht `transitional_period_opt_in=True` gesetzt ist. `output_format='pdf'` erzeugt eine PDF/A-3-Hybridrechnung der Stufe B mit sRGB-ICC-Profil, OutputIntent, eingebetteten Schriften und deterministischer /ID. |
+| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. KoSIT-Cloud-Validierung (`validator.kosit.de`) ist standardmaessig aktiviert mit exponentiellem Backoff-Retry (1s/2s/4s) und automatischem Schematron-Fallback. Deaktivierung mit `EINVOICING_DE_KOSIT_DISABLE=1`. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
+| `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml`. |
+| `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren, ZUGFeRD/XRechnung-CII-Header tauschen oder Cross-Syntax-Konvertierung CII/UBL ueber Core `convert_wire_format` durchfuehren. |
+| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens ueber SMP/SML-Lookup pruefen. |
+| `peppol_send` | Rechnung an einen Peppol-Empfaenger per AS4-Ausgansuebermittlung senden. Konvertiert ZUGFeRD zu XRechnung UBL (Peppol BIS 3.0 Profil), signiert mit X.509-Zugangsdaten und gibt die AS4-Empfangsbestaetigung zurueck. Erfordert `EINVOICING_DE_PEPPOL_CERT_PATH` und `EINVOICING_DE_PEPPOL_KEY_PATH`. |
+| `datev_export` | ZUGFeRD-Rechnung als DATEV-EXTF-700-Buchungsstapel-CSV-Datei fuer den Import in DATEV-Buchhaltungssoftware exportieren. Standardmaessig SKR-03-Konten (8400 Erloese / 10000 Forderungen). |
+| `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Saetze, §13b-UStG-Reverse-Charge-Codes, §19-UStG-Kleinunternehmerschwellen nach JStG 2024 mit 25.000 EUR Vorjahr / 100.000 EUR laufendes Jahr, Befreiungen). |
 
 ---
 
@@ -261,15 +267,9 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
-Aktuelle Version: **v0.3.1**. Geplante Releases:
+Aktuelle Version: **v0.6.0**.
 
-| Version | Funktionen |
-|---------|-----------|
-| **v0.4.0** | Vollständige ISO-19005-3-Stufe B in `generate_pdf_invoice` (sRGB OutputIntent + ICC + TTF-Schriften); Cross-Syntax-Transformation CII zu UBL in `invoice_convert`; standardmäßig aktivierte KoSIT-Cloud-Validierung mit Retry und strukturiertem Fallback; Audit-Gate-Abgleich der `[NEED:]`-Marker in der Länderreferenz |
-| **v0.5.0** | Peppol-AS4-Ausgangsübermittlung (DE-PEPPOL-1); DATEV-Importformat-Export (DE-DATEV-1) |
-| **v1.0.0** | Produktionsreif: vollständige EN-16931-Abdeckung, KoSIT-Cloud-Canary-Corpus, Performance-Benchmarks, 95 % Zeilenabdeckung mit Mutationstests, End-to-End-Integrationstest gegen den Cloud-Validator |
-
-Die Historie früherer Releases finden Sie in [RELEASE.md](RELEASE.md).
+Die Historie frueherer Releases finden Sie in [RELEASE.md](RELEASE.md).
 
 ---
 
