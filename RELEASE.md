@@ -41,6 +41,18 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.6.0] - 2026-06-25
+#### Added
+- **DE-SH-2:** PDF/A-3 level B conformance with sRGB ICC profile, OutputIntent, font embedding, and deterministic /ID
+- **DE-LC-2:** Cross-syntax CII/UBL conversion via core `convert_wire_format`
+- **DE-KOSIT-1:** KoSIT cloud validation default-on with exponential backoff retry (1s/2s/4s) and Schematron fallback
+- **DE-PEPPOL-1:** Peppol AS4 outbound transmission via core `PeppolTransmitter`
+- **DE-DATEV-1:** DATEV EXTF 700 Buchungsstapel CSV export
+- **DE-V1-1:** Full EN 16931 profile coverage verification (6 CII profiles + XRechnung UBL round-trip)
+- **DE-V1-2:** KoSIT cloud canary corpus with nightly CI
+- **DE-V1-3:** Performance benchmarks (serialize, parse, PDF generate, round-trip)
+- **DE-V1-4:** Mutation test configuration (mutmut)
+
 ### [0.3.1] - 2026-06-21
 #### Fixed
 - CI publish workflow: install the `[pdf]` and `[xslt2]` extras alongside `[dev]`
