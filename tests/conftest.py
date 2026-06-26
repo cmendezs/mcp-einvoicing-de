@@ -27,12 +27,12 @@ def minimal_invoice() -> ZUGFeRDInvoice:
     seller = ZUGFeRDParty(
         name="Muster GmbH",
         address=seller_address,
-        vat_id="DE123456789",
+        vat_id="DE129273398",
     )
     buyer = ZUGFeRDParty(
         name="Käufer AG",
         address=buyer_address,
-        vat_id="DE987654321",
+        vat_id="DE136695976",
     )
     tax = ZUGFeRDTax(
         category=GermanTaxCategory.STANDARD,

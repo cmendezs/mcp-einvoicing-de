@@ -31,12 +31,12 @@ def _invoice_with_lines(n_lines: int = 10) -> ZUGFeRDInvoice:
     seller = ZUGFeRDParty(
         name="Bench GmbH",
         address=ZUGFeRDAddress(line_one="Teststr. 1", city="Berlin", postcode="10115"),
-        vat_id="DE123456789",
+        vat_id="DE129273398",
     )
     buyer = ZUGFeRDParty(
         name="Bench Käufer AG",
         address=ZUGFeRDAddress(line_one="Weg 2", city="München", postcode="80331"),
-        vat_id="DE987654321",
+        vat_id="DE136695976",
     )
     lines = [
         ZUGFeRDLineItem(

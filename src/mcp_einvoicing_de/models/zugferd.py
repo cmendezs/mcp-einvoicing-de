@@ -10,6 +10,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated
 
+from mcp_einvoicing_core import TaxIdentifier
 from mcp_einvoicing_core.en16931 import (
     EN16931Address,
     EN16931AllowanceCharge,
@@ -78,6 +79,23 @@ class ZUGFeRDParty(EN16931Party):
             from mcp_einvoicing_de.utils.leitweg import validate_leitweg_id  # noqa: PLC0415
 
             validate_leitweg_id(v)
+        return v
+
+    @field_validator("vat_id", mode="after")
+    @classmethod
+    def _validate_de_vat_id_checksum(cls, v: str | None) -> str | None:
+        """Enforce the German USt-IdNr DIN 4774 mod-11 check digit (BT-31 / BT-48).
+
+        Scoped to DE-prefixed values only: non-DE counterparty VATs (FR, IT, etc.)
+        used for cross-border B2B invoicing are pass-through, since their format
+        rules belong to the issuing country's validator. Delegates to the core
+        3-layer pattern: TaxIdentifier.validate_de_vat (Layer 1).
+        """
+        if v is None or not v.upper().startswith("DE"):
+            return v
+        ok, error = TaxIdentifier.validate_de_vat(v)
+        if not ok:
+            raise ValueError(f"Invalid German USt-IdNr (BT-31 / BT-48): {error}")
         return v
 
 

@@ -59,7 +59,7 @@ class TestInvoiceCreateHandler:
         )
         data = json.loads(result[0].text)
         assert "DE B2B mandate" in data["error"]
-        assert data["buyer_vat_id"] == "DE987654321"
+        assert data["buyer_vat_id"] == "DE136695976"
 
     @pytest.mark.asyncio
     async def test_pdf_output_with_opt_in_succeeds(
@@ -79,7 +79,7 @@ class TestInvoiceCreateHandler:
     @pytest.mark.asyncio
     async def test_pdf_output_allowed_for_non_de_buyer(self) -> None:
         address = ZUGFeRDAddress(line_one="1 rue de la Paix", city="Paris", postcode="75001")
-        seller = ZUGFeRDParty(name="Muster GmbH", address=address, vat_id="DE123456789")
+        seller = ZUGFeRDParty(name="Muster GmbH", address=address, vat_id="DE129273398")
         buyer = ZUGFeRDParty(name="Buyer SAS", address=address, vat_id="FR12345678901")
         tax = ZUGFeRDTax(
             category=GermanTaxCategory.STANDARD,
@@ -111,7 +111,7 @@ class TestInvoiceCreateHandler:
 class TestTaxRepresentativeEmission:
     def test_bg11_block_emitted_after_buyer(self, minimal_invoice: ZUGFeRDInvoice) -> None:
         address = ZUGFeRDAddress(line_one="2 rue Lafayette", city="Paris", postcode="75009")
-        rep = ZUGFeRDParty(name="Fiscale Vertretung GmbH", address=address, vat_id="DE111111111")
+        rep = ZUGFeRDParty(name="Fiscale Vertretung GmbH", address=address, vat_id="DE198765432")
         minimal_invoice.tax_representative = rep
         # Bump from MINIMUM to EN_16931 so a CII representative block is meaningful.
         minimal_invoice.profile = ZUGFeRDProfile.EN_16931
@@ -124,3 +124,42 @@ class TestTaxRepresentativeEmission:
         buyer_idx = text.index("BuyerTradeParty")
         rep_idx = text.index("SellerTaxRepresentativeTradeParty")
         assert rep_idx > buyer_idx
+
+
+# ---------------------------------------------------------------------------
+# ARCH-VALID-1d — model-level USt-IdNr checksum enforcement on ZUGFeRDParty
+# ---------------------------------------------------------------------------
+
+
+class TestZUGFeRDPartyVatIdValidation:
+    """ZUGFeRDParty.vat_id must enforce the DE mod-11 check digit for DE-prefixed VATs.
+
+    Non-DE counterparty VATs (e.g. FR, IT) are accepted unchanged — those
+    formats are out of scope for the German validator.
+    """
+
+    @staticmethod
+    def _address() -> ZUGFeRDAddress:
+        return ZUGFeRDAddress(line_one="Musterstr. 1", city="Berlin", postcode="10115")
+
+    def test_invalid_de_vat_raises(self) -> None:
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="German USt-IdNr"):
+            ZUGFeRDParty(name="X GmbH", address=self._address(), vat_id="DE123456789")
+
+    def test_valid_de_vat_accepted(self) -> None:
+        party = ZUGFeRDParty(
+            name="X GmbH", address=self._address(), vat_id="DE129273398"
+        )
+        assert party.vat_id == "DE129273398"
+
+    def test_non_de_vat_passes_through(self) -> None:
+        party = ZUGFeRDParty(
+            name="Buyer SAS", address=self._address(), vat_id="FR12345678901"
+        )
+        assert party.vat_id == "FR12345678901"
+
+    def test_none_vat_id_allowed(self) -> None:
+        party = ZUGFeRDParty(name="X GmbH", address=self._address())
+        assert party.vat_id is None

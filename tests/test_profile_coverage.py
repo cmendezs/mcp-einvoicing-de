@@ -34,12 +34,12 @@ def _make_invoice(profile: ZUGFeRDProfile, with_lines: bool = True) -> ZUGFeRDIn
     seller = ZUGFeRDParty(
         name="Muster GmbH",
         address=ZUGFeRDAddress(line_one="Musterstr. 1", city="Berlin", postcode="10115"),
-        vat_id="DE123456789",
+        vat_id="DE129273398",
     )
     buyer = ZUGFeRDParty(
         name="Käufer AG",
         address=ZUGFeRDAddress(line_one="Beispielweg 5", city="München", postcode="80331"),
-        vat_id="DE987654321",
+        vat_id="DE136695976",
     )
     tax = ZUGFeRDTax(
         category=GermanTaxCategory.STANDARD,

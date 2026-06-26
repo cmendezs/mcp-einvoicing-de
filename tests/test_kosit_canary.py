@@ -40,14 +40,14 @@ def _canary_invoice(
         address=ZUGFeRDAddress(
             line_one="Teststraße 42", city="Berlin", postcode="10115", country_code="DE"
         ),
-        vat_id="DE123456789",
+        vat_id="DE129273398",
     )
     buyer = ZUGFeRDParty(
         name="Canary Käufer AG",
         address=ZUGFeRDAddress(
             line_one="Prüfweg 7", city="München", postcode="80331", country_code="DE"
         ),
-        vat_id="DE987654321",
+        vat_id="DE136695976",
     )
     tax = ZUGFeRDTax(
         category=GermanTaxCategory.STANDARD,
