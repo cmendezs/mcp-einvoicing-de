@@ -41,6 +41,13 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.7.0] - 2026-06-27
+#### Added
+- **[ARCH-VALID-1d] HIGH:** `ZUGFeRDParty.vat_id` now enforces the DIN 4774 mod-11 check digit on the German USt-IdNr at model construction via a new `@field_validator(mode="after")` delegating to `mcp_einvoicing_core.TaxIdentifier.validate_de_vat` (3-layer party-validation pattern, Layer 1). Validator is scoped to DE-prefixed values so non-DE counterparty VATs (FR, IT, etc.) pass through unchanged for cross-border B2B invoicing. Invalid DE USt-IdNr now raises `ValidationError`.
+
+#### Changed
+- Test fixtures rotated from placeholder VATs to mod-11-valid examples (`DE129273398`, `DE136695976`, `DE198765432`) across `tests/conftest.py`, `test_profile_coverage.py`, `test_benchmarks.py`, `test_kosit_canary.py`, and `test_invoice_create.py`. Added `TestZUGFeRDPartyVatIdValidation` covering invalid DE, valid DE, non-DE passthrough, and `None` cases.
+
 ### [0.6.0] - 2026-06-25
 #### Added
 - **DE-SH-2:** PDF/A-3 level B conformance with sRGB ICC profile, OutputIntent, font embedding, and deterministic /ID
