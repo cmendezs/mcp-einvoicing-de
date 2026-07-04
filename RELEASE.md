@@ -41,6 +41,12 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.7.1] - 2026-07-04
+#### Changed
+- **[DE-XSLT2-1] follow-up:** `validators/schematron.py` no longer carries its own copy of `SaxonSchematronValidator` / XSLT-version detection. Both were promoted into `mcp_einvoicing_core.schematron` in core v1.14.0 (`SaxonSchematronValidator`, `get_xslt_version`, `load_schematron_validator`); the DE `SchematronValidator(stylesheet_key)` factory now resolves the stylesheet path and delegates entirely to core's `load_schematron_validator()`. `SaxonSchematronValidator` is re-exported from this module unchanged so existing imports keep working.
+- Bumped the `mcp-einvoicing-core` dependency floor to `>=1.14.0` (was `>=1.12.0`) for the above.
+- `tools/invoice_validate.py`'s `_validate_local` now catches `ImportError` alongside `ValueError` around the factory call: core's `SaxonSchematronValidator` raises `ImportError` (not `ValueError`) when the optional `saxonche` extra is missing.
+
 ### [0.7.0] - 2026-06-27
 #### Added
 - **[ARCH-VALID-1d] HIGH:** `ZUGFeRDParty.vat_id` now enforces the DIN 4774 mod-11 check digit on the German USt-IdNr at model construction via a new `@field_validator(mode="after")` delegating to `mcp_einvoicing_core.TaxIdentifier.validate_de_vat` (3-layer party-validation pattern, Layer 1). Validator is scoped to DE-prefixed values so non-DE counterparty VATs (FR, IT, etc.) pass through unchanged for cross-border B2B invoicing. Invalid DE USt-IdNr now raises `ValidationError`.

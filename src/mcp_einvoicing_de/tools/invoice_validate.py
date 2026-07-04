@@ -272,11 +272,13 @@ async def _validate_local(
             profile=profile_name,
             syntax=syntax,
         )
-    except ValueError as exc:
-        # The DE factory in validators/schematron.py dispatches to the
-        # XSLT 2.0 Saxon backend for FeRD Factur-X stylesheets. When the optional
-        # ``saxonche`` extra is not installed, the factory raises ValueError with
-        # an install hint. Return a structured error so callers can present it.
+    except (ImportError, ValueError) as exc:
+        # The DE factory in validators/schematron.py delegates to core's
+        # load_schematron_validator(), which dispatches to the XSLT 2.0 Saxon
+        # backend for FeRD Factur-X stylesheets. When the optional ``saxonche``
+        # extra is not installed, core raises ImportError with an install hint;
+        # a ValueError here means Saxon could not compile the stylesheet.
+        # Return a structured error so callers can present it either way.
         logger.warning("Schematron backend unavailable for key=%s: %s", stylesheet_key, exc)
         from mcp_einvoicing_de.validators.schematron import ValidationMessage
 

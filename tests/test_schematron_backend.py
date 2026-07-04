@@ -5,12 +5,12 @@ from __future__ import annotations
 import importlib.util
 
 import pytest
+from mcp_einvoicing_core.schematron import get_xslt_version
 
 from mcp_einvoicing_de.validators.schematron import (
     _STYLESHEET_MAP,
     SaxonSchematronValidator,
     SchematronValidator,
-    _read_xslt_version,
 )
 
 _SAXON_AVAILABLE = importlib.util.find_spec("saxonche") is not None
@@ -21,7 +21,7 @@ class TestXsltVersionDetection:
         # Both the FeRD Factur-X compiled rules and the KoSIT
         # validator-configuration-xrechnung rules currently ship as XSLT 2.0.
         for key, path in _STYLESHEET_MAP.items():
-            version = _read_xslt_version(path)
+            version = get_xslt_version(path)
             assert version.startswith(("2.", "3.")), (
                 f"Expected XSLT 2.0+ for {key}, got version={version!r}"
             )
@@ -39,6 +39,20 @@ class TestFactoryDispatch:
     def test_factory_rejects_unknown_key(self) -> None:
         with pytest.raises(ValueError, match="Unknown stylesheet key"):
             SchematronValidator("not_a_real_key")
+
+    def test_factory_raises_import_error_without_saxonche(self, monkeypatch) -> None:
+        """Simulate the optional [xslt2] extra not being installed.
+
+        The factory now delegates to core's ``load_schematron_validator()``,
+        which raises ``ImportError`` (not ``ValueError``) when ``saxonche`` is
+        missing. ``tools/invoice_validate.py`` catches this specifically —
+        this test guards that contract.
+        """
+        import sys
+
+        monkeypatch.setitem(sys.modules, "saxonche", None)
+        with pytest.raises(ImportError, match="mcp-einvoicing-core\\[xslt2\\]"):
+            SchematronValidator("zugferd_minimum_cii")
 
 
 @pytest.mark.skipif(not _SAXON_AVAILABLE, reason="saxonche extra not installed")

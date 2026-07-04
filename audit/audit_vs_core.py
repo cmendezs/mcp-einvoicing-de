@@ -194,6 +194,8 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "generate_qr_png_base64",
     },
     # SchematronValidator is imported as the base class for DE's validator.
+    # get_xslt_version is used internally by core's load_schematron_validator()
+    # factory, which DE calls directly instead of re-checking the version itself.
     # The remaining symbols are internal imports of schematron.py.
     "mcp_einvoicing_core.schematron": {
         "ABC",
@@ -205,6 +207,7 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "abstractmethod",
         "dataclass",
         "field",
+        "get_xslt_version",
         "safe_parser",
     },
     # DE provides its own XML helpers (mcp_einvoicing_de.utils.xml_utils) tailored to
