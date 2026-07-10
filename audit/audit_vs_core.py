@@ -579,34 +579,63 @@ def run_check_5() -> CheckResult:
                     )
                 )
 
-    # 5e: Verify resources directory exists for Schematron stylesheets
-    resources_dir = Path(__file__).parent.parent / "mcp_einvoicing_de" / "resources" / "schematron"
-    if resources_dir.exists():
-        xslt_files = list(resources_dir.glob("*.xslt"))
-        result.findings.append(
-            CheckFinding(
-                check_id="CHECK_5",
-                tag="[OK]",
-                severity=SEVERITY_OK,
-                symbol="resources/schematron/",
-                message=f"Schematron resources directory found with {len(xslt_files)} XSLT file(s).",
-            )
-        )
-    else:
+    # 5e: Verify the bundled Schematron stylesheets ship with the wheel.
+    # The validator loads from src/mcp_einvoicing_de/rules/ (see
+    # validators/schematron.py::_STYLESHEET_MAP); the files below must all be
+    # present or local validation silently degrades to NO-STYLESHEET mode.
+    rules_dir = Path(__file__).parent.parent / "src" / "mcp_einvoicing_de" / "rules"
+    _REQUIRED_STYLESHEETS: tuple[str, ...] = (
+        "FACTUR-X_MINIMUM.xslt",
+        "FACTUR-X_BASIC-WL.xslt",
+        "FACTUR-X_BASIC.xslt",
+        "FACTUR-X_EN16931.xslt",
+        "FACTUR-X_EXTENDED.xslt",
+        "EN16931-UBL-validation.xsl",
+        "XRechnung-CII-validation.xsl",
+        "XRechnung-UBL-validation.xsl",
+    )
+    if not rules_dir.is_dir():
         result.findings.append(
             CheckFinding(
                 check_id="CHECK_5",
                 tag="[MISSING_RESOURCES]",
-                severity=SEVERITY_WARNING,
-                symbol="resources/schematron/",
+                severity=SEVERITY_BLOCKING,
+                symbol="src/mcp_einvoicing_de/rules/",
                 message=(
-                    "Schematron XSLT stylesheets directory not found at "
-                    "mcp_einvoicing_de/resources/schematron/. "
-                    "Validation will fall back to NO-STYLESHEET mode. "
-                    "Bundle or download KoSIT + EN 16931 compiled XSLT files."
+                    "Bundled Schematron directory not found at "
+                    "src/mcp_einvoicing_de/rules/. Local validation cannot run; "
+                    "the wheel would ship without validation capability."
                 ),
             )
         )
+    else:
+        missing = [f for f in _REQUIRED_STYLESHEETS if not (rules_dir / f).is_file()]
+        if missing:
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag="[MISSING_RESOURCES]",
+                    severity=SEVERITY_BLOCKING,
+                    symbol="src/mcp_einvoicing_de/rules/",
+                    message=(
+                        "Bundled Schematron stylesheets missing: "
+                        f"{', '.join(missing)}. These are referenced by "
+                        "validators/schematron.py::_STYLESHEET_MAP and must ship in the wheel."
+                    ),
+                )
+            )
+        else:
+            result.findings.append(
+                CheckFinding(
+                    check_id="CHECK_5",
+                    tag="[OK]",
+                    severity=SEVERITY_OK,
+                    symbol="src/mcp_einvoicing_de/rules/",
+                    message=(
+                        f"All {len(_REQUIRED_STYLESHEETS)} bundled Schematron stylesheets present."
+                    ),
+                )
+            )
 
     return result
 
