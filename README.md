@@ -86,8 +86,8 @@ The server does not require external credentials. Available environment variable
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint (overrides the default `https://validator.kosit.de`) | |
-| `EINVOICING_DE_KOSIT_DISABLE` | Set to `1` to disable KoSIT cloud validation entirely (local Schematron only) | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint. Only used if cloud validation is enabled — see `EINVOICING_DE_KOSIT_ENABLE` | |
+| `EINVOICING_DE_KOSIT_ENABLE` | Set to `1` to enable KoSIT cloud validation (`validator.kosit.de` or a self-hosted endpoint). Local Schematron-only validation is the default | |
 | `EINVOICING_DE_PEPPOL_CERT_PATH` | Path to the X.509 certificate for Peppol AS4 signing (PEM or DER) | |
 | `EINVOICING_DE_PEPPOL_KEY_PATH` | Path to the private key for Peppol AS4 signing (PEM or DER) | |
 | `EINVOICING_DE_PEPPOL_KEY_PASSWORD` | Password for the private key (if encrypted) | |
@@ -144,7 +144,7 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 | Tool | Description |
 |------|-------------|
 | `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL). Enforces the §14 Abs. 2 UStG B2B mandate: non-XML output is rejected for DE-prefixed VAT buyers unless `transitional_period_opt_in=True` is set. `output_format='pdf'` produces a PDF/A-3 level B hybrid invoice with sRGB ICC profile, OutputIntent, embedded fonts, and deterministic /ID. |
-| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT rules (BR-DE-\*). KoSIT cloud validation (`validator.kosit.de`) is enabled by default with exponential backoff retry (1s/2s/4s) and automatic Schematron fallback. Disable with `EINVOICING_DE_KOSIT_DISABLE=1`. XSLT 2.0 local validation requires the `[xslt2]` extra. |
+| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT rules (BR-DE-\*). Local Schematron validation runs by default (no data leaves your machine); set `cloud_validate=True` or `EINVOICING_DE_KOSIT_ENABLE=1` to opt into KoSIT cloud validation (`validator.kosit.de` or a self-hosted endpoint) with exponential backoff retry (1s/2s/4s). XSLT 2.0 local validation requires the `[xslt2]` extra. |
 | `invoice_parse` | Extract structured data from ZUGFeRD or XRechnung XML, or from a PDF/A-3 hybrid invoice with embedded `factur-x.xml` / `zugferd-invoice.xml`. |
 | `invoice_convert` | Convert between ZUGFeRD profiles, swap ZUGFeRD/XRechnung CII headers, or perform cross-syntax CII/UBL conversion via core `convert_wire_format`. |
 | `peppol_check` | Check Peppol participant registration of a German company via SMP/SML lookup. |
@@ -267,7 +267,7 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
-Current version: **v0.6.0**.
+Current version: **v0.8.0**.
 
 For the history of past releases, see [RELEASE.md](RELEASE.md).
 

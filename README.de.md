@@ -86,8 +86,8 @@ Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen
 | Variable | Beschreibung | Standard |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts (ueberschreibt den Standard `https://validator.kosit.de`) | |
-| `EINVOICING_DE_KOSIT_DISABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung vollstaendig zu deaktivieren (nur lokales Schematron) | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts. Wird nur verwendet, wenn die Cloud-Validierung aktiviert ist — siehe `EINVOICING_DE_KOSIT_ENABLE` | |
+| `EINVOICING_DE_KOSIT_ENABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung zu aktivieren (`validator.kosit.de` oder ein selbst gehosteter Endpunkt). Standardmaessig laeuft nur lokales Schematron | |
 | `EINVOICING_DE_PEPPOL_CERT_PATH` | Pfad zum X.509-Zertifikat fuer die Peppol-AS4-Signierung (PEM oder DER) | |
 | `EINVOICING_DE_PEPPOL_KEY_PATH` | Pfad zum privaten Schluessel fuer die Peppol-AS4-Signierung (PEM oder DER) | |
 | `EINVOICING_DE_PEPPOL_KEY_PASSWORD` | Passwort fuer den privaten Schluessel (falls verschluesselt) | |
@@ -144,7 +144,7 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 | Werkzeug | Beschreibung |
 |----------|-------------|
 | `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen. Erzwingt das B2B-Mandat nach §14 Abs. 2 UStG: Nicht-XML-Ausgaben werden fuer deutsche Rechnungsempfaenger mit USt-IdNr. (DE-Praefix) abgelehnt, sofern nicht `transitional_period_opt_in=True` gesetzt ist. `output_format='pdf'` erzeugt eine PDF/A-3-Hybridrechnung der Stufe B mit sRGB-ICC-Profil, OutputIntent, eingebetteten Schriften und deterministischer /ID. |
-| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. KoSIT-Cloud-Validierung (`validator.kosit.de`) ist standardmaessig aktiviert mit exponentiellem Backoff-Retry (1s/2s/4s) und automatischem Schematron-Fallback. Deaktivierung mit `EINVOICING_DE_KOSIT_DISABLE=1`. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
+| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. Standardmaessig laeuft nur lokale Schematron-Validierung (es verlassen keine Daten den eigenen Rechner); mit `cloud_validate=True` oder `EINVOICING_DE_KOSIT_ENABLE=1` die KoSIT-Cloud-Validierung (`validator.kosit.de` oder ein selbst gehosteter Endpunkt) mit exponentiellem Backoff-Retry (1s/2s/4s) aktivieren. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
 | `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml`. |
 | `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren, ZUGFeRD/XRechnung-CII-Header tauschen oder Cross-Syntax-Konvertierung CII/UBL ueber Core `convert_wire_format` durchfuehren. |
 | `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens ueber SMP/SML-Lookup pruefen. |
@@ -267,7 +267,7 @@ pytest tests/test_models.py -v
 
 ## Roadmap
 
-Aktuelle Version: **v0.6.0**.
+Aktuelle Version: **v0.8.0**.
 
 Die Historie frueherer Releases finden Sie in [RELEASE.md](RELEASE.md).
 
