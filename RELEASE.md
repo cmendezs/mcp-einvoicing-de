@@ -41,6 +41,26 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.8.0] - 2026-07-20
+#### Fixed
+- **[DE-SC-1] BLOCKING:** `GermanTaxCategory.REDUCED` emitted invalid EN 16931 category `AA`, causing every reduced-rate (7%) invoice to be rejected by Schematron and by ZRE/OZG-RE. `REDUCED` now aliases the valid category `S`.
+- **[DE-SC-2]:** local XRechnung validation ran only the BR-DE CIUS Schematron stylesheet, silently skipping EN 16931 base-rule violations. `_PROFILE_TO_STYLESHEET` now chains base + CIUS per syntax, merging findings across both.
+- **[DE-TL-1]:** `datev_export` applied `tax_lines[0].rate` to every line regardless of that line's own tax category/rate, mis-keying reverse-charge lines as exempt. `_bu_key()` + `_resolve_line_tax()` now resolve each line's own tax lines correctly.
+- **[DE-TL-2]:** `datev_export` Belegdatum day was not zero-padded, producing a malformed `DDMM`.
+- **[DE-TL-3]:** `datev_export`'s per-line branch posted net while the no-line branch posted gross; both now post gross consistently.
+- **[DE-LC-1]:** validation was cloud-first by default, sending the full invoice to `validator.kosit.de` without opt-in. Added `cloud_validate: bool = False`.
+- **[DE-LC-2]:** the KoSIT cloud endpoint carried an unconditional, unverified default URL. `KoSITValidator` now requires an explicit `base_url`.
+- **[DE-LC-3]:** removed `download_rules.py`, which wrote Schematron rules to a directory the loader never read from.
+- **[DE-SF-2]:** PDF/A-3 OutputIntent embedded a 128-byte header-only ICC stub, not a valid sRGB profile. Replaced with a real sRGB IEC61966-2.1 profile; added `verapdf.yml` CI conformance check.
+- **[DE-SC-3]:** `ZUGFeRDTax`'s tax-amount validator was a dead no-op. Replaced with a real BR-CO-17 `model_validator`.
+- **[DE-SF-3]:** Leitweg-ID check-digit validation could false-match a B2B purchase-order reference shaped like a Leitweg-ID and reject a legitimate invoice. Now gated on B2G context (`buyer.leitweg_id` present).
+- Audit gate: `CAdESSigner`/`CAdESSignerConfig` (IT/FR-specific CMS signing) were flagged as neither imported nor overridden; added to the intentional-overrides registry. Audit gate now 0 blocking / 0 warnings.
+- **[DE-GAP-1]:** bundled FeRD Factur-X Schematron stylesheets were missing their companion `codedb.xml` codelist files, causing Saxon I/O errors on every real-invoice validation. Restored from the vetted `specs/zugferd/` source.
+- CI: the new `verapdf.yml` workflow's installer version pin pointed at a nonexistent GitHub Releases asset (veraPDF publishes no GitHub Release assets). Fixed to use the real distribution channel, `software.verapdf.org`.
+
+#### Added
+- Bundled DATEV EXTF Buchungsstapel reference specs (`specs/datev/`) with provenance for the `datev_export` tool.
+
 ### [0.7.1] - 2026-07-04
 #### Changed
 - **[DE-XSLT2-1] follow-up:** `validators/schematron.py` no longer carries its own copy of `SaxonSchematronValidator` / XSLT-version detection. Both were promoted into `mcp_einvoicing_core.schematron` in core v1.14.0 (`SaxonSchematronValidator`, `get_xslt_version`, `load_schematron_validator`); the DE `SchematronValidator(stylesheet_key)` factory now resolves the stylesheet path and delegates entirely to core's `load_schematron_validator()`. `SaxonSchematronValidator` is re-exported from this module unchanged so existing imports keep working.
