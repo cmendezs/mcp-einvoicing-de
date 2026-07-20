@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" standalone="yes"?>
+<FormatDescription>
+  <Format>
+    <FormatId>1</FormatId>
+    <Description>Dieses Standardformat unterstützt Sie beim Ex-/Import von angelegten Filialen im Bereich der Anlagenbuchführung. Die gesamte Liste der ausgewählten Felder dieses DATEV-Standardformates für den Ex-/Import finden Sie links in der "Feldauswahl". In der Ex-/Importvorschau sehen Sie anschließend einen Ausschnitt der Filialen. Über das Kontextmenü "Format neu anlegen" oder "Formatverwaltung" können Sie sich individuelle Formate anlegen und dieses Format als Vorlage verwenden.</Description>
+    <Name>Anlagenbuchführung - Filialen</Name>
+    <StandardType>1</StandardType>
+    <Importable>1</Importable>
+    <Exportable>1</Exportable>
+    <DataCategory>Stammdaten|Anlagenbuchführung|Filialen</DataCategory>
+    <GroupSeperator />
+    <DecimalSeperator />
+    <DateFormatExpression>TT.MM.JJJJ</DateFormatExpression>
+    <DateFormatSeperator />
+    <CurrencySignExpression />
+    <DirectoryName />
+    <FileName />
+    <Version>1</Version>
+    <IsDefaultFormat>0</IsDefaultFormat>
+  </Format>
+<Field>
+    <FieldId>1</FieldId>
+    <DisplayGroupId>425</DisplayGroupId>
+    <OrdinalNumber>0</OrdinalNumber>
+    <Label>Filialnummer</Label>
+    <Importable>1</Importable>
+    <Exportable>1</Exportable>
+    <Length>6</Length>
+    <DecimalPlaces>0</DecimalPlaces>
+    <FormatType>Zahl</FormatType>
+    <Necessary>1</Necessary>
+    <IsFormatable>0</IsFormatable>
+    <DecimalsEditable>0</DecimalsEditable>
+    <GroupingSymbol>0</GroupingSymbol>
+    <CreditDebitSign>0</CreditDebitSign>
+    <BaseFieldId>2733</BaseFieldId>
+    <FixedLength>6</FixedLength>
+    <AddCreditDebitSign>0</AddCreditDebitSign>
+    <MaxCount>0</MaxCount>
+  </Field>
+  <Field>
+    <FieldId>2</FieldId>
+    <DisplayGroupId>425</DisplayGroupId>
+    <OrdinalNumber>1</OrdinalNumber>
+    <Label>Filialbezeichnung</Label>
+    <Importable>1</Importable>
+    <Exportable>1</Exportable>
+    <Length>60</Length>
+    <DecimalPlaces>0</DecimalPlaces>
+    <FormatType>Text</FormatType>
+    <Necessary>1</Necessary>
+    <IsFormatable>0</IsFormatable>
+    <DecimalsEditable>0</DecimalsEditable>
+    <GroupingSymbol>0</GroupingSymbol>
+    <CreditDebitSign>0</CreditDebitSign>
+    <BaseFieldId>2734</BaseFieldId>
+    <FixedLength>60</FixedLength>
+    <AddCreditDebitSign>0</AddCreditDebitSign>
+    <MaxCount>0</MaxCount>
+  </Field>
+  <CsvFormatProperties>
+    <CsvFormatPropertiesId>1</CsvFormatPropertiesId>
+    <FormatId>1</FormatId>
+    <SeperatorField>;</SeperatorField>
+    <SeperatorText>"</SeperatorText>
+    <DoubleTextSeperator>1</DoubleTextSeperator>
+    <LayoutStyle>variabel</LayoutStyle>
+    <Alignment>typabhängig</Alignment>
+    <Coding>ANSI</Coding>
+    <RowFrom>1</RowFrom>
+    <RowTo>-1</RowTo>
+    <Header>0</Header>
+    <Headline>1</Headline>
+    <EndLineWithSeperatorText>0</EndLineWithSeperatorText>
+  </CsvFormatProperties>
+</FormatDescription>

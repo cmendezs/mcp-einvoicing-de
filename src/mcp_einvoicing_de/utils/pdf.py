@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from importlib import resources
 from io import BytesIO
 from typing import TYPE_CHECKING
 
@@ -39,50 +40,22 @@ _PROFILE_CONFORMANCE: dict[str, str] = {
 }
 
 
-def _build_srgb_icc_profile() -> bytes:
-    """Return a minimal sRGB ICC profile suitable for PDF/A OutputIntent.
+_ICC_RESOURCE = "sRGB_IEC61966-2-1.icc"
 
-    This is a v2.1 header-only profile that declares the sRGB colour space.
-    A minimal valid ICC profile is 128 bytes (header) + tag table. We use
-    the approach of constructing the bare minimum ICC v2 profile header
-    that PDF validators accept for OutputIntent.
+
+def _load_srgb_icc_bytes() -> bytes:
+    """Return the bundled sRGB IEC61966-2.1 ICC profile for PDF/A OutputIntent.
+
+    DE-SF-2: the previous ``_build_srgb_icc_profile()`` emitted a 128-byte
+    header-only stub with an empty tag table — not a valid ICC profile, so
+    PDF/A validators (veraPDF) reject the OutputIntent. This loads the real
+    profile bundled as package data under ``resources/icc/``.
     """
-    # 128-byte ICC profile header for sRGB
-    header = bytearray(128)
-    # Profile size (will be set at end)
-    # Preferred CMM type: 0
-    # Profile version: 2.1.0
-    header[8] = 0x02
-    header[9] = 0x10
-    # Profile/Device class: 'mntr' (monitor)
-    header[12:16] = b"mntr"
-    # Colour space: 'RGB '
-    header[16:20] = b"RGB "
-    # PCS: 'XYZ '
-    header[20:24] = b"XYZ "
-    # Date: 2025-01-01
-    header[24:26] = (2025).to_bytes(2, "big")
-    header[26:28] = (1).to_bytes(2, "big")
-    header[28:30] = (1).to_bytes(2, "big")
-    # Profile file signature: 'acsp'
-    header[36:40] = b"acsp"
-    # Primary platform: 'APPL'
-    header[40:44] = b"APPL"
-    # Rendering intent: perceptual (0)
-    # PCS illuminant (D50): X=0.9642, Y=1.0, Z=0.8249 in s15Fixed16
-    header[68:72] = (0x0000F6D6).to_bytes(4, "big")  # X
-    header[72:76] = (0x00010000).to_bytes(4, "big")  # Y
-    header[76:80] = (0x0000D32D).to_bytes(4, "big")  # Z
-
-    # Tag table: 0 tags (minimal)
-    tag_count = (0).to_bytes(4, "big")
-    profile = bytes(header) + tag_count
-
-    # Set profile size in header
-    size = len(profile)
-    profile = size.to_bytes(4, "big") + profile[4:]
-
-    return profile
+    return (
+        resources.files("mcp_einvoicing_de.resources.icc")
+        .joinpath(_ICC_RESOURCE)
+        .read_bytes()
+    )
 
 
 def _apply_pdfa3_conformance(pdf_bytes: bytes, deterministic_id: str = "") -> bytes:
@@ -131,7 +104,7 @@ def _apply_pdfa3_conformance(pdf_bytes: bytes, deterministic_id: str = "") -> by
         pdf.Root["/Metadata"] = xmp_stream
 
         # 2. sRGB OutputIntent with ICC profile
-        icc_bytes = _build_srgb_icc_profile()
+        icc_bytes = _load_srgb_icc_bytes()
         icc_stream = pdf.make_stream(icc_bytes)
         icc_stream["/N"] = 3  # RGB = 3 components
 

@@ -37,8 +37,8 @@ _GERMAN_VAT_RATES: dict[str, Any] = {
         "applies_to": "Most goods and services not otherwise specified",
         "legal_basis": "§12 Abs. 1 UStG",
     },
-    "AA_7": {
-        "category": "AA",
+    "REDUCED_7": {
+        "category": "S",
         "rate_percent": 7,
         "name_de": "Ermäßigter Steuersatz",
         "name_en": "Reduced rate",

@@ -6,7 +6,7 @@ Schema source: [NEED: official FeRD XSD download URL for ZUGFeRD 2.3]
 
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 from typing import Annotated
 
@@ -20,7 +20,7 @@ from mcp_einvoicing_core.en16931 import (
     EN16931PaymentMeans,
     EN16931Tax,
 )
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 
 class ZUGFeRDProfile(StrEnum):
@@ -38,7 +38,8 @@ class GermanTaxCategory(StrEnum):
     """EN 16931 VAT category codes relevant in Germany."""
 
     STANDARD = "S"  # Regelsteuersatz (19 %)
-    REDUCED = "AA"  # Ermäßigter Steuersatz (7 %)
+    # 7% reduced rate rides on UNCL5305 category S; rate value carries the differentiation.
+    REDUCED = "S"  # Ermäßigter Steuersatz (7 %)
     EXEMPT = "E"  # Steuerbefreit
     REVERSE_CHARGE = "AE"  # §13b UStG (Steuerschuldnerschaft des Leistungsempfängers)
     INTRA_COMMUNITY = "K"  # Innergemeinschaftliche Lieferung (§4 Nr. 1b UStG)
@@ -106,11 +107,23 @@ class ZUGFeRDTax(EN16931Tax):
         ..., description="VAT category code (BT-118)"
     )
 
-    @field_validator("tax_amount")
-    @classmethod
-    def validate_tax_amount(cls, v: Decimal, info: object) -> Decimal:
-        # [NEED: access info.data for cross-field validation in Pydantic v2]
-        return v
+    @model_validator(mode="after")
+    def _check_br_co_17(self) -> ZUGFeRDTax:
+        """EN 16931 rule BR-CO-17: tax_amount must equal taxable_amount * rate / 100,
+        within a tolerance of one minor currency unit.
+
+        Tolerance matches the Schematron rules in
+        src/mcp_einvoicing_de/rules/FACTUR-X_EN16931.xslt:841,929,3204.
+        """
+        expected = (self.taxable_amount * self.rate / Decimal("100")).quantize(
+            Decimal("0.01"), ROUND_HALF_UP
+        )
+        if abs(self.tax_amount - expected) > Decimal("0.01"):
+            raise ValueError(
+                f"BR-CO-17: tax_amount {self.tax_amount} deviates from {expected} "
+                "by more than 0.01"
+            )
+        return self
 
 
 class ZUGFeRDAllowanceCharge(EN16931AllowanceCharge):

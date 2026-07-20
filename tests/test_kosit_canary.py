@@ -105,7 +105,7 @@ class TestKoSITCanary:
         with_lines: bool,
     ) -> None:
         xml_bytes = _canary_invoice(profile, inv_num, with_lines)
-        validator = KoSITValidator()
+        validator = KoSITValidator(KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL)
         result = await validator.validate(xml_bytes, filename=f"{inv_num}.xml")
 
         assert result.is_valid, (

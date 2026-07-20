@@ -70,6 +70,6 @@ tests/fixtures/*.pdf
 # Pre-publish audit output (generated artefacts)
 audit/report.json
 
-# Schematron XSLT resources (downloaded at runtime, not committed)
-# The directory is tracked (with .gitkeep); only the downloaded XSLT files are ignored.
-mcp_einvoicing_de/resources/schematron/*.xslt
+# Proprietary third-party binary (DATEV eG) — not redistributed via git or the
+# PyPI wheel; re-download from developer.datev.de if needed locally.
+specs/datev/DatevFormatPruefProgramm.exe

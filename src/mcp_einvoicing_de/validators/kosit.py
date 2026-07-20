@@ -36,11 +36,6 @@ _KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset({
     "validator.kosit.de",    # official KoSIT cloud validator
 })
 
-_DEFAULT_KOSIT_URL = os.environ.get(
-    "EINVOICING_DE_KOSIT_VALIDATOR_URL",
-    "https://validator.kosit.de/api/v1/validate",
-)
-
 _RETRY_DELAYS = (1.0, 2.0, 4.0)
 
 
@@ -100,7 +95,17 @@ class KoSITValidator:
     [NEED: confirm whether mcp-einvoicing-core provides a RemoteValidatorBase]
     """
 
-    def __init__(self, base_url: str = _DEFAULT_KOSIT_URL, timeout: float = 30.0) -> None:
+    _UNVERIFIED_DEFAULT_KOSIT_URL = os.environ.get(
+        "EINVOICING_DE_KOSIT_VALIDATOR_URL",
+        "https://validator.kosit.de/api/v1/validate",
+    )
+    """[Unverified] KoSIT does not publish a public REST validate endpoint at
+    this URL as of 2026-07; verify against the KoSIT technical service
+    documentation before enabling. There is no implicit default any more
+    (DE-LC-2) — callers that opt into cloud validation (DE-LC-1) must supply
+    a URL explicitly, either their own trusted endpoint or this sentinel."""
+
+    def __init__(self, base_url: str, timeout: float = 30.0) -> None:
         self._base_url = _validate_kosit_url(base_url).rstrip("/")
         self._timeout = timeout
 

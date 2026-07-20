@@ -88,6 +88,11 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # ZUGFeRD/XRechnung, which use XAdES-EPES
         "XMLDSigSigner",
         "XMLDSigSignerConfig",
+        # OVERRIDE-REASON: CAdESSigner/CAdESSignerConfig is the CMS/PKCS#7
+        # attached signature (CAdES-BES) used for IT FatturaPA .xml.p7m and
+        # FR Chorus Pro; ZUGFeRD and XRechnung apply no such wrapper signature.
+        "CAdESSigner",
+        "CAdESSignerConfig",
         "abstractmethod",
         "dataclass",
         "datetime",

@@ -17,12 +17,13 @@ from __future__ import annotations
 import json
 import logging
 import os
+import warnings
 from typing import Any
 
 import mcp.types as types
 from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 from mcp_einvoicing_de.validators.kosit import KoSITValidator
@@ -34,7 +35,19 @@ from mcp_einvoicing_de.validators.schematron import (
 
 logger = logging.getLogger(__name__)
 
-_KOSIT_DISABLED = os.environ.get("EINVOICING_DE_KOSIT_DISABLE", "").strip() == "1"
+# DE-LC-1: cloud validation is opt-in. EINVOICING_DE_KOSIT_ENABLE=1 turns it on
+# globally; the legacy EINVOICING_DE_KOSIT_DISABLE kill-switch is honoured for
+# one release as a hard override (logged as deprecated) since "disable" no
+# longer has a meaningful default state to disable.
+_KOSIT_ENABLE_ENV = os.environ.get("EINVOICING_DE_KOSIT_ENABLE", "").strip() == "1"
+_KOSIT_DISABLE_ENV_LEGACY = os.environ.get("EINVOICING_DE_KOSIT_DISABLE", "").strip() == "1"
+if _KOSIT_DISABLE_ENV_LEGACY:
+    logger.warning(
+        "EINVOICING_DE_KOSIT_DISABLE is deprecated: cloud validation now "
+        "defaults to off, so this variable has no effect except as a hard "
+        "override that blocks cloud_validate=True. Use "
+        "EINVOICING_DE_KOSIT_ENABLE=1 to opt in to cloud validation instead."
+    )
 
 
 # ── Input / Output schemas ────────────────────────────────────────────────────
@@ -71,11 +84,21 @@ class InvoiceValidateInput(BaseModel):
             "If omitted, auto-detected from the XML root element namespace."
         ),
     )
-    use_local_only: bool = Field(
+    cloud_validate: bool = Field(
         False,
         description=(
-            "If True, skip the KoSIT cloud validator and use only local Schematron. "
-            "By default KoSIT cloud validation is attempted first with Schematron fallback."
+            "By default this validator runs entirely locally (Schematron only). "
+            "Set cloud_validate=True (or EINVOICING_DE_KOSIT_ENABLE=1) to opt in "
+            "to sending the invoice XML to a remote KoSIT endpoint. Doing so "
+            "egresses the full invoice payload."
+        ),
+    )
+    use_local_only: bool | None = Field(
+        None,
+        description=(
+            "[Deprecated] Use cloud_validate instead. use_local_only=True is "
+            "equivalent to cloud_validate=False, which is now the default; "
+            "this alias is retained for one release and will be removed."
         ),
     )
     kosit_strict: bool = Field(
@@ -96,6 +119,19 @@ class InvoiceValidateInput(BaseModel):
         # Cross-field validation happens in model_validator; this is a pass-through
         return v
 
+    @model_validator(mode="after")
+    def _apply_deprecated_use_local_only_alias(self) -> InvoiceValidateInput:
+        if self.use_local_only is not None:
+            warnings.warn(
+                "use_local_only is deprecated; use cloud_validate instead "
+                "(use_local_only=True is equivalent to cloud_validate=False, "
+                "which is now the default).",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            object.__setattr__(self, "cloud_validate", not self.use_local_only)
+        return self
+
     def get_xml_bytes(self) -> bytes:
         """Resolve xml_content / xml_base64 to raw bytes."""
         return resolve_xml_input(self.xml_content, self.xml_base64)
@@ -108,6 +144,14 @@ class ValidationFinding(BaseModel):
     rule_id: str
     location: str
     text: str
+    source: str = Field(
+        "",
+        description=(
+            "Stylesheet key that produced this finding (e.g. 'en16931_cii', "
+            "'xrechnung_cii'). Empty when the finding did not come from a "
+            "chained local Schematron run (e.g. KoSIT cloud results)."
+        ),
+    )
 
 
 class InvoiceValidateOutput(BaseModel):
@@ -134,7 +178,11 @@ TOOL_INVOICE_VALIDATE = types.Tool(
         "and German KoSIT Schematron rules (BR-DE-* business rules). "
         "Returns a structured validation report with errors and warnings. "
         "Supports all ZUGFeRD profiles (MINIMUM through EXTENDED) and XRechnung "
-        "(CII and UBL syntax). Profile and syntax are auto-detected if not specified."
+        "(CII and UBL syntax). Profile and syntax are auto-detected if not specified. "
+        "By default this validator runs entirely locally (Schematron only). Set "
+        "cloud_validate=True (or EINVOICING_DE_KOSIT_ENABLE=1) to opt in to sending "
+        "the invoice XML to a remote KoSIT endpoint. Doing so egresses the full "
+        "invoice payload."
     ),
     inputSchema={
         "type": "object",
@@ -157,10 +205,17 @@ TOOL_INVOICE_VALIDATE = types.Tool(
                 "enum": ["CII", "UBL"],
                 "description": "Override syntax detection.",
             },
-            "use_local_only": {
+            "cloud_validate": {
                 "type": "boolean",
                 "default": False,
-                "description": "Skip KoSIT cloud; use only local Schematron.",
+                "description": (
+                    "Opt in to remote KoSIT cloud validation (egresses the full "
+                    "invoice payload). Local Schematron only by default."
+                ),
+            },
+            "use_local_only": {
+                "type": "boolean",
+                "description": "[Deprecated] Use cloud_validate instead (inverted).",
             },
             "kosit_strict": {
                 "type": "boolean",
@@ -183,17 +238,27 @@ TOOL_INVOICE_VALIDATE = types.Tool(
 
 # ── Implementation ────────────────────────────────────────────────────────────
 
-_PROFILE_TO_STYLESHEET: dict[str, dict[str, str]] = {
-    # Maps (profile_enum_name, syntax) → stylesheet key (see validators/schematron.py).
-    # Each profile uses its own FeRD compiled Schematron so that rules permitting
-    # optional fields in lower profiles (MINIMUM, BASIC-WL) are not incorrectly
-    # applied as errors by the stricter EN 16931 ruleset.
-    "MINIMUM":   {"CII": "zugferd_minimum_cii"},
-    "BASIC_WL":  {"CII": "zugferd_basicwl_cii"},
-    "BASIC":     {"CII": "zugferd_basic_cii"},
-    "EN_16931":  {"CII": "en16931_cii", "UBL": "en16931_ubl"},
-    "EXTENDED":  {"CII": "zugferd_extended_cii"},
-    "XRECHNUNG": {"CII": "xrechnung_cii", "UBL": "xrechnung_ubl"},
+_PROFILE_TO_STYLESHEET: dict[str, dict[str, list[str]]] = {
+    # Maps (profile_enum_name, syntax) → ordered list of stylesheet keys (see
+    # validators/schematron.py). Each profile uses its own FeRD compiled
+    # Schematron so that rules permitting optional fields in lower profiles
+    # (MINIMUM, BASIC-WL) are not incorrectly applied as errors by the
+    # stricter EN 16931 ruleset.
+    #
+    # XRECHNUNG chains the CEN EN 16931 base ruleset ahead of the KoSIT
+    # XRechnung CIUS ruleset: the bundled XRechnung-*-validation.xsl files
+    # only encode the BR-DE-* / CIUS-specific rules, not the underlying
+    # EN 16931 base rules (DE-SC-2) — running the CIUS stylesheet alone
+    # silently skips base-rule violations.
+    "MINIMUM":   {"CII": ["zugferd_minimum_cii"]},
+    "BASIC_WL":  {"CII": ["zugferd_basicwl_cii"]},
+    "BASIC":     {"CII": ["zugferd_basic_cii"]},
+    "EN_16931":  {"CII": ["en16931_cii"], "UBL": ["en16931_ubl"]},
+    "EXTENDED":  {"CII": ["zugferd_extended_cii"]},
+    "XRECHNUNG": {
+        "CII": ["en16931_cii", "xrechnung_cii"],
+        "UBL": ["en16931_ubl", "xrechnung_ubl"],
+    },
 }
 
 
@@ -223,11 +288,20 @@ def _resolve_syntax(syntax_str: str | None, xml_bytes: bytes) -> str:
 async def _validate_local(
     xml_bytes: bytes, profile_name: str, syntax: str
 ) -> ValidationResult:
-    """Run local Schematron validation."""
-    stylesheet_map = _PROFILE_TO_STYLESHEET.get(profile_name, {})
-    stylesheet_key = stylesheet_map.get(syntax)
+    """Run local Schematron validation.
 
-    if stylesheet_key is None:
+    For profiles that map to more than one stylesheet key (XRECHNUNG chains
+    the EN 16931 base ruleset ahead of the KoSIT CIUS ruleset — DE-SC-2),
+    every stylesheet in the list is run and findings are merged: errors and
+    warnings are concatenated, and ``is_valid`` is the boolean AND across all
+    runs. Each merged ``ValidationMessage`` carries a dynamic ``source``
+    attribute (the stylesheet key that produced it) so callers can tell which
+    ruleset fired; this is DE-local and does not require a core schema change.
+    """
+    stylesheet_map = _PROFILE_TO_STYLESHEET.get(profile_name, {})
+    stylesheet_keys = stylesheet_map.get(syntax)
+
+    if not stylesheet_keys:
         logger.warning(
             "No Schematron stylesheet for profile=%s syntax=%s; skipping Schematron",
             profile_name,
@@ -254,11 +328,27 @@ async def _validate_local(
             syntax=syntax,
         )
 
+    merged = ValidationResult(is_valid=True, profile=profile_name, syntax=syntax)
+    for stylesheet_key in stylesheet_keys:
+        result = _run_one_stylesheet(xml_bytes, stylesheet_key, profile_name, syntax)
+        for msg in result.errors + result.warnings:
+            msg.source = stylesheet_key  # type: ignore[attr-defined]
+        merged.errors.extend(result.errors)
+        merged.warnings.extend(result.warnings)
+        merged.is_valid = merged.is_valid and result.is_valid
+
+    return merged
+
+
+def _run_one_stylesheet(
+    xml_bytes: bytes, stylesheet_key: str, profile_name: str, syntax: str
+) -> ValidationResult:
+    """Run a single bundled Schematron stylesheet and return its result."""
+    from mcp_einvoicing_de.validators.schematron import ValidationMessage
+
     try:
         validator = SchematronValidator(stylesheet_key)
     except FileNotFoundError as exc:
-        from mcp_einvoicing_de.validators.schematron import ValidationMessage
-
         return ValidationResult(
             is_valid=False,
             errors=[
@@ -280,8 +370,6 @@ async def _validate_local(
         # a ValueError here means Saxon could not compile the stylesheet.
         # Return a structured error so callers can present it either way.
         logger.warning("Schematron backend unavailable for key=%s: %s", stylesheet_key, exc)
-        from mcp_einvoicing_de.validators.schematron import ValidationMessage
-
         return ValidationResult(
             is_valid=False,
             errors=[
@@ -320,12 +408,17 @@ async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextC
     profile_name = _resolve_profile(params.profile, xml_bytes)
     syntax = _resolve_syntax(params.syntax, xml_bytes)
 
+    use_cloud = (params.cloud_validate or _KOSIT_ENABLE_ENV) and not _KOSIT_DISABLE_ENV_LEGACY
+
     validator_used: str
-    if params.use_local_only or _KOSIT_DISABLED:
+    if not use_cloud:
         result = await _validate_local(xml_bytes, profile_name, syntax)
         validator_used = "local_schematron"
     else:
-        kosit = KoSITValidator()
+        # DE-LC-2: no implicit default URL — the caller opting into cloud
+        # validation gets the explicitly-named [Unverified] sentinel unless
+        # a real endpoint is configured via EINVOICING_DE_KOSIT_VALIDATOR_URL.
+        kosit = KoSITValidator(KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL)
         kosit_result = await kosit.validate(xml_bytes)
         kosit_failed = any(
             e.rule_id == "KOSIT-HTTP" for e in kosit_result.errors
@@ -350,13 +443,21 @@ async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextC
 
     findings_errors = [
         ValidationFinding(
-            severity=e.severity, rule_id=e.rule_id, location=e.location, text=e.text
+            severity=e.severity,
+            rule_id=e.rule_id,
+            location=e.location,
+            text=e.text,
+            source=getattr(e, "source", ""),
         )
         for e in result.errors
     ]
     findings_warnings = [
         ValidationFinding(
-            severity=w.severity, rule_id=w.rule_id, location=w.location, text=w.text
+            severity=w.severity,
+            rule_id=w.rule_id,
+            location=w.location,
+            text=w.text,
+            source=getattr(w, "source", ""),
         )
         for w in result.warnings
     ] if params.strict else []

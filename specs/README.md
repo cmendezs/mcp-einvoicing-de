@@ -72,9 +72,46 @@ The `_PROFILE_TO_STYLESHEET` map in
 | `xrechnung_cii` | `xrechnung/resources/xrechnung/3.0.2/xsl/XRechnung-CII-validation.xsl` |
 | `xrechnung_ubl` | `xrechnung/resources/xrechnung/3.0.2/xsl/XRechnung-UBL-validation.xsl` |
 
+## DATEV (`specs/datev/`)
+
+Reference material for the `datev_export` tool's DATEV EXTF Buchungsstapel mapping.
+
+- **Source portal**: https://developer.datev.de/
+- **Format name / version**: EXTF Buchungsstapel, format version 13
+- **Retrieval date**: 2026-07-18
+- **Files bundled**:
+  - `EXTF_Buchungsstapel.csv` — sample export data (from `Musterdaten_DATEV_Format`),
+    dated 2025-06-18, format `EXTF`, doc-type `700`, name `Buchungsstapel`, version `13`
+  - `Format_Buchungsstapel.xml` — field-level format specification (`<Version>13</Version>`),
+    the primary source cited in `tools/datev_export.py`
+  - `Formate/*.xml` — the DATEV Format-Prüfprogramm's bundled format rulesets (text, 287 files)
+- **Deliberately not committed**: `DatevFormatPruefProgramm.exe`, the compiled Format-Prüfprogramm
+  v2.2.3.0 CLI validator. Unlike the CSV/XML text specs, distributing a proprietary DATEV
+  binary through a public git repository is a distinct redistribution question from excluding
+  it out of the PyPI wheel, and DATEV's actual terms of use for `developer.datev.de` downloads
+  were never verified `[Unverified]`. It is git-ignored (see `.gitignore`); re-download it from
+  `developer.datev.de` locally if you need it for the CI follow-up below.
+
+Consumer: [`tools/datev_export.py`](../src/mcp_einvoicing_de/tools/datev_export.py)
+cites `Format_Buchungsstapel.xml` field 9 (BU-Schlüssel) and field 10 (Belegdatum,
+`TTMM`) in its module docstring.
+
+**Follow-up**: wiring the DATEV Format-Prüfprogramm into CI (via Wine on Linux runners
+against a locally-supplied `.exe`, or by parsing the bundled `Formate/*.xml` rulesets
+directly instead) as a sanity check on `datev_export` output is tracked as a v0.8.1/v0.9.0
+follow-up; confirming DATEV's redistribution terms should happen first if the CLI binary
+approach is chosen.
+
 ## License notes
 
 - ZUGFeRD / Factur-X schemas: copyright FeRD and FNFE-MPE. Free to use for
   implementing and testing compliance with the ZUGFeRD and Factur-X standards.
 - KoSIT validator configuration: Apache 2.0 (see `xrechnung/LICENSE`).
 - CII D22B XSD: UN/CEFACT. Bundled in the FeRD release package.
+- DATEV EXTF Buchungsstapel format spec: copyright DATEV eG, distributed via
+  `developer.datev.de`. The CSV/XML text specs are bundled here for internal
+  reference only; not redistributed as part of the published PyPI wheel
+  (`specs/` lives outside `src/mcp_einvoicing_de/` and is excluded from the
+  package build). The compiled `DatevFormatPruefProgramm.exe` CLI validator is
+  additionally excluded from git entirely (not just the wheel) — see the DATEV
+  section above.

@@ -6,12 +6,12 @@
     "url": "https://github.com/cmendezs/mcp-einvoicing-de",
     "source": "github"
   },
-  "version": "0.7.1",
+  "version": "0.8.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "mcp-einvoicing-de",
-      "version": "0.7.1",
+      "version": "0.8.0",
       "transport": {
         "type": "stdio"
       },
@@ -23,8 +23,14 @@
           "format": "string"
         },
         {
+          "name": "EINVOICING_DE_KOSIT_ENABLE",
+          "description": "Set to 1 to opt in to remote KoSIT cloud validation by default across all invoice_validate calls (egresses the full invoice payload). Local Schematron only by default; callers can still opt in per-call with cloud_validate=True.",
+          "isRequired": false,
+          "format": "string"
+        },
+        {
           "name": "EINVOICING_DE_KOSIT_VALIDATOR_URL",
-          "description": "URL of a self-hosted KoSIT validation tool REST endpoint (e.g. http://localhost:8080/api/v1/validate). When set, remote KoSIT validation is enabled; when absent, local Schematron validation is used.",
+          "description": "URL of a self-hosted KoSIT validation tool REST endpoint (e.g. http://localhost:8080/api/v1/validate), used only when cloud validation is enabled (cloud_validate=True or EINVOICING_DE_KOSIT_ENABLE=1). Defaults to an [Unverified] validator.kosit.de endpoint if unset.",
           "isRequired": false,
           "format": "string"
         }
