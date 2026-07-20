@@ -5,7 +5,9 @@ import into DATEV Belegtransfer or DATEV Rechnungswesen. Maps ZUGFeRDInvoice
 line items, tax breakdown, and party identifiers to the DATEV
 Buchungsstapel (booking batch) format.
 
-DATEV format reference: developer.datev.de (EXTF 700 specification).
+DATEV format reference: developer.datev.de (EXTF 700 specification), primary
+source bundled at specs/datev/Format_Buchungsstapel.xml (field 9, BU-Schlüssel,
+4 chars max; field 10, Belegdatum, format TTMM).
 [NEED: confirm current EXTF version number against developer.datev.de]
 """
 
@@ -23,7 +25,7 @@ import mcp.types as types
 from mcp_einvoicing_core.xml_utils import format_error
 from pydantic import BaseModel, Field
 
-from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice
+from mcp_einvoicing_de.models.zugferd import GermanTaxCategory, ZUGFeRDInvoice, ZUGFeRDTax
 
 logger = logging.getLogger(__name__)
 
@@ -106,27 +108,79 @@ TOOL_DATEV_EXPORT = types.Tool(
 
 
 def _format_datev_date(d: date) -> str:
-    """Format a date as DDMM for DATEV Buchungsstapel Belegdatum."""
-    return f"{d.day:d}{d.month:02d}"
+    """Format a date as TTMM for DATEV Buchungsstapel Belegdatum (field 10).
 
-
-def _tax_code_from_rate(rate: Decimal) -> str:
-    """Map a VAT rate to a DATEV BU-Schlüssel (tax code).
-
-    Common German tax codes in the DATEV Buchungsstapel:
-    - 0 = no automatic tax posting
-    - 2 = 7% reduced rate
-    - 3 = 19% standard rate
-    - 8 = tax-exempt (§4 UStG)
-    - 9 = reverse charge (§13b UStG)
+    Source: specs/datev/Format_Buchungsstapel.xml field 10
+    (<FormatExpression>TTMM</FormatExpression>).
     """
+    return f"{d.day:02d}{d.month:02d}"
+
+
+def _bu_key(category: GermanTaxCategory, rate: Decimal, line_kind: str = "revenue") -> str:
+    """Map a VAT category + rate to a DATEV BU-Schlüssel (tax code, field 9).
+
+    Source: specs/datev/Format_Buchungsstapel.xml field 9 (BU-Schlüssel, 4
+    chars max). ``line_kind`` is "revenue" for the sales/Ausgangsrechnung
+    bookings this tool produces (Debitoren-Sammelkonto debit / Erlöskonto
+    credit); "expense" codes are included for API completeness but are not
+    reachable from this tool's own call sites today.
+
+    Values marked [Verified locally] were confirmed against the bundled
+    DATEV EXTF_Buchungsstapel.csv sample ("Schreibwaren" row: BU 9, 19%
+    Vorsteuer). Others are [Unverified] pending confirmation against the
+    developer.datev.de Appendix > "Buchungsschlüssel (BU)" page — tracked as
+    a v0.8.1 follow-up.
+    """
+    if category == GermanTaxCategory.REVERSE_CHARGE:
+        return "94"  # [Unverified] §13b UStG reverse charge
+    if category == GermanTaxCategory.INTRA_COMMUNITY:
+        return "91"  # [Unverified] §4 Nr. 1b UStG intra-community supply
+    if category in (
+        GermanTaxCategory.EXEMPT,
+        GermanTaxCategory.SERVICES_OUTSIDE_SCOPE,
+        GermanTaxCategory.EXPORT,
+        GermanTaxCategory.NOT_SUBJECT,
+    ):
+        return ""  # no Automatik-BU; book to a manual tax-exempt account
+    # category == STANDARD (GermanTaxCategory.REDUCED is an alias of STANDARD;
+    # the 7%/19% distinction is carried by `rate`, not by category).
+    if line_kind == "revenue":
+        return ""  # [Unverified] revenue Automatikkonto already encodes the rate (SKR03/04)
     if rate == Decimal("19") or rate == Decimal("19.00"):
-        return "3"
+        return "9"  # [Verified locally] Vorsteuer 19% — EXTF_Buchungsstapel.csv "Schreibwaren" row
     if rate == Decimal("7") or rate == Decimal("7.00"):
-        return "2"
-    if rate == Decimal("0") or rate == Decimal("0.00"):
-        return "8"
-    return "0"
+        return "8"  # [Unverified] Vorsteuer 7%
+    return ""
+
+
+def _resolve_line_tax(
+    item: Any, tax_lines: list[ZUGFeRDTax]
+) -> tuple[GermanTaxCategory, Decimal]:
+    """Resolve the (category, rate) pair for one invoice line.
+
+    Matches the line's own `tax_category` + `tax_rate` against the invoice's
+    VAT breakdown (`tax_lines`) so mixed-rate and reverse-charge invoices are
+    keyed correctly instead of applying `tax_lines[0]` to every line
+    (DE-TL-1). Falls back to `tax_lines[0]` — and logs a warning that the
+    export is degraded — only when no matching breakdown entry is found.
+    """
+    item_category = getattr(item, "tax_category", None)
+    item_rate = getattr(item, "tax_rate", None)
+    if item_category is not None and item_rate is not None:
+        for tax_line in tax_lines:
+            if tax_line.category == item_category and tax_line.rate == item_rate:
+                return GermanTaxCategory(item_category), item_rate
+
+    logger.warning(
+        "Line %s: no matching tax_lines entry for category=%s rate=%s; "
+        "falling back to tax_lines[0] (degraded export)",
+        getattr(item, "line_id", "?"),
+        item_category,
+        item_rate,
+    )
+    if tax_lines:
+        return tax_lines[0].category, tax_lines[0].rate
+    return GermanTaxCategory.STANDARD, Decimal("19")
 
 
 def _build_extf_header(
@@ -210,15 +264,22 @@ async def handle_datev_export(arguments: dict[str, Any]) -> list[types.TextConte
 
     if invoice.line_items:
         for item in invoice.line_items:
-            net = item.net_amount or Decimal("0")
-            rate = Decimal("19")
-            if invoice.tax_lines:
-                rate = invoice.tax_lines[0].rate
-            tax_code = _tax_code_from_rate(rate)
+            category, rate = _resolve_line_tax(item, invoice.tax_lines)
+            tax_code = _bu_key(category, rate, line_kind="revenue")
             desc = item.description or item.name or f"Line {item.line_id}"
 
+            # Post gross (net + line VAT) in both branches (DE-TL-3): the
+            # no-lines branch below always posts invoice.tax_inclusive_amount
+            # (gross); the per-line branch previously posted net only,
+            # producing inconsistent totals for mixed-rate invoices.
+            # [Verified locally] against the bundled DATEV EXTF sample
+            # ("Aufteilung AR ohne Automatikkonto": 1190,00 = 1000,00 net +
+            # 190,00 VAT at 19% — brutto).
+            line_tax = (item.line_net_amount * rate / Decimal("100")).quantize(Decimal("0.01"))
+            gross = item.line_net_amount + line_tax
+
             records.append(_build_booking_record(
-                amount=net,
+                amount=gross,
                 debit_credit="S",
                 account=params.receivable_account,
                 contra_account=params.revenue_account,
@@ -228,10 +289,12 @@ async def handle_datev_export(arguments: dict[str, Any]) -> list[types.TextConte
                 description=desc,
             ))
     else:
+        category = GermanTaxCategory.STANDARD
         rate = Decimal("19")
         if invoice.tax_lines:
+            category = invoice.tax_lines[0].category
             rate = invoice.tax_lines[0].rate
-        tax_code = _tax_code_from_rate(rate)
+        tax_code = _bu_key(category, rate, line_kind="revenue")
 
         records.append(_build_booking_record(
             amount=invoice.tax_inclusive_amount,

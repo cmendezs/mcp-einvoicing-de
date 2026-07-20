@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mcp-einvoicing-de"
-version = "0.7.1"
+version = "0.8.0"
 description = "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -64,7 +64,6 @@ dev = [
 
 [project.scripts]
 mcp-einvoicing-de = "mcp_einvoicing_de.server:main"
-mcp-einvoicing-de-download-rules = "mcp_einvoicing_de.download_rules:main"
 
 [project.urls]
 Homepage = "https://github.com/cmendezs/mcp-einvoicing-de"

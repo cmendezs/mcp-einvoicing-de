@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 
@@ -61,25 +61,23 @@ class XRechnungInvoice(ZUGFeRDInvoice):
 
     model_config = {"populate_by_name": True}
 
-    @field_validator("buyer_reference", mode="after")
-    @classmethod
-    def validate_buyer_reference_leitweg(cls, v: str) -> str:
-        """Validate Leitweg-ID format and check digit when the reference looks like one.
+    @model_validator(mode="after")
+    def validate_buyer_reference_leitweg(self) -> XRechnungInvoice:
+        """Validate Leitweg-ID check digit only in a B2G context (DE-SF-3).
 
-        XRechnung buyer_reference may be a Leitweg-ID (B2G) or a free-form
-        buyer reference string (B2B purchase order number, etc.).  Format and
-        check-digit validation is applied only when the value matches the
-        Leitweg-ID pattern so that legitimate non-Leitweg-ID references are
-        not rejected.
+        XRechnung buyer_reference may be a Leitweg-ID (B2G, mandatory
+        check-digit format) or a free-form buyer reference string (B2B
+        purchase order number, etc.). Gating on ``buyer.leitweg_id is not
+        None`` — rather than on whether buyer_reference merely *looks like* a
+        Leitweg-ID — avoids false-matching a B2B PO number that happens to
+        share the Leitweg-ID shape (e.g. "04011000-12345-67") and rejecting a
+        legitimate invoice over a check digit that was never meant to apply.
         """
-        from mcp_einvoicing_de.utils.leitweg import (  # noqa: PLC0415
-            looks_like_leitweg_id,
-            validate_leitweg_id,
-        )
+        from mcp_einvoicing_de.utils.leitweg import validate_leitweg_id  # noqa: PLC0415
 
-        if looks_like_leitweg_id(v):
-            validate_leitweg_id(v)
-        return v
+        if self.buyer.leitweg_id is not None:
+            validate_leitweg_id(self.buyer_reference)
+        return self
 
     def model_post_init(self, __context: object) -> None:
         # Enforce XRECHNUNG regardless of any caller-supplied profile value.

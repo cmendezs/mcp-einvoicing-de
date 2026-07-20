@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+import mcp_einvoicing_de.tools.invoice_validate as invoice_validate_module
 from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 from mcp_einvoicing_de.tools.invoice_validate import (
@@ -14,6 +15,22 @@ from mcp_einvoicing_de.tools.invoice_validate import (
     handle_invoice_validate,
 )
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
+from mcp_einvoicing_de.validators.schematron import ValidationResult
+
+
+class _RecordingKoSIT:
+    """Stand-in for KoSITValidator that records construction/calls with no HTTP."""
+
+    instances: int = 0
+    validate_calls: int = 0
+    _UNVERIFIED_DEFAULT_KOSIT_URL = "https://validator.kosit.de/api/v1/validate"
+
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        type(self).instances += 1
+
+    async def validate(self, xml_bytes: bytes, filename: str = "invoice.xml") -> ValidationResult:
+        type(self).validate_calls += 1
+        return ValidationResult(is_valid=True)
 
 # ── Unit tests — input model ──────────────────────────────────────────────────
 
@@ -156,3 +173,61 @@ class TestHandleInvoiceValidate:
         data = json.loads(result[0].text)
         if "warnings" in data:
             assert data["warnings"] == []
+
+
+# ── DE-LC-1: cloud validation is opt-in, default is local-only ───────────────
+
+
+class TestCloudValidateOptIn:
+    @pytest.fixture(autouse=True)
+    def _patch_kosit(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        _RecordingKoSIT.instances = 0
+        _RecordingKoSIT.validate_calls = 0
+        monkeypatch.setattr(invoice_validate_module, "KoSITValidator", _RecordingKoSIT)
+
+    @pytest.mark.asyncio
+    async def test_default_call_makes_no_kosit_call(self, minimal_cii_xml: bytes) -> None:
+        result = await handle_invoice_validate({
+            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
+        })
+        data = json.loads(result[0].text)
+        assert _RecordingKoSIT.instances == 0
+        assert _RecordingKoSIT.validate_calls == 0
+        assert data.get("validator_used") == "local_schematron"
+
+    @pytest.mark.asyncio
+    async def test_cloud_validate_true_calls_kosit(self, minimal_cii_xml: bytes) -> None:
+        result = await handle_invoice_validate({
+            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
+            "cloud_validate": True,
+        })
+        data = json.loads(result[0].text)
+        assert _RecordingKoSIT.instances == 1
+        assert _RecordingKoSIT.validate_calls == 1
+        assert data.get("validator_used") == "kosit_cloud"
+
+    @pytest.mark.asyncio
+    async def test_deprecated_use_local_only_true_avoids_kosit_and_warns(
+        self, minimal_cii_xml: bytes
+    ) -> None:
+        with pytest.warns(DeprecationWarning, match="use_local_only is deprecated"):
+            result = await handle_invoice_validate({
+                "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
+                "use_local_only": True,
+            })
+        data = json.loads(result[0].text)
+        assert _RecordingKoSIT.instances == 0
+        assert data.get("validator_used") == "local_schematron"
+
+    @pytest.mark.asyncio
+    async def test_deprecated_use_local_only_false_opts_into_cloud(
+        self, minimal_cii_xml: bytes
+    ) -> None:
+        with pytest.warns(DeprecationWarning, match="use_local_only is deprecated"):
+            result = await handle_invoice_validate({
+                "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
+                "use_local_only": False,
+            })
+        data = json.loads(result[0].text)
+        assert _RecordingKoSIT.instances == 1
+        assert data.get("validator_used") == "kosit_cloud"

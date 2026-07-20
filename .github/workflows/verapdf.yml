@@ -1,0 +1,69 @@
+name: veraPDF PDF/A-3 conformance
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+
+jobs:
+  verapdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      - run: uv sync --all-extras
+
+      - name: Generate Factur-X / XRechnung PDF/A-3 samples
+        run: uv run python scripts/generate_verapdf_samples.py verapdf-samples
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # [Unverified] veraPDF greenfield installer version pin — confirm the
+      # latest release at https://github.com/veraPDF/veraPDF-apps/releases
+      # before relying on this job; update VERAPDF_VERSION if it has moved.
+      - name: Install veraPDF CLI
+        env:
+          VERAPDF_VERSION: "1.24.1"
+        run: |
+          curl -sSL -o verapdf-installer.zip \
+            "https://github.com/veraPDF/veraPDF-apps/releases/download/v${VERAPDF_VERSION}/verapdf-greenfield-${VERAPDF_VERSION}-installer.zip"
+          unzip -q verapdf-installer.zip -d verapdf-installer
+          cat > verapdf-installer/auto-install.xml <<'EOF'
+          <AutomatedInstallation langpack="eng">
+            <com.izforge.izpack.panels.htmlhello.HTMLHelloPanel id="welcome"/>
+            <com.izforge.izpack.panels.target.TargetPanel id="target">
+              <installpath>${PWD}/verapdf</installpath>
+            </com.izforge.izpack.panels.target.TargetPanel>
+            <com.izforge.izpack.panels.packs.PacksPanel id="packs">
+              <pack index="0" name="Core files" selected="true"/>
+            </com.izforge.izpack.panels.packs.PacksPanel>
+            <com.izforge.izpack.panels.install.InstallPanel id="install"/>
+            <com.izforge.izpack.panels.finish.FinishPanel id="finish"/>
+          </AutomatedInstallation>
+          EOF
+          java -jar verapdf-installer/*/verapdf-izpack-installer-*.jar \
+            verapdf-installer/auto-install.xml
+          echo "$PWD/verapdf" >> "$GITHUB_PATH"
+
+      - name: Validate PDF/A-3b conformance
+        run: |
+          set -e
+          for f in verapdf-samples/*.pdf; do
+            echo "== $f =="
+            verapdf --format text --profile 3b "$f" | tee "$f.verapdf.txt"
+            if grep -q "PDF_VALIDATION_FAILED\|non compliant\|INVALID" "$f.verapdf.txt"; then
+              echo "veraPDF reported non-conformance for $f"
+              exit 1
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verapdf-samples
+          path: verapdf-samples/

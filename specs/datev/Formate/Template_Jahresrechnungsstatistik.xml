@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone="yes"?>
+<FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>
+  <FormatTemplate>
+    <FormatTemplateId>95</FormatTemplateId>
+    <Name>Jahresrechnungsstatistik</Name>
+    <Importable>0</Importable>
+    <Exportable>1</Exportable>
+    <DataCategory>Stammdaten|Finanzrechnung|Kommunale Statistiken|Jahresrechnungsstatistik</DataCategory>
+    <Version>1</Version>
+    <OrdinalNumber>55</OrdinalNumber>
+    <DisplayOptionsRequired>AllgemeinMandantenDaten:NutzungFinanzrechnung</DisplayOptionsRequired>
+  </FormatTemplate>
+</FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>

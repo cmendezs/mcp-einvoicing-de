@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" standalone="yes"?>
+<FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>
+  <FormatTemplate>
+    <FormatTemplateId>600</FormatTemplateId>
+    <Name>Anlagenbuchführung - Gdpdu</Name>
+    <Importable>0</Importable>
+    <Exportable>0</Exportable>
+    <DataCategory>GDPdU|Anlag</DataCategory>
+    <Version>1</Version>
+    <OrdinalNumber>34</OrdinalNumber>
+  </FormatTemplate>
+</FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>

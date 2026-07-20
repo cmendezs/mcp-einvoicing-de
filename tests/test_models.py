@@ -71,11 +71,14 @@ class TestXRechnungInvoice:
         xr = XRechnungInvoice.model_validate(data)
         assert xr.syntax == XRechnungSyntax.CII
 
-    def test_buyer_reference_invalid_leitweg_rejected(
+    def test_buyer_reference_invalid_leitweg_rejected_when_b2g(
         self, minimal_invoice: ZUGFeRDInvoice
     ) -> None:
-        """Leitweg-ID with wrong check digit must be rejected."""
+        """DE-SF-3: a bad check digit is only rejected in a B2G context, i.e.
+        when the buyer party carries an explicit ``leitweg_id``.
+        """
         data = minimal_invoice.model_dump()
+        data["buyer"]["leitweg_id"] = "991-1234512345-01"
         data["buyer_reference"] = "991-1234512345-06"  # mod-97 = 6, not 1
         with pytest.raises(ValidationError, match="check digit"):
             XRechnungInvoice.model_validate(data)
@@ -88,6 +91,27 @@ class TestXRechnungInvoice:
         data["buyer_reference"] = "PO-2025-98765"  # purchase order, not a Leitweg-ID
         xr = XRechnungInvoice.model_validate(data)
         assert xr.buyer_reference == "PO-2025-98765"
+
+    def test_b2b_po_shaped_like_leitweg_not_false_matched(
+        self, minimal_invoice: ZUGFeRDInvoice
+    ) -> None:
+        """DE-SF-3 regression: a B2B purchase-order reference that happens to
+        match the Leitweg-ID shape (including a check digit that would be
+        invalid as a real Leitweg-ID) must be accepted when the buyer party
+        has no ``leitweg_id`` set — it is not a routing identifier here.
+        """
+        data = minimal_invoice.model_dump()
+        assert data["buyer"].get("leitweg_id") is None
+        data["buyer_reference"] = "04011000-12345-67"  # looks like a Leitweg-ID, bad check digit
+        xr = XRechnungInvoice.model_validate(data)
+        assert xr.buyer_reference == "04011000-12345-67"
+
+    def test_b2g_valid_leitweg_accepted(self, minimal_invoice: ZUGFeRDInvoice) -> None:
+        data = minimal_invoice.model_dump()
+        data["buyer"]["leitweg_id"] = "991-1234512345-01"
+        data["buyer_reference"] = "991-1234512345-01"
+        xr = XRechnungInvoice.model_validate(data)
+        assert xr.buyer_reference == "991-1234512345-01"
 
 
 class TestLeitwegIdValidator:

@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" standalone="yes"?>
+<FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>
+  <Format>
+    <FormatId>18</FormatId>
+    <Name>Geschäftspartner (Bankverb.)</Name>
+    <Importable>1</Importable>
+    <Exportable>1</Exportable>
+    <DataCategory>Stammdaten|Kunden/Lieferanten|Geschäftspartner (Bankverb.)</DataCategory>
+    <Description>Neue Geschäftspartner</Description>
+    <StandardType>1</StandardType>
+    <GroupSeperator>.</GroupSeperator>
+    <DecimalSeperator>,</DecimalSeperator>
+    <DateFormatExpression>TT.MM.JJ</DateFormatExpression>
+    <DateFormatSeperator>.</DateFormatSeperator>
+    <CurrencySignExpression>+x</CurrencySignExpression>
+    <DirectoryName />
+    <FileName />
+    <Version>1</Version>
+    <IsDefaultFormat>0</IsDefaultFormat>
+  </Format>
+  <CsvFormatProperties>
+    <CsvFormatPropertiesId>1</CsvFormatPropertiesId>
+    <FormatId>1</FormatId>
+    <SeperatorField>;</SeperatorField>
+    <SeperatorText>"</SeperatorText>
+    <DoubleTextSeperator>1</DoubleTextSeperator>
+    <LayoutStyle>variabel</LayoutStyle>
+    <Alignment>Type</Alignment>
+    <Coding>ANSI</Coding>
+    <RowFrom>1</RowFrom>
+    <RowTo>-1</RowTo>
+    <Header>0</Header>
+    <Headline>1</Headline>
+    <EndLineWithSeperatorText>0</EndLineWithSeperatorText>
+  </CsvFormatProperties>
+</FormatTemplate_x0020_for_x0020_Import_x002F_Export_x0020_Irw>
