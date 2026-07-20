@@ -23,15 +23,14 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # [Unverified] veraPDF greenfield installer version pin — confirm the
-      # latest release at https://github.com/veraPDF/veraPDF-apps/releases
-      # before relying on this job; update VERAPDF_VERSION if it has moved.
+      # veraPDF does not publish GitHub Releases assets; the greenfield
+      # installer is served unversioned from software.verapdf.org (confirmed
+      # 2026-07-20: HTTP 200, valid zip, current release 1.30.2). No version
+      # pin needed — this URL always resolves to the current release build.
       - name: Install veraPDF CLI
-        env:
-          VERAPDF_VERSION: "1.24.1"
         run: |
           curl -sSL -o verapdf-installer.zip \
-            "https://github.com/veraPDF/veraPDF-apps/releases/download/v${VERAPDF_VERSION}/verapdf-greenfield-${VERAPDF_VERSION}-installer.zip"
+            "https://software.verapdf.org/rel/verapdf-installer.zip"
           unzip -q verapdf-installer.zip -d verapdf-installer
           cat > verapdf-installer/auto-install.xml <<'EOF'
           <AutomatedInstallation langpack="eng">
