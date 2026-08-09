@@ -73,7 +73,6 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "TypeVar",
         "abstractmethod",
         "assert_not_read_only",
-        "scrub",
     },
     # XAdES signing is ES-specific (Facturae / TicketBAI). DE applies no
     # document-level signing for ZUGFeRD or XRechnung.
@@ -93,6 +92,10 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         # FR Chorus Pro; ZUGFeRD and XRechnung apply no such wrapper signature.
         "CAdESSigner",
         "CAdESSignerConfig",
+        # OVERRIDE-REASON: load_certificate_der (core v1.16.0) loads a PKCS#12/DER
+        # certificate for AuthMode.JWS (Spanish FACe integrator API); DE has no
+        # JWS-authenticated lifecycle integration.
+        "load_certificate_der",
         "abstractmethod",
         "dataclass",
         "datetime",
@@ -134,7 +137,9 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     },
     # OAuth2 client and types: DE has no live clearance API. ZUGFeRD and XRechnung
     # are post-audit formats; no government endpoint interaction is required.
-    # Remaining symbols are internal imports of http_client.py.
+    # JWSConfig (core v1.16.0, AuthMode.JWS) supports RS256/x5c JWT auth for the
+    # Spanish FACe integrator API — ES-specific, not applicable to any DE lifecycle
+    # integration. Remaining symbols are internal imports of http_client.py.
     "mcp_einvoicing_core.http_client": {
         "Any",
         "AuthMode",
@@ -145,6 +150,7 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "BaseSettings",
         "Enum",
         "Field",
+        "JWSConfig",
         "OAuthConfig",
         "OAuthValues",
         "Path",

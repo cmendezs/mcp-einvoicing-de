@@ -16,6 +16,7 @@ import logging
 from typing import Any
 
 import mcp.types as types
+from mcp_einvoicing_core.base_server import scrub
 from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field
@@ -168,7 +169,8 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
     except Exception as exc:
         return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
 
-    invoice_data = invoice.model_dump(mode="json")
+    invoice_data = scrub(invoice.model_dump(mode="json"))
+    raw_xml = xml_bytes.decode("utf-8", errors="replace") if params.include_raw_xml else None
     output = InvoiceParseOutput(
         profile=profile.name if profile else (invoice.profile.name if hasattr(invoice.profile, "name") else str(invoice.profile)),
         syntax=syntax.value,
@@ -179,7 +181,7 @@ async def handle_invoice_parse(arguments: dict[str, Any]) -> list[types.TextCont
         tax_inclusive_amount=str(invoice.tax_inclusive_amount),
         currency_code=invoice.currency_code,
         invoice_data=invoice_data,
-        raw_xml=xml_bytes.decode("utf-8", errors="replace") if params.include_raw_xml else None,
+        raw_xml=scrub(raw_xml) if raw_xml is not None else None,
     )
 
     return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
