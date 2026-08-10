@@ -72,7 +72,7 @@ pip install -e ".[dev]"
 
 | Extra | Purpose | Install |
 |-------|---------|---------|
-| `[xslt2]` | Saxon-HE backend for XSLT 2.0 Schematron stylesheets (FeRD Factur-X 1.08 and KoSIT XRechnung 3.0.2). Required for local Schematron validation; lxml supports XSLT 1.0 only. | `pip install mcp-einvoicing-de[xslt2]` |
+| `[xslt2]` | Saxon-HE backend for XSLT 2.0 Schematron stylesheets (FeRD Factur-X 1.09.2 and KoSIT XRechnung 3.0.2). Required for local Schematron validation; lxml supports XSLT 1.0 only. | `pip install mcp-einvoicing-de[xslt2]` |
 | `[pdf]` | Additional PDF utilities for embedded XML extraction (`pikepdf` is also a base dependency for PDF/A-3 generation). | `pip install mcp-einvoicing-de[pdf]` |
 | `[pymupdf]` | Alternative PDF engine (uses `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
 | `[dev]` | Development tools (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
@@ -230,7 +230,7 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 
 | Standard | Version | Profiles / Syntax |
 |----------|---------|-------------------|
-| ZUGFeRD | 2.3.2 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
+| ZUGFeRD | 2.5.2 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
 | XRechnung | 3.0.2 | CII (Cross Industry Invoice), UBL (Universal Business Language) |
 | EN 16931 | 2017 | European core data model for electronic invoicing |
 | Peppol BIS | 3.0 | Billing 3.0 (EN 16931-compliant) |
