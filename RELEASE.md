@@ -41,6 +41,16 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.8.2] - 2026-08-10
+#### Fixed
+- **BT-24 Specification Identifier bug (BLOCKING):** `ZUGFeRDProfile.BASIC` emitted the bare `urn:factur-x.eu:1p0:basic` (missing the required `urn:cen.eu:en16931:2017#compliant#` prefix); `ZUGFeRDProfile.EN_16931` emitted `urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931` instead of the correct bare `urn:cen.eu:en16931:2017`. Found by cross-checking against the package's own bundled `specs/examples/zugferd/{BASIC,EN16931}/` and `FACTUR-X_BASIC_codedb.xml` Schematron codelist, both of which already expected the corrected values. `models/zugferd.py`.
+
+#### Changed
+- **ZUGFeRD 2.5.2 / Factur-X 1.09.2 spec upgrade** (FeRD/FNFE-MPE release, effective 2026-09-01): replaced bundled `specs/zugferd/{MINIMUM,BASICWL,BASIC,EN16931,EXTENDED}/` schema, Schematron, and XSLT, the runtime copies in `src/mcp_einvoicing_de/rules/`, the example set in `specs/examples/zugferd/`, and `specs/documentation/zugferd/`. Upgraded from ZUGFeRD 2.4 / Factur-X 1.08. The D16B→D22B rebase was a non-issue — `specs/zugferd/XSD_CII_D22B/` was already D22B, byte-identical to the new release. `BR-CO-27`→`CII-SR-470` and the `BR-FXEXT-*` EXTENDED-profile rules were already present in the 1.08 assets. EXTENDED-profile BT-151/BT-151-0 cardinality relaxation only applies to `SubInvoiceLine`/subtype (BT-X-8) `GROUP`/`INFORMATION` lines, which `ZUGFeRDLineItem` does not model — no model change needed.
+
+#### Known issues
+- `BR-FXEXT-CO-15` fires on EXTENDED-profile invoices with a VAT total; reproduces under both the old and new bundled stylesheet, so it predates this release. Tracked as DE-ZF252-3 in `roadmap-2026.md`.
+
 ### [0.8.0] - 2026-07-20
 #### Fixed
 - **[DE-SC-1] BLOCKING:** `GermanTaxCategory.REDUCED` emitted invalid EN 16931 category `AA`, causing every reduced-rate (7%) invoice to be rejected by Schematron and by ZRE/OZG-RE. `REDUCED` now aliases the valid category `S`.
