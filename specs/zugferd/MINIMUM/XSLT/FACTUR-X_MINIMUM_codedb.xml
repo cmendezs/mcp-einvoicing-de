@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Factur-X release metadata
+     Version: 1.09.2
+     Release date: 2026-08-04
+     Effective date: 2026-09-01
+-->
 <codedb>
   <cl id="1">
     <enumeration value="urn:factur-x.eu:1p0:minimum"/>
@@ -311,8 +316,13 @@
     <enumeration value="0242"/>
     <enumeration value="0243"/>
     <enumeration value="0244"/>
+    <enumeration value="0245"/>
+    <enumeration value="0246"/>
+    <enumeration value="0247"/>
+    <enumeration value="0248"/>
   </cl>
   <cl id="5">
+    <enumeration value="1A"/>
     <enumeration value="AD"/>
     <enumeration value="AE"/>
     <enumeration value="AF"/>
@@ -557,6 +567,7 @@
     <enumeration value="VU"/>
     <enumeration value="WF"/>
     <enumeration value="WS"/>
+    <enumeration value="XI"/>
     <enumeration value="YE"/>
     <enumeration value="YT"/>
     <enumeration value="ZA"/>
@@ -570,7 +581,6 @@
     <enumeration value="AFN"/>
     <enumeration value="ALL"/>
     <enumeration value="AMD"/>
-    <enumeration value="ANG"/>
     <enumeration value="AOA"/>
     <enumeration value="ARS"/>
     <enumeration value="AUD"/>
@@ -579,7 +589,6 @@
     <enumeration value="BAM"/>
     <enumeration value="BBD"/>
     <enumeration value="BDT"/>
-    <enumeration value="BGN"/>
     <enumeration value="BHD"/>
     <enumeration value="BIF"/>
     <enumeration value="BMD"/>
@@ -732,6 +741,7 @@
     <enumeration value="XBC"/>
     <enumeration value="XBD"/>
     <enumeration value="XCD"/>
+    <enumeration value="XCG"/>
     <enumeration value="XDR"/>
     <enumeration value="XOF"/>
     <enumeration value="XPD"/>
@@ -751,7 +761,6 @@
     <enumeration value="AFN"/>
     <enumeration value="ALL"/>
     <enumeration value="AMD"/>
-    <enumeration value="ANG"/>
     <enumeration value="AOA"/>
     <enumeration value="ARS"/>
     <enumeration value="AUD"/>
@@ -760,7 +769,6 @@
     <enumeration value="BAM"/>
     <enumeration value="BBD"/>
     <enumeration value="BDT"/>
-    <enumeration value="BGN"/>
     <enumeration value="BHD"/>
     <enumeration value="BIF"/>
     <enumeration value="BMD"/>
@@ -913,6 +921,7 @@
     <enumeration value="XBC"/>
     <enumeration value="XBD"/>
     <enumeration value="XCD"/>
+    <enumeration value="XCG"/>
     <enumeration value="XDR"/>
     <enumeration value="XOF"/>
     <enumeration value="XPD"/>
@@ -932,7 +941,6 @@
     <enumeration value="AFN"/>
     <enumeration value="ALL"/>
     <enumeration value="AMD"/>
-    <enumeration value="ANG"/>
     <enumeration value="AOA"/>
     <enumeration value="ARS"/>
     <enumeration value="AUD"/>
@@ -941,7 +949,6 @@
     <enumeration value="BAM"/>
     <enumeration value="BBD"/>
     <enumeration value="BDT"/>
-    <enumeration value="BGN"/>
     <enumeration value="BHD"/>
     <enumeration value="BIF"/>
     <enumeration value="BMD"/>
@@ -1094,6 +1101,7 @@
     <enumeration value="XBC"/>
     <enumeration value="XBD"/>
     <enumeration value="XCD"/>
+    <enumeration value="XCG"/>
     <enumeration value="XDR"/>
     <enumeration value="XOF"/>
     <enumeration value="XPD"/>

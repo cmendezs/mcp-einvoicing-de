@@ -1,7 +1,8 @@
 """Pydantic models for ZUGFeRD 2.x invoices (all profiles).
 
-Reference: https://www.ferd-net.de/standards/zugferd-2.3/index.html
-Schema source: [NEED: official FeRD XSD download URL for ZUGFeRD 2.3]
+Reference: https://www.ferd-net.de/standards/zugferd-2-0/index.html
+Schema source: bundled FeRD/FNFE-MPE release package (ZUGFeRD 2.5.2 / Factur-X 1.09.2,
+effective 2026-09-01), see specs/README.md and specs/documentation/zugferd/
 """
 
 from __future__ import annotations
@@ -28,8 +29,8 @@ class ZUGFeRDProfile(StrEnum):
 
     MINIMUM = "urn:factur-x.eu:1p0:minimum"
     BASIC_WL = "urn:factur-x.eu:1p0:basicwl"
-    BASIC = "urn:factur-x.eu:1p0:basic"
-    EN_16931 = "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931"
+    BASIC = "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic"
+    EN_16931 = "urn:cen.eu:en16931:2017"
     EXTENDED = "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended"
     XRECHNUNG = "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0"
 
