@@ -16,12 +16,9 @@ Legal references:
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
-import mcp.types as types
-from mcp_einvoicing_core.xml_utils import format_error
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
@@ -133,26 +130,6 @@ _EXEMPTIONS: list[dict[str, Any]] = [
 ]
 
 
-class TaxRulesInput(BaseModel):
-    """Input schema for tax_rules."""
-
-    query: str = Field(
-        ...,
-        description=(
-            "What to look up. Examples: 'reverse_charge', 'rates', 'exemptions', "
-            "'kleinunternehmer', '13b', 'zero_rate', 'vatex_codes', "
-            "or a free-text question about German VAT."
-        ),
-    )
-    context: str | None = Field(
-        None,
-        description=(
-            "Optional context about the transaction, e.g. 'construction services' "
-            "or 'intra-community supply'. Used to filter relevant rules."
-        ),
-    )
-
-
 class TaxRulesOutput(BaseModel):
     """Output schema for tax_rules."""
 
@@ -168,40 +145,24 @@ class TaxRulesOutput(BaseModel):
     )
 
 
-TOOL_TAX_RULES = types.Tool(
-    name="tax_rules",
-    description=(
-        "Query German VAT rules for e-invoicing. "
-        "Returns structured information about VAT rates (19%, 7%), VAT category codes, "
-        "reverse charge rules under §13b UStG, zero-rate and exemption provisions (§4 UStG), "
-        "intra-community supply rules, and VATEX exemption reason codes. "
-        "For use when building invoice creation logic or validating VAT treatment."
-    ),
-    inputSchema={
-        "type": "object",
-        "required": ["query"],
-        "properties": {
-            "query": {
-                "type": "string",
-                "description": "What to look up: 'rates', 'reverse_charge', 'exemptions', 'vatex_codes', etc.",
-            },
-            "context": {
-                "type": "string",
-                "description": "Optional transaction context to filter results.",
-            },
-        },
-    },
-)
+async def tax_rules(query: str, context: str | None = None) -> dict[str, Any]:
+    """Query German VAT rules for e-invoicing.
 
+    Returns structured information about VAT rates (19%, 7%), VAT category
+    codes, reverse charge rules under §13b UStG, zero-rate and exemption
+    provisions (§4 UStG), intra-community supply rules, and VATEX exemption
+    reason codes. For use when building invoice creation logic or
+    validating VAT treatment.
 
-async def handle_tax_rules(arguments: dict[str, Any]) -> list[types.TextContent]:
-    """MCP handler for tax_rules."""
-    try:
-        params = TaxRulesInput.model_validate(arguments)
-    except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
-
-    query_lower = params.query.lower()
+    Args:
+        query: What to look up. Examples: 'reverse_charge', 'rates',
+            'exemptions', 'kleinunternehmer', '13b', 'zero_rate',
+            'vatex_codes', or a free-text question about German VAT.
+        context: Optional context about the transaction, e.g. 'construction
+            services' or 'intra-community supply'. Used to filter relevant
+            rules.
+    """
+    query_lower = query.lower()
     results: list[dict[str, Any]] = []
     notes: list[str] = []
 
@@ -210,8 +171,8 @@ async def handle_tax_rules(arguments: dict[str, Any]) -> list[types.TextContent]
 
     if any(kw in query_lower for kw in ("reverse", "13b", "§13b", "steuerschuld", "umkehr")):
         results.extend(_REVERSE_CHARGE_CASES)
-        if params.context:
-            context_lower = params.context.lower()
+        if context:
+            context_lower = context.lower()
             results = [
                 r for r in results
                 if any(kw in r.get("description_en", "").lower() for kw in context_lower.split())
@@ -242,5 +203,5 @@ async def handle_tax_rules(arguments: dict[str, Any]) -> list[types.TextContent]
         "effective 2025-01-01)."
     )
 
-    output = TaxRulesOutput(query=params.query, results=results, notes=notes)
-    return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
+    output = TaxRulesOutput(query=query, results=results, notes=notes)
+    return output.model_dump()

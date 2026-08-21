@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import json
 
 import pytest
 
@@ -12,7 +11,7 @@ from mcp_einvoicing_de.models.xrechnung import XRechnungSyntax
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDProfile
 from mcp_einvoicing_de.tools.invoice_validate import (
     InvoiceValidateInput,
-    handle_invoice_validate,
+    invoice_validate,
 )
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
 from mcp_einvoicing_de.validators.schematron import ValidationResult
@@ -129,8 +128,7 @@ class TestDetectZUGFeRDProfile:
 class TestHandleInvoiceValidate:
     @pytest.mark.asyncio
     async def test_missing_input_returns_error(self) -> None:
-        result = await handle_invoice_validate({})
-        data = json.loads(result[0].text)
+        data = await invoice_validate()
         assert "error" in data
 
     @pytest.mark.asyncio
@@ -140,37 +138,33 @@ class TestHandleInvoiceValidate:
         NO-STYLESHEET warning but does not error. The response structure must
         be well-formed regardless.
         """
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-        })
-        data = json.loads(result[0].text)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode()
+        )
         # Either a valid output or a stylesheet-missing warning — both are structured
         assert "error" in data or "is_valid" in data
 
     @pytest.mark.asyncio
     async def test_malformed_xml_is_invalid(self) -> None:
-        result = await handle_invoice_validate({"xml_content": "<broken"})
-        data = json.loads(result[0].text)
+        data = await invoice_validate(xml_content="<broken")
         # Should either be a parse error at the input level or a validation error
         assert "error" in data or data.get("is_valid") is False
 
     @pytest.mark.asyncio
     async def test_profile_override(self, minimal_cii_xml: bytes) -> None:
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-            "profile": "EN_16931",
-        })
-        data = json.loads(result[0].text)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+            profile="EN_16931",
+        )
         if "is_valid" in data:
             assert data["profile"] == "EN_16931"
 
     @pytest.mark.asyncio
     async def test_strict_false_omits_warnings(self, minimal_cii_xml: bytes) -> None:
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-            "strict": False,
-        })
-        data = json.loads(result[0].text)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+            strict=False,
+        )
         if "warnings" in data:
             assert data["warnings"] == []
 
@@ -187,21 +181,19 @@ class TestCloudValidateOptIn:
 
     @pytest.mark.asyncio
     async def test_default_call_makes_no_kosit_call(self, minimal_cii_xml: bytes) -> None:
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-        })
-        data = json.loads(result[0].text)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode()
+        )
         assert _RecordingKoSIT.instances == 0
         assert _RecordingKoSIT.validate_calls == 0
         assert data.get("validator_used") == "local_schematron"
 
     @pytest.mark.asyncio
     async def test_cloud_validate_true_calls_kosit(self, minimal_cii_xml: bytes) -> None:
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-            "cloud_validate": True,
-        })
-        data = json.loads(result[0].text)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+            cloud_validate=True,
+        )
         assert _RecordingKoSIT.instances == 1
         assert _RecordingKoSIT.validate_calls == 1
         assert data.get("validator_used") == "kosit_cloud"
@@ -211,11 +203,10 @@ class TestCloudValidateOptIn:
         self, minimal_cii_xml: bytes
     ) -> None:
         with pytest.warns(DeprecationWarning, match="use_local_only is deprecated"):
-            result = await handle_invoice_validate({
-                "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-                "use_local_only": True,
-            })
-        data = json.loads(result[0].text)
+            data = await invoice_validate(
+                xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+                use_local_only=True,
+            )
         assert _RecordingKoSIT.instances == 0
         assert data.get("validator_used") == "local_schematron"
 
@@ -224,10 +215,9 @@ class TestCloudValidateOptIn:
         self, minimal_cii_xml: bytes
     ) -> None:
         with pytest.warns(DeprecationWarning, match="use_local_only is deprecated"):
-            result = await handle_invoice_validate({
-                "xml_base64": base64.b64encode(minimal_cii_xml).decode(),
-                "use_local_only": False,
-            })
-        data = json.loads(result[0].text)
+            data = await invoice_validate(
+                xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+                use_local_only=False,
+            )
         assert _RecordingKoSIT.instances == 1
         assert data.get("validator_used") == "kosit_cloud"

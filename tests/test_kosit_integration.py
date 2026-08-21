@@ -7,12 +7,11 @@ Gated behind EINVOICING_DE_INTEGRATION_TESTS=1. Runs nightly, not on every PR.
 
 from __future__ import annotations
 
-import json
 import os
 
 import pytest
 
-from mcp_einvoicing_de.tools.invoice_validate import handle_invoice_validate
+from mcp_einvoicing_de.tools.invoice_validate import invoice_validate
 
 _INTEGRATION = os.environ.get("EINVOICING_DE_INTEGRATION_TESTS") == "1"
 pytestmark = pytest.mark.skipif(not _INTEGRATION, reason="Integration tests disabled")
@@ -31,10 +30,7 @@ def en16931_xml(minimal_invoice: object) -> str:
 class TestKoSITIntegration:
     @pytest.mark.asyncio
     async def test_kosit_cloud_validates_en16931(self, en16931_xml: str) -> None:
-        result = await handle_invoice_validate(
-            {"xml_content": en16931_xml, "kosit_strict": True}
-        )
-        data = json.loads(result[0].text)
+        data = await invoice_validate(xml_content=en16931_xml, kosit_strict=True)
         assert data["validator_used"] == "kosit_cloud", (
             f"Expected kosit_cloud but got {data['validator_used']}"
         )

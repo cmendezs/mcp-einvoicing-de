@@ -11,18 +11,15 @@ import asyncio
 import json
 
 from mcp_einvoicing_de.serializers import ZUGFeRDCIISerializer
-from mcp_einvoicing_de.tools.invoice_parse import handle_invoice_parse
+from mcp_einvoicing_de.tools.invoice_parse import invoice_parse
 
 
 def test_invoice_parse_redacts_iban_and_bic(minimal_invoice) -> None:
     xml_bytes = ZUGFeRDCIISerializer().serialize(minimal_invoice, pretty_print=False)
 
-    result = asyncio.run(
-        handle_invoice_parse(
-            {"xml_content": xml_bytes.decode("utf-8"), "include_raw_xml": True}
-        )
+    payload = asyncio.run(
+        invoice_parse(xml_content=xml_bytes.decode("utf-8"), include_raw_xml=True)
     )
-    payload = json.loads(result[0].text)
 
     assert "DE89370400440532013000" not in json.dumps(payload)
     assert "COBADEFFXXX" not in json.dumps(payload)

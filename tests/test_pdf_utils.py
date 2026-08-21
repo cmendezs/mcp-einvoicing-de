@@ -59,13 +59,8 @@ class TestParsePdfBase64Branch:
     async def test_pdf_branch_returns_structured_error_on_missing_attachment(
         self, minimal_invoice
     ) -> None:
-        import json
-
-        from mcp_einvoicing_de.tools.invoice_parse import handle_invoice_parse
+        from mcp_einvoicing_de.tools.invoice_parse import invoice_parse
 
         pdf_base = generate_pdf_invoice(minimal_invoice)
-        result = await handle_invoice_parse(
-            {"pdf_base64": base64.b64encode(pdf_base).decode("ascii")}
-        )
-        data = json.loads(result[0].text)
+        data = await invoice_parse(pdf_base64=base64.b64encode(pdf_base).decode("ascii"))
         assert "No ZUGFeRD" in data.get("error", "")

@@ -30,7 +30,7 @@ from mcp_einvoicing_de.serializers import (
     ZUGFeRDCIIParser,
     ZUGFeRDCIISerializer,
 )
-from mcp_einvoicing_de.tools.invoice_validate import handle_invoice_validate
+from mcp_einvoicing_de.tools.invoice_validate import invoice_validate
 
 _SAXON_AVAILABLE = importlib.util.find_spec("saxonche") is not None
 
@@ -169,13 +169,10 @@ class TestXRechnungSchematronChaining:
     """
 
     async def _validate(self, xml_bytes: bytes) -> dict:
-        import json
-
-        result = await handle_invoice_validate({
-            "xml_base64": base64.b64encode(xml_bytes).decode(),
-            "use_local_only": True,
-        })
-        return json.loads(result[0].text)
+        return await invoice_validate(
+            xml_base64=base64.b64encode(xml_bytes).decode(),
+            use_local_only=True,
+        )
 
     async def test_merged_report_includes_base_and_cius_findings(self) -> None:
         """A fixture missing BT-9/BT-20 (base rule) and BG-16/electronic

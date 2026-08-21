@@ -14,15 +14,12 @@ source bundled at specs/datev/Format_Buchungsstapel.xml (field 9, BU-Schlüssel,
 from __future__ import annotations
 
 import csv
-import json
 import logging
 from datetime import date
 from decimal import Decimal
 from io import StringIO
 from typing import Any
 
-import mcp.types as types
-from mcp_einvoicing_core.xml_utils import format_error
 from pydantic import BaseModel, Field
 
 from mcp_einvoicing_de.models.zugferd import GermanTaxCategory, ZUGFeRDInvoice, ZUGFeRDTax
@@ -40,34 +37,6 @@ _DEFAULT_REVENUE_ACCOUNT = "8400"  # Erlöse 19% USt (SKR 03)
 _DEFAULT_RECEIVABLE_ACCOUNT = "10000"  # Debitoren-Sammelkonto
 
 
-class DatevExportInput(BaseModel):
-    """Input schema for datev_export."""
-
-    invoice: dict[str, Any] = Field(
-        ..., description="ZUGFeRDInvoice data to export."
-    )
-    revenue_account: str = Field(
-        _DEFAULT_REVENUE_ACCOUNT,
-        description="DATEV revenue account number (Erlöskonto). Default: 8400 (SKR 03, 19% USt).",
-    )
-    receivable_account: str = Field(
-        _DEFAULT_RECEIVABLE_ACCOUNT,
-        description="DATEV receivable account number (Debitorenkonto). Default: 10000.",
-    )
-    consultant_number: str = Field(
-        "0",
-        description="DATEV Beraternummer (consultant number).",
-    )
-    client_number: str = Field(
-        "1",
-        description="DATEV Mandantennummer (client number).",
-    )
-    fiscal_year_start: str = Field(
-        "",
-        description="Fiscal year start date (YYYYMMDD). Defaults to Jan 1 of invoice year.",
-    )
-
-
 class DatevExportOutput(BaseModel):
     """Output schema for datev_export."""
 
@@ -75,36 +44,6 @@ class DatevExportOutput(BaseModel):
     record_count: int = Field(..., description="Number of booking records.")
     total_amount: str = Field(..., description="Total invoice amount.")
     invoice_number: str
-
-
-TOOL_DATEV_EXPORT = types.Tool(
-    name="datev_export",
-    description=(
-        "Export a ZUGFeRD invoice to DATEV CSV format (EXTF 700, Buchungsstapel). "
-        "Produces a CSV file importable by DATEV Belegtransfer or DATEV Rechnungswesen. "
-        "Maps invoice line items to DATEV booking records with configurable accounts."
-    ),
-    inputSchema={
-        "type": "object",
-        "required": ["invoice"],
-        "properties": {
-            "invoice": {"type": "object", "description": "ZUGFeRDInvoice data."},
-            "revenue_account": {
-                "type": "string",
-                "default": _DEFAULT_REVENUE_ACCOUNT,
-                "description": "DATEV revenue account (Erlöskonto).",
-            },
-            "receivable_account": {
-                "type": "string",
-                "default": _DEFAULT_RECEIVABLE_ACCOUNT,
-                "description": "DATEV receivable account (Debitorenkonto).",
-            },
-            "consultant_number": {"type": "string", "default": "0"},
-            "client_number": {"type": "string", "default": "1"},
-            "fiscal_year_start": {"type": "string", "default": ""},
-        },
-    },
-)
 
 
 def _format_datev_date(d: date) -> str:
@@ -248,23 +187,41 @@ def _build_booking_record(
     return record
 
 
-async def handle_datev_export(arguments: dict[str, Any]) -> list[types.TextContent]:
-    """MCP handler for datev_export."""
-    try:
-        params = DatevExportInput.model_validate(arguments)
-    except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+async def datev_export(
+    invoice: dict[str, Any],
+    revenue_account: str = _DEFAULT_REVENUE_ACCOUNT,
+    receivable_account: str = _DEFAULT_RECEIVABLE_ACCOUNT,
+    consultant_number: str = "0",
+    client_number: str = "1",
+    fiscal_year_start: str = "",
+) -> dict[str, Any]:
+    """Export a ZUGFeRD invoice to DATEV CSV format (EXTF 700, Buchungsstapel).
 
+    Produces a CSV file importable by DATEV Belegtransfer or DATEV
+    Rechnungswesen. Maps invoice line items to DATEV booking records with
+    configurable accounts.
+
+    Args:
+        invoice: ZUGFeRDInvoice data to export.
+        revenue_account: DATEV revenue account number (Erloskonto).
+            Default: 8400 (SKR 03, 19% USt).
+        receivable_account: DATEV receivable account number
+            (Debitorenkonto). Default: 10000.
+        consultant_number: DATEV Beraternummer (consultant number).
+        client_number: DATEV Mandantennummer (client number).
+        fiscal_year_start: Fiscal year start date (YYYYMMDD). Defaults to
+            Jan 1 of invoice year.
+    """
     try:
-        invoice = ZUGFeRDInvoice.model_validate(params.invoice)
+        invoice_model = ZUGFeRDInvoice.model_validate(invoice)
     except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps(format_error(f"Invalid invoice: {exc}")))]
+        return {"error": f"Invalid invoice: {exc}"}
 
     records: list[list[str]] = []
 
-    if invoice.line_items:
-        for item in invoice.line_items:
-            category, rate = _resolve_line_tax(item, invoice.tax_lines)
+    if invoice_model.line_items:
+        for item in invoice_model.line_items:
+            category, rate = _resolve_line_tax(item, invoice_model.tax_lines)
             tax_code = _bu_key(category, rate, line_kind="revenue")
             desc = item.description or item.name or f"Line {item.line_id}"
 
@@ -274,46 +231,46 @@ async def handle_datev_export(arguments: dict[str, Any]) -> list[types.TextConte
             # producing inconsistent totals for mixed-rate invoices.
             # [Verified locally] against the bundled DATEV EXTF sample
             # ("Aufteilung AR ohne Automatikkonto": 1190,00 = 1000,00 net +
-            # 190,00 VAT at 19% — brutto).
+            # 190,00 VAT at 19% brutto).
             line_tax = (item.line_net_amount * rate / Decimal("100")).quantize(Decimal("0.01"))
             gross = item.line_net_amount + line_tax
 
             records.append(_build_booking_record(
                 amount=gross,
                 debit_credit="S",
-                account=params.receivable_account,
-                contra_account=params.revenue_account,
+                account=receivable_account,
+                contra_account=revenue_account,
                 tax_code=tax_code,
-                invoice_date=invoice.invoice_date,
-                invoice_number=invoice.invoice_number,
+                invoice_date=invoice_model.invoice_date,
+                invoice_number=invoice_model.invoice_number,
                 description=desc,
             ))
     else:
         category = GermanTaxCategory.STANDARD
         rate = Decimal("19")
-        if invoice.tax_lines:
-            category = invoice.tax_lines[0].category
-            rate = invoice.tax_lines[0].rate
+        if invoice_model.tax_lines:
+            category = invoice_model.tax_lines[0].category
+            rate = invoice_model.tax_lines[0].rate
         tax_code = _bu_key(category, rate, line_kind="revenue")
 
         records.append(_build_booking_record(
-            amount=invoice.tax_inclusive_amount,
+            amount=invoice_model.tax_inclusive_amount,
             debit_credit="S",
-            account=params.receivable_account,
-            contra_account=params.revenue_account,
+            account=receivable_account,
+            contra_account=revenue_account,
             tax_code=tax_code,
-            invoice_date=invoice.invoice_date,
-            invoice_number=invoice.invoice_number,
-            description=f"Rechnung {invoice.invoice_number}",
+            invoice_date=invoice_model.invoice_date,
+            invoice_number=invoice_model.invoice_number,
+            description=f"Rechnung {invoice_model.invoice_number}",
         ))
 
     buf = StringIO()
     header = _build_extf_header(
-        consultant_number=params.consultant_number,
-        client_number=params.client_number,
-        fiscal_year_start=params.fiscal_year_start,
-        date_from=invoice.invoice_date,
-        date_to=invoice.invoice_date,
+        consultant_number=consultant_number,
+        client_number=client_number,
+        fiscal_year_start=fiscal_year_start,
+        date_from=invoice_model.invoice_date,
+        date_to=invoice_model.invoice_date,
     )
     buf.write(header + "\n")
 
@@ -324,7 +281,7 @@ async def handle_datev_export(arguments: dict[str, Any]) -> list[types.TextConte
     output = DatevExportOutput(
         csv_content=buf.getvalue(),
         record_count=len(records),
-        total_amount=str(invoice.tax_inclusive_amount),
-        invoice_number=invoice.invoice_number,
+        total_amount=str(invoice_model.tax_inclusive_amount),
+        invoice_number=invoice_model.invoice_number,
     )
-    return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
+    return output.model_dump()

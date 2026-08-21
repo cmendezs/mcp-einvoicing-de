@@ -148,6 +148,9 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
         "BaseEInvoicingConfig",
         "BaseModel",
         "BaseSettings",
+        # OVERRIDE-REASON: compute_retry_delay is an internal retry-backoff helper used by
+        # BaseEInvoicingClient's own request loop; DE calls the client, not this helper directly
+        "compute_retry_delay",
         "Enum",
         "Field",
         "JWSConfig",
@@ -182,13 +185,26 @@ _INTENTIONAL_OVERRIDES: dict[str, set[str]] = {
     # this via its own pdf utility; the core PDFEmbedder is unused.
     "mcp_einvoicing_core.pdf": {
         "PDFEmbedder",
+        # OVERRIDE-REASON: stdlib re-export in pdf module; not used directly by DE
+        "Union",
     },
-    # Peppol: DE imports PeppolEnvironment, PeppolParticipantId, and PeppolSMPClient
-    # for peppol_check. The remaining types and module-internal symbols are not used.
+    # ARCH-CONVERGE-DE resolved: peppol_check.py/peppol_send.py (DE's own hand-rolled
+    # Peppol tools) were deleted entirely; server.py now mounts the shared core
+    # plugin (mcp_einvoicing_core.peppol.tools.register_peppol_tools), which imports
+    # PeppolSMPClient/PeppolParticipantId/PeppolEnvironment/PEPPOL_BIS_BILLING_30
+    # itself. DE package code no longer imports Peppol client primitives directly.
     "mcp_einvoicing_core.peppol": {
         "Enum",
+        "PeppolEnvironment",
         "PeppolLookupResult",
+        "PeppolParticipantId",
+        "PeppolSMPClient",
         "PeppolServiceInfo",
+        "PEPPOL_BIS_BILLING_30",
+        # OVERRIDE-REASON: resolve_naptr (core v1.19.0) is a standalone DNS diagnostic;
+        # DE's mounted core plugin exposes it as the resolve_peppol_dns tool, DE package
+        # code itself has no direct call site
+        "resolve_naptr",
         "dataclass",
         "field",
     },
@@ -281,31 +297,33 @@ _REQUIRED_TOOL_CATEGORIES: dict[str, str] = {
     "invoice_validate": "Validate against EN 16931 + KoSIT Schematron",
     "invoice_parse": "Extract structured data from an invoice file",
     "invoice_convert": "Convert between profiles or syntaxes",
-    "peppol_check": "Verify Peppol participant registration",
-    "peppol_send": "Send invoice via Peppol AS4",
     "datev_export": "Export invoice to DATEV CSV format",
     "tax_rules": "German VAT rules helper",
 }
+
+# Peppol participant lookup/send/DNS/codelist tools are registered via the
+# shared core plugin (mcp_einvoicing_core.peppol.tools.register_peppol_tools,
+# mounted in server.py under the "peppol" plugin name), not DE-local
+# functions, so they are intentionally absent from _REQUIRED_TOOL_CATEGORIES.
+# peppol_check/peppol_send were removed entirely in this convergence. See
+# ARCH-CONVERGE-DE in roadmap-2026.md.
 
 
 def _collect_registered_tools() -> set[str]:
     registered: set[str] = set()
     try:
         tool_modules = [
-            ("mcp_einvoicing_de.tools.invoice_create", "TOOL_INVOICE_CREATE"),
-            ("mcp_einvoicing_de.tools.invoice_validate", "TOOL_INVOICE_VALIDATE"),
-            ("mcp_einvoicing_de.tools.invoice_parse", "TOOL_INVOICE_PARSE"),
-            ("mcp_einvoicing_de.tools.invoice_convert", "TOOL_INVOICE_CONVERT"),
-            ("mcp_einvoicing_de.tools.peppol_check", "TOOL_PEPPOL_CHECK"),
-            ("mcp_einvoicing_de.tools.peppol_send", "TOOL_PEPPOL_SEND"),
-            ("mcp_einvoicing_de.tools.datev_export", "TOOL_DATEV_EXPORT"),
-            ("mcp_einvoicing_de.tools.tax_rules", "TOOL_TAX_RULES"),
+            ("mcp_einvoicing_de.tools.invoice_create", "invoice_create"),
+            ("mcp_einvoicing_de.tools.invoice_validate", "invoice_validate"),
+            ("mcp_einvoicing_de.tools.invoice_parse", "invoice_parse"),
+            ("mcp_einvoicing_de.tools.invoice_convert", "invoice_convert"),
+            ("mcp_einvoicing_de.tools.datev_export", "datev_export"),
+            ("mcp_einvoicing_de.tools.tax_rules", "tax_rules"),
         ]
-        for mod_path, attr in tool_modules:
+        for mod_path, fn_name in tool_modules:
             mod, _ = _try_import(mod_path)
-            if mod and hasattr(mod, attr):
-                tool_obj = getattr(mod, attr)
-                registered.add(tool_obj.name)
+            if mod and hasattr(mod, fn_name):
+                registered.add(fn_name)
     except Exception:
         pass
     return registered
@@ -336,7 +354,8 @@ def run_check_2() -> CheckResult:
                     symbol=tool_name,
                     message=(
                         f"Required tool '{tool_name}' ({description}) is not registered "
-                        "in the MCP server. Add it to server.py _ALL_TOOLS and _TOOL_HANDLERS."
+                        "in the MCP server. Add it via mcp.tool() in server.py's "
+                        "_register_de_tools()."
                     ),
                 )
             )
@@ -466,7 +485,7 @@ def run_check_5() -> CheckResult:
     """CHECK 5 — DE-specific structural and completeness checks."""
     result = CheckResult(check_id="CHECK_5", name="DE-specific structural checks")
 
-    # 5a: Verify server.py exports _ALL_TOOLS and _TOOL_HANDLERS
+    # 5a: server.py imports cleanly and exposes mcp + main (ARCH-CONVERGE-DE)
     server_mod, err = _try_import("mcp_einvoicing_de.server")
     if server_mod is None:
         result.findings.append(
@@ -479,7 +498,7 @@ def run_check_5() -> CheckResult:
             )
         )
     else:
-        for attr in ("_ALL_TOOLS", "_TOOL_HANDLERS", "main"):
+        for attr in ("mcp", "main"):
             tag = "[OK]" if hasattr(server_mod, attr) else "[MISSING]"
             sev = SEVERITY_OK if hasattr(server_mod, attr) else SEVERITY_BLOCKING
             result.findings.append(
@@ -496,44 +515,33 @@ def run_check_5() -> CheckResult:
                 )
             )
 
-        # 5b: _ALL_TOOLS and _TOOL_HANDLERS must be in sync
-        all_tools = getattr(server_mod, "_ALL_TOOLS", [])
-        all_handlers = getattr(server_mod, "_TOOL_HANDLERS", {})
-        tool_names_from_list = {t.name for t in all_tools}
-        tool_names_from_handlers = set(all_handlers.keys())
-
-        for name in sorted(tool_names_from_list - tool_names_from_handlers):
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_5",
-                    tag="[MISSING_HANDLER]",
-                    severity=SEVERITY_BLOCKING,
-                    symbol=f"_TOOL_HANDLERS[{name!r}]",
-                    message=f"Tool '{name}' is in _ALL_TOOLS but has no handler in _TOOL_HANDLERS.",
+        # 5b: mcp must be an EInvoicingMCPServer instance
+        mcp_obj = getattr(server_mod, "mcp", None)
+        core_mod, _ = _try_import("mcp_einvoicing_core")
+        server_cls = getattr(core_mod, "EInvoicingMCPServer", None) if core_mod else None
+        if mcp_obj is not None and server_cls is not None:
+            if isinstance(mcp_obj, server_cls):
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag="[OK]",
+                        severity=SEVERITY_OK,
+                        symbol="server.mcp",
+                        message="server.mcp is an EInvoicingMCPServer instance.",
+                    )
                 )
-            )
-        for name in sorted(tool_names_from_handlers - tool_names_from_list):
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_5",
-                    tag="[MISSING_REGISTRATION]",
-                    severity=SEVERITY_WARNING,
-                    symbol=f"_ALL_TOOLS[{name!r}]",
-                    message=f"Handler '{name}' is in _TOOL_HANDLERS but not listed in _ALL_TOOLS.",
+            else:
+                result.findings.append(
+                    CheckFinding(
+                        check_id="CHECK_5",
+                        tag="[WRONG_TYPE]",
+                        severity=SEVERITY_WARNING,
+                        symbol="server.mcp",
+                        message=(
+                            f"server.mcp is {type(mcp_obj).__name__}, expected EInvoicingMCPServer."
+                        ),
+                    )
                 )
-            )
-        if not (tool_names_from_list - tool_names_from_handlers) and not (
-            tool_names_from_handlers - tool_names_from_list
-        ):
-            result.findings.append(
-                CheckFinding(
-                    check_id="CHECK_5",
-                    tag="[OK]",
-                    severity=SEVERITY_OK,
-                    symbol="_ALL_TOOLS ↔ _TOOL_HANDLERS",
-                    message=f"All {len(all_tools)} tools have matching handlers.",
-                )
-            )
 
     # 5c: Verify ZUGFeRDProfile enum covers required profiles
     models_mod, _ = _try_import("mcp_einvoicing_de.models.zugferd")

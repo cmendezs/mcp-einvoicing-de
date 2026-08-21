@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from datetime import date
 from decimal import Decimal
 
@@ -19,7 +18,7 @@ from mcp_einvoicing_de.models.zugferd import (
 from mcp_einvoicing_de.serializers import ZUGFeRDCIISerializer
 from mcp_einvoicing_de.tools.invoice_create import (
     _buyer_requires_de_b2b_mandate,
-    handle_invoice_create,
+    invoice_create,
 )
 
 
@@ -45,8 +44,7 @@ class TestInvoiceCreateHandler:
 
     @pytest.mark.asyncio
     async def test_default_xml_output_succeeds(self, invoice_payload: dict) -> None:
-        result = await handle_invoice_create({"invoice": invoice_payload})
-        data = json.loads(result[0].text)
+        data = await invoice_create(invoice=invoice_payload)
         assert "error" not in data
         assert "<rsm:CrossIndustryInvoice" in (data.get("xml_content") or "")
 
@@ -54,10 +52,7 @@ class TestInvoiceCreateHandler:
     async def test_pdf_output_rejected_for_de_buyer_without_opt_in(
         self, invoice_payload: dict
     ) -> None:
-        result = await handle_invoice_create(
-            {"invoice": invoice_payload, "output_format": "pdf"}
-        )
-        data = json.loads(result[0].text)
+        data = await invoice_create(invoice=invoice_payload, output_format="pdf")
         assert "DE B2B mandate" in data["error"]
         assert data["buyer_vat_id"] == "DE136695976"
 
@@ -65,14 +60,11 @@ class TestInvoiceCreateHandler:
     async def test_pdf_output_with_opt_in_succeeds(
         self, invoice_payload: dict
     ) -> None:
-        result = await handle_invoice_create(
-            {
-                "invoice": invoice_payload,
-                "output_format": "pdf",
-                "transitional_period_opt_in": True,
-            }
+        data = await invoice_create(
+            invoice=invoice_payload,
+            output_format="pdf",
+            transitional_period_opt_in=True,
         )
-        data = json.loads(result[0].text)
         assert "error" not in data
         assert "pdf_base64" in data or "xml_content" in data
 
@@ -100,10 +92,9 @@ class TestInvoiceCreateHandler:
             amount_due=Decimal("119.00"),
             tax_lines=[tax],
         )
-        result = await handle_invoice_create(
-            {"invoice": invoice.model_dump(mode="json"), "output_format": "pdf"}
+        data = await invoice_create(
+            invoice=invoice.model_dump(mode="json"), output_format="pdf"
         )
-        data = json.loads(result[0].text)
         assert "error" not in data
         assert data["pdf_base64"] is not None
 

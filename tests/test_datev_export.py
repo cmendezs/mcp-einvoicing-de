@@ -12,7 +12,6 @@ gross amount (net + VAT), not net-only in the per-line branch.
 
 from __future__ import annotations
 
-import json
 import logging
 from datetime import date
 from decimal import Decimal
@@ -32,7 +31,7 @@ from mcp_einvoicing_de.tools.datev_export import (
     _bu_key,
     _format_datev_date,
     _resolve_line_tax,
-    handle_datev_export,
+    datev_export,
 )
 
 _SELLER = ZUGFeRDParty(
@@ -169,14 +168,14 @@ def _make_invoice(*, with_lines: bool) -> ZUGFeRDInvoice:
 class TestHandleDatevExportGrossPosting:
     @pytest.mark.asyncio
     async def test_both_branches_post_the_same_gross_amount(self) -> None:
-        with_lines_result = await handle_datev_export(
-            {"invoice": _make_invoice(with_lines=True).model_dump(mode="json")}
+        with_lines_result = await datev_export(
+            invoice=_make_invoice(with_lines=True).model_dump(mode="json")
         )
-        no_lines_result = await handle_datev_export(
-            {"invoice": _make_invoice(with_lines=False).model_dump(mode="json")}
+        no_lines_result = await datev_export(
+            invoice=_make_invoice(with_lines=False).model_dump(mode="json")
         )
-        with_lines_csv = json.loads(with_lines_result[0].text)["csv_content"]
-        no_lines_csv = json.loads(no_lines_result[0].text)["csv_content"]
+        with_lines_csv = with_lines_result["csv_content"]
+        no_lines_csv = no_lines_result["csv_content"]
 
         with_lines_amount = with_lines_csv.splitlines()[1].split(";")[0]
         no_lines_amount = no_lines_csv.splitlines()[1].split(";")[0]
@@ -187,9 +186,9 @@ class TestHandleDatevExportGrossPosting:
 
     @pytest.mark.asyncio
     async def test_belegdatum_in_csv_is_zero_padded(self) -> None:
-        result = await handle_datev_export(
-            {"invoice": _make_invoice(with_lines=True).model_dump(mode="json")}
+        result = await datev_export(
+            invoice=_make_invoice(with_lines=True).model_dump(mode="json")
         )
-        csv_content = json.loads(result[0].text)["csv_content"]
+        csv_content = result["csv_content"]
         belegdatum = csv_content.splitlines()[1].split(";")[9]
         assert belegdatum == "0201"

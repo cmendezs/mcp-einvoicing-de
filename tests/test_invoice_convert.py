@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from mcp_einvoicing_de.models.zugferd import ZUGFeRDInvoice, ZUGFeRDProfile
 from mcp_einvoicing_de.serializers import ZUGFeRDCIISerializer
-from mcp_einvoicing_de.tools.invoice_convert import handle_invoice_convert
+from mcp_einvoicing_de.tools.invoice_convert import invoice_convert
 
 
 @pytest.fixture()
@@ -20,14 +18,11 @@ def en16931_cii_xml(minimal_invoice: ZUGFeRDInvoice) -> bytes:
 class TestInvoiceConvertHandler:
     @pytest.mark.asyncio
     async def test_profile_urn_swap_same_syntax(self, en16931_cii_xml: bytes) -> None:
-        result = await handle_invoice_convert(
-            {
-                "xml_content": en16931_cii_xml.decode("utf-8"),
-                "target_profile": "EXTENDED",
-                "target_syntax": "CII",
-            }
+        data = await invoice_convert(
+            xml_content=en16931_cii_xml.decode("utf-8"),
+            target_profile="EXTENDED",
+            target_syntax="CII",
         )
-        data = json.loads(result[0].text)
         assert data["source_profile"] == "EN_16931"
         assert data["target_profile"] == "EXTENDED"
         assert ZUGFeRDProfile.EXTENDED.value in data["xml_content"]
@@ -60,14 +55,11 @@ class TestInvoiceConvertHandler:
         ]
         xml = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=False)
 
-        result = await handle_invoice_convert(
-            {
-                "xml_content": xml.decode("utf-8"),
-                "target_profile": "MINIMUM",
-                "target_syntax": "CII",
-            }
+        data = await invoice_convert(
+            xml_content=xml.decode("utf-8"),
+            target_profile="MINIMUM",
+            target_syntax="CII",
         )
-        data = json.loads(result[0].text)
         assert "allow_data_loss" in data["error"]
 
     @pytest.mark.asyncio
@@ -76,14 +68,11 @@ class TestInvoiceConvertHandler:
             update={"profile": ZUGFeRDProfile.EN_16931, "buyer_reference": "BUYER-REF-001"}
         )
         cii_xml = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=False)
-        result = await handle_invoice_convert(
-            {
-                "xml_content": cii_xml.decode("utf-8"),
-                "target_profile": "XRECHNUNG",
-                "target_syntax": "UBL",
-            }
+        data = await invoice_convert(
+            xml_content=cii_xml.decode("utf-8"),
+            target_profile="XRECHNUNG",
+            target_syntax="UBL",
         )
-        data = json.loads(result[0].text)
         assert "error" not in data
         assert data["target_syntax"] == "UBL"
         assert data["target_profile"] == "XRECHNUNG"

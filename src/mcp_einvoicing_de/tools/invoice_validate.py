@@ -14,13 +14,11 @@ Official rule sources:
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import warnings
 from typing import Any
 
-import mcp.types as types
 from mcp_einvoicing_core.exceptions import EInvoicingError
 from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -170,71 +168,6 @@ class InvoiceValidateOutput(BaseModel):
 
 
 # ── MCP Tool definition ───────────────────────────────────────────────────────
-
-TOOL_INVOICE_VALIDATE = types.Tool(
-    name="invoice_validate",
-    description=(
-        "Validate a ZUGFeRD 2.x or XRechnung 3.x invoice XML against EN 16931 rules "
-        "and German KoSIT Schematron rules (BR-DE-* business rules). "
-        "Returns a structured validation report with errors and warnings. "
-        "Supports all ZUGFeRD profiles (MINIMUM through EXTENDED) and XRechnung "
-        "(CII and UBL syntax). Profile and syntax are auto-detected if not specified. "
-        "By default this validator runs entirely locally (Schematron only). Set "
-        "cloud_validate=True (or EINVOICING_DE_KOSIT_ENABLE=1) to opt in to sending "
-        "the invoice XML to a remote KoSIT endpoint. Doing so egresses the full "
-        "invoice payload."
-    ),
-    inputSchema={
-        "type": "object",
-        "properties": {
-            "xml_content": {
-                "type": "string",
-                "description": "Raw XML string of the invoice to validate.",
-            },
-            "xml_base64": {
-                "type": "string",
-                "description": "Base64-encoded XML bytes of the invoice.",
-            },
-            "profile": {
-                "type": "string",
-                "enum": ["MINIMUM", "BASIC_WL", "BASIC", "EN_16931", "EXTENDED", "XRECHNUNG"],
-                "description": "Override profile detection.",
-            },
-            "syntax": {
-                "type": "string",
-                "enum": ["CII", "UBL"],
-                "description": "Override syntax detection.",
-            },
-            "cloud_validate": {
-                "type": "boolean",
-                "default": False,
-                "description": (
-                    "Opt in to remote KoSIT cloud validation (egresses the full "
-                    "invoice payload). Local Schematron only by default."
-                ),
-            },
-            "use_local_only": {
-                "type": "boolean",
-                "description": "[Deprecated] Use cloud_validate instead (inverted).",
-            },
-            "kosit_strict": {
-                "type": "boolean",
-                "default": False,
-                "description": "Fail hard when KoSIT is unreachable (no fallback).",
-            },
-            "strict": {
-                "type": "boolean",
-                "default": True,
-                "description": "Include warnings in output.",
-            },
-        },
-        "anyOf": [
-            {"required": ["xml_content"]},
-            {"required": ["xml_base64"]},
-        ],
-    },
-)
-
 
 # ── Implementation ────────────────────────────────────────────────────────────
 
@@ -393,17 +326,63 @@ def _run_one_stylesheet(
     return validator.validate(xml_bytes, profile=profile_name, syntax=syntax)
 
 
-async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextContent]:
-    """MCP handler for invoice_validate."""
-    try:
-        params = InvoiceValidateInput.model_validate(arguments)
-    except Exception as exc:
-        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+async def invoice_validate(
+    xml_content: str | None = None,
+    xml_base64: str | None = None,
+    profile: str | None = None,
+    syntax: str | None = None,
+    cloud_validate: bool = False,
+    use_local_only: bool | None = None,
+    kosit_strict: bool = False,
+    strict: bool = True,
+) -> dict[str, Any]:
+    """Validate a ZUGFeRD 2.x or XRechnung 3.x invoice XML.
+
+    Checks against EN 16931 rules and German KoSIT Schematron rules
+    (BR-DE-* business rules). Returns a structured validation report with
+    errors and warnings. Supports all ZUGFeRD profiles (MINIMUM through
+    EXTENDED) and XRechnung (CII and UBL syntax). Profile and syntax are
+    auto-detected if not specified. By default this validator runs
+    entirely locally (Schematron only). Set cloud_validate=True (or
+    EINVOICING_DE_KOSIT_ENABLE=1) to opt in to sending the invoice XML to
+    a remote KoSIT endpoint. Doing so egresses the full invoice payload.
+
+    Args:
+        xml_content: Raw XML string of the invoice to validate. Provide
+            either xml_content or xml_base64, not both.
+        xml_base64: Base64-encoded XML bytes of the invoice.
+        profile: Override profile detection. One of: MINIMUM, BASIC_WL,
+            BASIC, EN_16931, EXTENDED, XRECHNUNG. If omitted, auto-detected
+            from the XML GuidelineID.
+        syntax: Override syntax detection. One of: CII, UBL. If omitted,
+            auto-detected from the XML root element namespace.
+        cloud_validate: Opt in to sending the invoice XML to a remote
+            KoSIT endpoint (egresses the full invoice payload). Local
+            Schematron only by default.
+        use_local_only: [Deprecated] Use cloud_validate instead.
+            use_local_only=True is equivalent to cloud_validate=False,
+            which is now the default; this alias is retained for one
+            release and will be removed.
+        kosit_strict: If True, fail hard when the KoSIT cloud validator is
+            unreachable instead of falling back to local Schematron.
+        strict: If True, warnings are also reported. If False, only
+            errors are returned.
+    """
+    params = InvoiceValidateInput(
+        xml_content=xml_content,
+        xml_base64=xml_base64,
+        profile=profile,
+        syntax=syntax,
+        cloud_validate=cloud_validate,
+        use_local_only=use_local_only,
+        kosit_strict=kosit_strict,
+        strict=strict,
+    )
 
     try:
         xml_bytes = params.get_xml_bytes()
     except (ValueError, EInvoicingError) as exc:
-        return [types.TextContent(type="text", text=json.dumps(format_error(str(exc))))]
+        return format_error(str(exc))
 
     profile_name = _resolve_profile(params.profile, xml_bytes)
     syntax = _resolve_syntax(params.syntax, xml_bytes)
@@ -473,4 +452,4 @@ async def handle_invoice_validate(arguments: dict[str, Any]) -> list[types.TextC
         validator_used=validator_used,
     )
 
-    return [types.TextContent(type="text", text=output.model_dump_json(indent=2))]
+    return output.model_dump()

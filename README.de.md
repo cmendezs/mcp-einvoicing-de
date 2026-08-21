@@ -30,7 +30,8 @@ mcp-einvoicing-de (dieses Paket, eigenständiger MCP-Server)
 ├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic-Modelle (alle Profile)
 ├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* Regeln
 ├── KoSITValidator                     ← Remote-Validierungstool (optional)
-└── Tools: create / validate / parse / convert / peppol_check / peppol_send / datev_export / tax_rules
+└── Tools: create / validate / parse / convert / datev_export / tax_rules
+    (+ Peppol-Werkzeug-Plugin des Core, separat eingebunden: lookup / send / DNS / codelists)
 
         ↑ erweitert
 mcp-einvoicing-core (gemeinsame Basis, als Abhängigkeit installiert)
@@ -88,9 +89,7 @@ Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen
 | `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
 | `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts. Wird nur verwendet, wenn die Cloud-Validierung aktiviert ist — siehe `EINVOICING_DE_KOSIT_ENABLE` | |
 | `EINVOICING_DE_KOSIT_ENABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung zu aktivieren (`validator.kosit.de` oder ein selbst gehosteter Endpunkt). Standardmaessig laeuft nur lokales Schematron | |
-| `EINVOICING_DE_PEPPOL_CERT_PATH` | Pfad zum X.509-Zertifikat fuer die Peppol-AS4-Signierung (PEM oder DER) | |
-| `EINVOICING_DE_PEPPOL_KEY_PATH` | Pfad zum privaten Schluessel fuer die Peppol-AS4-Signierung (PEM oder DER) | |
-| `EINVOICING_DE_PEPPOL_KEY_PASSWORD` | Passwort fuer den privaten Schluessel (falls verschluesselt) | |
+| `EINVOICING_PEPPOL_CODELIST_DIR` | Lokales Verzeichnis mit einer eigenen Kopie der OpenPeppol eDEC Code Lists, erforderlich fuer die Peppol-Codelist-Werkzeuge (nicht in diesem Paket enthalten; siehe README von `mcp-einvoicing-core`) | |
 
 ### 🤖 Integration Claude Desktop
 
@@ -147,10 +146,23 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 | `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. Standardmaessig laeuft nur lokale Schematron-Validierung (es verlassen keine Daten den eigenen Rechner); mit `cloud_validate=True` oder `EINVOICING_DE_KOSIT_ENABLE=1` die KoSIT-Cloud-Validierung (`validator.kosit.de` oder ein selbst gehosteter Endpunkt) mit exponentiellem Backoff-Retry (1s/2s/4s) aktivieren. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
 | `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml`. |
 | `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren, ZUGFeRD/XRechnung-CII-Header tauschen oder Cross-Syntax-Konvertierung CII/UBL ueber Core `convert_wire_format` durchfuehren. |
-| `peppol_check` | Peppol-Teilnehmerregistrierung eines deutschen Unternehmens ueber SMP/SML-Lookup pruefen. |
-| `peppol_send` | Rechnung an einen Peppol-Empfaenger per AS4-Ausgansuebermittlung senden. Konvertiert ZUGFeRD zu XRechnung UBL (Peppol BIS 3.0 Profil), signiert mit X.509-Zugangsdaten und gibt die AS4-Empfangsbestaetigung zurueck. Erfordert `EINVOICING_DE_PEPPOL_CERT_PATH` und `EINVOICING_DE_PEPPOL_KEY_PATH`. |
 | `datev_export` | ZUGFeRD-Rechnung als DATEV-EXTF-700-Buchungsstapel-CSV-Datei fuer den Import in DATEV-Buchhaltungssoftware exportieren. Standardmaessig SKR-03-Konten (8400 Erloese / 10000 Forderungen). |
 | `tax_rules` | Deutsche Umsatzsteuerregeln abfragen (Saetze, §13b-UStG-Reverse-Charge-Codes, §19-UStG-Kleinunternehmerschwellen nach JStG 2024 mit 25.000 EUR Vorjahr / 100.000 EUR laufendes Jahr, Befreiungen). |
+
+### Peppol-Netzwerkwerkzeuge
+
+Peppol-Teilnehmersuche, Suche nach Service-Endpunkten, eine reine DNS-Diagnose, AS4-Versand und die Codelist-Werkzeuge von OpenPeppol eDEC werden vom gemeinsamen Peppol-Werkzeug-Plugin des Core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`) bereitgestellt, das in `server.py` mit einem deutschlandspezifischen Identifikator-Adapter eingebunden ist: eine blanke USt-IdNr. (z. B. `123456789` oder `DE123456789`) wird auf das Peppol-Schema `9930:<Wert>` (`DE:VAT`) normalisiert; ein bereits schema-qualifizierter Identifikator (z. B. `9930:DE123456789` oder `0204:<Leitweg-ID>` fuer per Leitweg-ID geroutete B2G-Rechnungen) bleibt unveraendert. Fuer den Versand per AS4 zunaechst XRechnung UBL mit `invoice_convert` (oder `invoice_create` mit `target_syntax='UBL'`) erzeugen und das Ergebnis dann an `peppol_send` uebergeben.
+
+| Werkzeug | Beschreibung |
+|---|---|
+| `peppol_lookup_participant` | Prueft, ob ein Unternehmen im Peppol-Netzwerk registriert ist; liefert Registrierungsstatus und unterstuetzte Dokumenttypen |
+| `peppol_get_service_endpoint` | Ruft den AS4-Endpunkt fuer den Dokumenttyp eines Teilnehmers ab |
+| `resolve_peppol_dns` | Reine DNS-Diagnose (SML), unabhaengig von der SMP-Erreichbarkeit |
+| `peppol_send` | Uebertraegt eine UBL/CII-Rechnung per AS4 |
+| `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | OpenPeppol-eDEC-Codelist-Abfragen (erfordern `EINVOICING_PEPPOL_CODELIST_DIR`) |
+| `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | OpenPeppol-eDEC-Codelist-Pruefungen und Versionsabfrage |
+
+Vollstaendige Parameterdokumentation zu diesen Werkzeugen siehe [README von `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme).
 
 ---
 
@@ -195,16 +207,15 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 ### Beispiel 3: Peppol-Registrierung prüfen
 
 ```
-3. peppol_check(
-     participant_id="0204:991-1234512345-06",
+3. peppol_lookup_participant(
+     identifier="123456789",   # blanke USt-IdNr., normalisiert zu 9930:DE123456789
      environment="production"
    )
    → {
        "is_registered": true,
-       "participant_id": "0204:991-1234512345-06",
-       "document_type_supported": true,
-       "access_point_url": "https://ap.example.de/as4",
-       "transport_profile": "peppol-transport-as4-v2.0"
+       "participant_id": "9930:DE123456789",
+       "supported_document_types": ["urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0"],
+       "smp_hostname": "b-...iso6523-actorid-upis.edelivery.tech.ec.europa.eu"
      }
 ```
 
