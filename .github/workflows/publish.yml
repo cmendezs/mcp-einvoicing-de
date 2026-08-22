@@ -1,78 +1,42 @@
-name: CI / Publish to PyPI
+name: Publish to PyPI
 
 on:
   push:
-    branches: [main]
     tags:
       - "v*"
-  pull_request:
-    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
   contents: write   # write required to create GitHub Releases
   id-token: write   # required for OIDC trusted publisher (PyPI)
 
 jobs:
-  # ── 1. Tests ───────────────────────────────────────────────────────────────
-  test:
-    name: Test (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13"]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install package + dev dependencies (incl. pdf and xslt2 extras)
-        run: pip install -e ".[dev,pdf,xslt2]"
-
-      - name: Lint with ruff
-        run: ruff check src/mcp_einvoicing_de/ tests/ audit/
-
-      - name: Type-check with mypy
-        run: mypy src/mcp_einvoicing_de/
-        continue-on-error: true  # Non-blocking until type stubs are complete
-
-      - name: Run tests
-        run: pytest --tb=short
-
-      - name: Upload coverage report
-        if: matrix.python-version == '3.11'
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: htmlcov/
-
-  # ── 2. Pre-publish audit ───────────────────────────────────────────────────
+  # ── 1. Pre-publish audit gate (mandatory; never remove) ────────────────────
   audit:
     name: Pre-publish audit vs mcp-einvoicing-core
-    needs: test
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
 
-      - name: Install package + core
-        run: pip install -e ".[dev]"
+      - name: Install package + dev dependencies
+        # --no-sources + --upgrade: resolve mcp-einvoicing-core from PyPI, bypassing
+        # the stale committed lock (see ci.yml for the full explanation).
+        run: uv sync --all-extras --no-sources --upgrade
 
       - name: Run pre-publish audit
         # Exit code 2 = blocking failures → job fails → publish is blocked
         # Exit code 1 = warnings only     → job passes (informational)
-        run: python audit/audit_vs_core.py --output audit/report.json --fail-on blocking
+        run: uv run python audit/audit_vs_core.py --output audit/report.json --fail-on blocking
 
       - name: Upload audit report
         if: always()   # Upload even on failure so the report is inspectable
@@ -81,13 +45,11 @@ jobs:
           name: audit-report
           path: audit/report.json
 
-  # ── 3. Build distribution ──────────────────────────────────────────────────
+  # ── 2. Build distribution ──────────────────────────────────────────────────
   build:
     name: Build distribution packages
     needs: audit
     runs-on: ubuntu-latest
-    # Only build on tag pushes
-    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - uses: actions/checkout@v4
@@ -96,10 +58,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
+
+      - name: Install package + dev dependencies
+        run: uv sync --all-extras --no-sources --upgrade
+
+      - name: Generate tool reference
+        # Regenerate docs/TOOLS.md from the live tool registry at release time.
+        run: uv run --no-sync python scripts/gen_tool_reference.py
 
       - name: Build wheel and sdist
         run: uv build --no-sources
@@ -125,13 +93,11 @@ jobs:
           name: dist-packages
           path: dist/
 
-  # ── 4. Publish to PyPI ─────────────────────────────────────────────────────
+  # ── 3. Publish to PyPI ─────────────────────────────────────────────────────
   publish:
     name: Publish to PyPI
     needs: build
     runs-on: ubuntu-latest
-    # Only publish on tag pushes; audit must have passed (via the needs chain)
-    if: startsWith(github.ref, 'refs/tags/v')
 
     environment:
       name: pypi
@@ -150,12 +116,11 @@ jobs:
         # Configure the trusted publisher at:
         # https://pypi.org/manage/project/mcp-einvoicing-de/settings/publishing/
 
-  # ── 5. Create GitHub Release ───────────────────────────────────────────────
+  # ── 4. Create GitHub Release ───────────────────────────────────────────────
   release:
     name: Create GitHub Release
     needs: publish
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
       - uses: actions/checkout@v4
