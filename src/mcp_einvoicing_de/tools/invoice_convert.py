@@ -123,7 +123,10 @@ async def invoice_convert(
     except ValueError as exc:
         return format_error(f"Unknown target_syntax: {exc}")
 
-    if target_syntax_enum == XRechnungSyntax.UBL and target_profile_enum != ZUGFeRDProfile.XRECHNUNG:
+    if (
+        target_syntax_enum == XRechnungSyntax.UBL
+        and target_profile_enum != ZUGFeRDProfile.XRECHNUNG
+    ):
         return format_error(
             "UBL syntax is only defined for the XRECHNUNG profile. "
             "Use target_syntax='CII' for ZUGFeRD profiles."
@@ -184,7 +187,9 @@ async def invoice_convert(
     elif target_profile_enum == ZUGFeRDProfile.XRECHNUNG:
         # Convert ZUGFeRDInvoice to XRechnungInvoice when the target is XRechnung so that
         # the XRechnung serializer can pick up the CustomizationID URN.
-        invoice = XRechnungInvoice.model_validate({**invoice.model_dump(), "syntax": target_syntax_enum})
+        invoice = XRechnungInvoice.model_validate(
+            {**invoice.model_dump(), "syntax": target_syntax_enum}
+        )
 
     # Re-serialize in the target syntax.
     try:

@@ -75,11 +75,13 @@ def main() -> None:
     (outdir / "facturx_en16931.pdf").write_bytes(facturx_hybrid)
 
     xr_base = _base_invoice(ZUGFeRDProfile.XRECHNUNG, "VERAPDF-XRECHNUNG-001")
-    xr_invoice = XRechnungInvoice.model_validate({
-        **xr_base.model_dump(),
-        "syntax": XRechnungSyntax.CII,
-        "buyer_reference": "PO-VERAPDF-001",
-    })
+    xr_invoice = XRechnungInvoice.model_validate(
+        {
+            **xr_base.model_dump(),
+            "syntax": XRechnungSyntax.CII,
+            "buyer_reference": "PO-VERAPDF-001",
+        }
+    )
     xr_xml = ZUGFeRDCIISerializer().serialize(xr_invoice, pretty_print=True)
     xr_pdf = generate_pdf_invoice(xr_invoice)
     xr_hybrid = embed_xml_in_pdf(xr_pdf, xr_xml, profile_name="XRECHNUNG")

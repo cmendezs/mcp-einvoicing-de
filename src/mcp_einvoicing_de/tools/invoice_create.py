@@ -88,7 +88,10 @@ async def invoice_create(
     """
     try:
         profile_str = invoice.get("profile", "EN_16931")
-        if profile_str == ZUGFeRDProfile.XRECHNUNG.name or profile_str == ZUGFeRDProfile.XRECHNUNG.value:
+        if (
+            profile_str == ZUGFeRDProfile.XRECHNUNG.name
+            or profile_str == ZUGFeRDProfile.XRECHNUNG.value
+        ):
             invoice_model = XRechnungInvoice.model_validate({**invoice, "syntax": syntax})
         else:
             invoice_model = ZUGFeRDInvoice.model_validate(invoice)

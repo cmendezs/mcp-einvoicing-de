@@ -113,9 +113,7 @@ class TestProfileCoverageCII:
             (ZUGFeRDProfile.XRECHNUNG, True),
         ],
     )
-    def test_cii_round_trip(
-        self, profile: ZUGFeRDProfile, with_lines: bool
-    ) -> None:
+    def test_cii_round_trip(self, profile: ZUGFeRDProfile, with_lines: bool) -> None:
         invoice = _make_invoice(profile, with_lines=with_lines)
         serializer = ZUGFeRDCIISerializer()
         parser = ZUGFeRDCIIParser()
@@ -141,10 +139,12 @@ class TestProfileCoverageUBL:
 
     def test_xrechnung_ubl_round_trip(self) -> None:
         base = _make_invoice(ZUGFeRDProfile.XRECHNUNG, with_lines=True)
-        invoice = XRechnungInvoice.model_validate({
-            **base.model_dump(),
-            "syntax": XRechnungSyntax.UBL,
-        })
+        invoice = XRechnungInvoice.model_validate(
+            {
+                **base.model_dump(),
+                "syntax": XRechnungSyntax.UBL,
+            }
+        )
         serializer = XRechnungUBLSerializer()
         parser = XRechnungUBLParser()
 
@@ -179,22 +179,21 @@ class TestXRechnungSchematronChaining:
         addresses (CIUS rules) must surface findings from both stylesheets.
         """
         base = _make_invoice(ZUGFeRDProfile.XRECHNUNG, with_lines=True)
-        invoice = XRechnungInvoice.model_validate({
-            **base.model_dump(),
-            "syntax": XRechnungSyntax.UBL,
-        })
+        invoice = XRechnungInvoice.model_validate(
+            {
+                **base.model_dump(),
+                "syntax": XRechnungSyntax.UBL,
+            }
+        )
         xml_bytes = XRechnungUBLSerializer().serialize(invoice, pretty_print=True)
 
         data = await self._validate(xml_bytes)
         sources = {e["source"] for e in data["errors"]}
 
         assert "en16931_ubl" in sources, (
-            "Expected an EN 16931 base-rule finding (e.g. BR-CO-25); "
-            f"got sources={sources}"
+            f"Expected an EN 16931 base-rule finding (e.g. BR-CO-25); got sources={sources}"
         )
-        assert "xrechnung_ubl" in sources, (
-            f"Expected a KoSIT CIUS finding; got sources={sources}"
-        )
+        assert "xrechnung_ubl" in sources, f"Expected a KoSIT CIUS finding; got sources={sources}"
         base_rule_ids = {e["rule_id"] for e in data["errors"] if e["source"] == "en16931_ubl"}
         assert "BR-CO-25" in base_rule_ids, (
             "Without chaining, the base-rule violation (missing due date / "

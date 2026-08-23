@@ -83,9 +83,7 @@ class TestXRechnungInvoice:
         with pytest.raises(ValidationError, match="check digit"):
             XRechnungInvoice.model_validate(data)
 
-    def test_buyer_reference_free_form_accepted(
-        self, minimal_invoice: ZUGFeRDInvoice
-    ) -> None:
+    def test_buyer_reference_free_form_accepted(self, minimal_invoice: ZUGFeRDInvoice) -> None:
         """Non-Leitweg-ID buyer reference strings must be accepted without format checks."""
         data = minimal_invoice.model_dump()
         data["buyer_reference"] = "PO-2025-98765"  # purchase order, not a Leitweg-ID
@@ -119,22 +117,22 @@ class TestLeitwegIdValidator:
 
     # Known-valid Leitweg-IDs (mod-97 = 1, computed and verified):
     VALID = [
-        "04011000-12345-03",   # Verwaltungsebene 8 digits + Instanzkennzeichen
-        "991-1234512345-01",   # 3-digit Verwaltungsebene + Instanzkennzeichen
-        "991-01-03",           # Short Instanzkennzeichen
+        "04011000-12345-03",  # Verwaltungsebene 8 digits + Instanzkennzeichen
+        "991-1234512345-01",  # 3-digit Verwaltungsebene + Instanzkennzeichen
+        "991-01-03",  # Short Instanzkennzeichen
     ]
 
     INVALID_FORMAT = [
-        "",                     # empty
-        "abc-12345-06",        # Verwaltungsebene not all digits
-        "04011000-12345",       # missing check digit segment
-        "04011000-12345-1",    # check digit must be exactly 2 digits
+        "",  # empty
+        "abc-12345-06",  # Verwaltungsebene not all digits
+        "04011000-12345",  # missing check digit segment
+        "04011000-12345-1",  # check digit must be exactly 2 digits
         "04011000-12345-034",  # check digit must be exactly 2 digits
     ]
 
     INVALID_CHECKDIGIT = [
-        "991-1234512345-06",   # mod-97 = 6
-        "04011000-12345-34",   # FeRD synthetic example, mod-97 = 32
+        "991-1234512345-06",  # mod-97 = 6
+        "04011000-12345-34",  # FeRD synthetic example, mod-97 = 32
     ]
 
     @pytest.mark.parametrize("value", VALID)
@@ -157,17 +155,13 @@ class TestLeitwegIdValidator:
     def test_looks_like_false_for_free_form(self) -> None:
         assert looks_like_leitweg_id("PO-2025-98765") is False
 
-    def test_leitweg_id_field_on_party_accepted(
-        self, minimal_invoice: ZUGFeRDInvoice
-    ) -> None:
+    def test_leitweg_id_field_on_party_accepted(self, minimal_invoice: ZUGFeRDInvoice) -> None:
         data = minimal_invoice.buyer.model_dump()
         data["leitweg_id"] = "04011000-12345-03"
         buyer = ZUGFeRDParty.model_validate(data)
         assert buyer.leitweg_id == "04011000-12345-03"
 
-    def test_leitweg_id_field_on_party_rejected(
-        self, minimal_invoice: ZUGFeRDInvoice
-    ) -> None:
+    def test_leitweg_id_field_on_party_rejected(self, minimal_invoice: ZUGFeRDInvoice) -> None:
         data = minimal_invoice.buyer.model_dump()
         data["leitweg_id"] = "04011000-12345-34"  # mod-97 = 32, not 1
         with pytest.raises(ValidationError, match="check digit"):

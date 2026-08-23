@@ -162,9 +162,7 @@ class InvoiceValidateOutput(BaseModel):
     warning_count: int
     errors: list[ValidationFinding]
     warnings: list[ValidationFinding]
-    validator_used: str = Field(
-        ..., description="'local_schematron' or 'kosit_remote'"
-    )
+    validator_used: str = Field(..., description="'local_schematron' or 'kosit_remote'")
 
 
 # ── MCP Tool definition ───────────────────────────────────────────────────────
@@ -183,11 +181,11 @@ _PROFILE_TO_STYLESHEET: dict[str, dict[str, list[str]]] = {
     # only encode the BR-DE-* / CIUS-specific rules, not the underlying
     # EN 16931 base rules (DE-SC-2) — running the CIUS stylesheet alone
     # silently skips base-rule violations.
-    "MINIMUM":   {"CII": ["zugferd_minimum_cii"]},
-    "BASIC_WL":  {"CII": ["zugferd_basicwl_cii"]},
-    "BASIC":     {"CII": ["zugferd_basic_cii"]},
-    "EN_16931":  {"CII": ["en16931_cii"], "UBL": ["en16931_ubl"]},
-    "EXTENDED":  {"CII": ["zugferd_extended_cii"]},
+    "MINIMUM": {"CII": ["zugferd_minimum_cii"]},
+    "BASIC_WL": {"CII": ["zugferd_basicwl_cii"]},
+    "BASIC": {"CII": ["zugferd_basic_cii"]},
+    "EN_16931": {"CII": ["en16931_cii"], "UBL": ["en16931_ubl"]},
+    "EXTENDED": {"CII": ["zugferd_extended_cii"]},
     "XRECHNUNG": {
         "CII": ["en16931_cii", "xrechnung_cii"],
         "UBL": ["en16931_ubl", "xrechnung_ubl"],
@@ -218,9 +216,7 @@ def _resolve_syntax(syntax_str: str | None, xml_bytes: bytes) -> str:
         return "CII"
 
 
-async def _validate_local(
-    xml_bytes: bytes, profile_name: str, syntax: str
-) -> ValidationResult:
+async def _validate_local(xml_bytes: bytes, profile_name: str, syntax: str) -> ValidationResult:
     """Run local Schematron validation.
 
     For profiles that map to more than one stylesheet key (XRECHNUNG chains
@@ -399,9 +395,7 @@ async def invoice_validate(
         # a real endpoint is configured via EINVOICING_DE_KOSIT_VALIDATOR_URL.
         kosit = KoSITValidator(KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL)
         kosit_result = await kosit.validate(xml_bytes)
-        kosit_failed = any(
-            e.rule_id == "KOSIT-HTTP" for e in kosit_result.errors
-        )
+        kosit_failed = any(e.rule_id == "KOSIT-HTTP" for e in kosit_result.errors)
         if kosit_failed and not params.kosit_strict:
             logger.warning("KoSIT cloud unreachable, falling back to local Schematron")
             result = await _validate_local(xml_bytes, profile_name, syntax)
@@ -430,16 +424,20 @@ async def invoice_validate(
         )
         for e in result.errors
     ]
-    findings_warnings = [
-        ValidationFinding(
-            severity=w.severity,
-            rule_id=w.rule_id,
-            location=w.location,
-            text=w.text,
-            source=getattr(w, "source", ""),
-        )
-        for w in result.warnings
-    ] if params.strict else []
+    findings_warnings = (
+        [
+            ValidationFinding(
+                severity=w.severity,
+                rule_id=w.rule_id,
+                location=w.location,
+                text=w.text,
+                source=getattr(w, "source", ""),
+            )
+            for w in result.warnings
+        ]
+        if params.strict
+        else []
+    )
 
     output = InvoiceValidateOutput(
         is_valid=result.is_valid,

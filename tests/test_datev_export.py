@@ -63,9 +63,7 @@ def _line(
 
 def _tax(rate: Decimal, category: GermanTaxCategory, taxable: Decimal) -> ZUGFeRDTax:
     tax_amount = (taxable * rate / Decimal("100")).quantize(Decimal("0.01"))
-    return ZUGFeRDTax(
-        category=category, rate=rate, taxable_amount=taxable, tax_amount=tax_amount
-    )
+    return ZUGFeRDTax(category=category, rate=rate, taxable_amount=taxable, tax_amount=tax_amount)
 
 
 # ── Unit tests — _bu_key / _resolve_line_tax ─────────────────────────────────
@@ -114,7 +112,9 @@ class TestResolveLineTax:
         assert rate_19 == Decimal("19")
         assert rate_7 == Decimal("7")
 
-    def test_falls_back_to_first_tax_line_when_unmatched(self, caplog: pytest.LogCaptureFixture) -> None:
+    def test_falls_back_to_first_tax_line_when_unmatched(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
         tax_lines = [_tax(Decimal("19"), GermanTaxCategory.STANDARD, Decimal("100.00"))]
         # A line whose declared rate (16%) matches no entry in tax_lines —
         # a degraded/inconsistent input the resolver must not crash on.
@@ -186,9 +186,7 @@ class TestHandleDatevExportGrossPosting:
 
     @pytest.mark.asyncio
     async def test_belegdatum_in_csv_is_zero_padded(self) -> None:
-        result = await datev_export(
-            invoice=_make_invoice(with_lines=True).model_dump(mode="json")
-        )
+        result = await datev_export(invoice=_make_invoice(with_lines=True).model_dump(mode="json"))
         csv_content = result["csv_content"]
         belegdatum = csv_content.splitlines()[1].split(";")[9]
         assert belegdatum == "0201"

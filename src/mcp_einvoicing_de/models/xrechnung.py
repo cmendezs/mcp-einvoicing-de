@@ -82,4 +82,3 @@ class XRechnungInvoice(ZUGFeRDInvoice):
     def model_post_init(self, __context: object) -> None:
         # Enforce XRECHNUNG regardless of any caller-supplied profile value.
         object.__setattr__(self, "profile", ZUGFeRDProfile.XRECHNUNG)
-

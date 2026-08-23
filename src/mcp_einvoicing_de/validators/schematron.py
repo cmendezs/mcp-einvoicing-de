@@ -62,14 +62,14 @@ _STYLESHEET_MAP: dict[str, Path] = {
     # FeRD / Factur-X 1.08 profile-specific compiled Schematron
     "zugferd_minimum_cii": _RULES_DIR / "FACTUR-X_MINIMUM.xslt",
     "zugferd_basicwl_cii": _RULES_DIR / "FACTUR-X_BASIC-WL.xslt",
-    "zugferd_basic_cii":   _RULES_DIR / "FACTUR-X_BASIC.xslt",
-    "en16931_cii":         _RULES_DIR / "FACTUR-X_EN16931.xslt",
+    "zugferd_basic_cii": _RULES_DIR / "FACTUR-X_BASIC.xslt",
+    "en16931_cii": _RULES_DIR / "FACTUR-X_EN16931.xslt",
     "zugferd_extended_cii": _RULES_DIR / "FACTUR-X_EXTENDED.xslt",
     # EN 16931 UBL (for XRechnung UBL base rules)
-    "en16931_ubl":         _RULES_DIR / "EN16931-UBL-validation.xsl",
+    "en16931_ubl": _RULES_DIR / "EN16931-UBL-validation.xsl",
     # XRechnung 3.0.2 CIUS rules (CII and UBL)
-    "xrechnung_cii":       _RULES_DIR / "XRechnung-CII-validation.xsl",
-    "xrechnung_ubl":       _RULES_DIR / "XRechnung-UBL-validation.xsl",
+    "xrechnung_cii": _RULES_DIR / "XRechnung-CII-validation.xsl",
+    "xrechnung_ubl": _RULES_DIR / "XRechnung-UBL-validation.xsl",
 }
 
 
@@ -96,7 +96,6 @@ def SchematronValidator(stylesheet_key: str) -> BaseStructuredValidator:  # noqa
     stylesheet_path = _STYLESHEET_MAP.get(stylesheet_key)
     if stylesheet_path is None:
         raise ValueError(
-            f"Unknown stylesheet key: {stylesheet_key!r}. "
-            f"Valid keys: {sorted(_STYLESHEET_MAP)}"
+            f"Unknown stylesheet key: {stylesheet_key!r}. Valid keys: {sorted(_STYLESHEET_MAP)}"
         )
     return load_schematron_validator(stylesheet_path)

@@ -57,9 +57,7 @@ class TestInvoiceCreateHandler:
         assert data["buyer_vat_id"] == "DE136695976"
 
     @pytest.mark.asyncio
-    async def test_pdf_output_with_opt_in_succeeds(
-        self, invoice_payload: dict
-    ) -> None:
+    async def test_pdf_output_with_opt_in_succeeds(self, invoice_payload: dict) -> None:
         data = await invoice_create(
             invoice=invoice_payload,
             output_format="pdf",
@@ -92,9 +90,7 @@ class TestInvoiceCreateHandler:
             amount_due=Decimal("119.00"),
             tax_lines=[tax],
         )
-        data = await invoice_create(
-            invoice=invoice.model_dump(mode="json"), output_format="pdf"
-        )
+        data = await invoice_create(invoice=invoice.model_dump(mode="json"), output_format="pdf")
         assert "error" not in data
         assert data["pdf_base64"] is not None
 
@@ -140,15 +136,11 @@ class TestZUGFeRDPartyVatIdValidation:
             ZUGFeRDParty(name="X GmbH", address=self._address(), vat_id="DE123456789")
 
     def test_valid_de_vat_accepted(self) -> None:
-        party = ZUGFeRDParty(
-            name="X GmbH", address=self._address(), vat_id="DE129273398"
-        )
+        party = ZUGFeRDParty(name="X GmbH", address=self._address(), vat_id="DE129273398")
         assert party.vat_id == "DE129273398"
 
     def test_non_de_vat_passes_through(self) -> None:
-        party = ZUGFeRDParty(
-            name="Buyer SAS", address=self._address(), vat_id="FR12345678901"
-        )
+        party = ZUGFeRDParty(name="Buyer SAS", address=self._address(), vat_id="FR12345678901")
         assert party.vat_id == "FR12345678901"
 
     def test_none_vat_id_allowed(self) -> None:

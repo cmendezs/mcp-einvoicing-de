@@ -140,7 +140,9 @@ async def invoice_parse(
     invoice_data = scrub(invoice.model_dump(mode="json"))
     raw_xml = xml_bytes.decode("utf-8", errors="replace") if include_raw_xml else None
     output = InvoiceParseOutput(
-        profile=profile.name if profile else (invoice.profile.name if hasattr(invoice.profile, "name") else str(invoice.profile)),
+        profile=profile.name
+        if profile
+        else (invoice.profile.name if hasattr(invoice.profile, "name") else str(invoice.profile)),
         syntax=syntax.value,
         invoice_number=invoice.invoice_number,
         invoice_date=str(invoice.invoice_date),

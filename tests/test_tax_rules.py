@@ -47,7 +47,5 @@ class TestHandleTaxRules:
         data = await tax_rules(query="reverse_charge", context="construction services")
         assert "results" in data
         # At least one result should mention construction
-        descriptions = " ".join(
-            r.get("description_en", "") for r in data["results"]
-        ).lower()
+        descriptions = " ".join(r.get("description_en", "") for r in data["results"]).lower()
         assert "construction" in descriptions or len(data["results"]) > 0

@@ -40,17 +40,14 @@ class ZUGFeRDCIISerializer(EN16931CIISerializer):
             self._inject_tax_representative(root, invoice)
         return self._to_bytes(root, pretty_print=pretty_print)
 
-    def _inject_tax_representative(
-        self, root: etree._Element, invoice: ZUGFeRDInvoice
-    ) -> None:
+    def _inject_tax_representative(self, root: etree._Element, invoice: ZUGFeRDInvoice) -> None:
         """Insert ram:SellerTaxRepresentativeTradeParty (BG-11) into the CII tree.
 
         Per CII D22B HeaderTradeAgreementType sequence, BG-11 follows BuyerTradeParty
         and precedes BuyerOrderReferencedDocument and later siblings.
         """
         agreement = root.find(
-            f"{{{_RSM}}}SupplyChainTradeTransaction"
-            f"/{{{_RAM}}}ApplicableHeaderTradeAgreement"
+            f"{{{_RSM}}}SupplyChainTradeTransaction/{{{_RAM}}}ApplicableHeaderTradeAgreement"
         )
         if agreement is None:
             return

@@ -31,7 +31,9 @@ class _RecordingKoSIT:
         type(self).validate_calls += 1
         return ValidationResult(is_valid=True)
 
+
 # ── Unit tests — input model ──────────────────────────────────────────────────
+
 
 class TestInvoiceValidateInput:
     def test_xml_content_accepted(self) -> None:
@@ -55,6 +57,7 @@ class TestInvoiceValidateInput:
 
 
 # ── Unit tests — XML detection helpers ───────────────────────────────────────
+
 
 class TestDetectInvoiceSyntax:
     def test_detects_cii(self, minimal_cii_xml: bytes) -> None:
@@ -125,6 +128,7 @@ class TestDetectZUGFeRDProfile:
 
 # ── Integration tests — handle_invoice_validate ───────────────────────────────
 
+
 class TestHandleInvoiceValidate:
     @pytest.mark.asyncio
     async def test_missing_input_returns_error(self) -> None:
@@ -138,9 +142,7 @@ class TestHandleInvoiceValidate:
         NO-STYLESHEET warning but does not error. The response structure must
         be well-formed regardless.
         """
-        data = await invoice_validate(
-            xml_base64=base64.b64encode(minimal_cii_xml).decode()
-        )
+        data = await invoice_validate(xml_base64=base64.b64encode(minimal_cii_xml).decode())
         # Either a valid output or a stylesheet-missing warning — both are structured
         assert "error" in data or "is_valid" in data
 
@@ -181,9 +183,7 @@ class TestCloudValidateOptIn:
 
     @pytest.mark.asyncio
     async def test_default_call_makes_no_kosit_call(self, minimal_cii_xml: bytes) -> None:
-        data = await invoice_validate(
-            xml_base64=base64.b64encode(minimal_cii_xml).decode()
-        )
+        data = await invoice_validate(xml_base64=base64.b64encode(minimal_cii_xml).decode())
         assert _RecordingKoSIT.instances == 0
         assert _RecordingKoSIT.validate_calls == 0
         assert data.get("validator_used") == "local_schematron"

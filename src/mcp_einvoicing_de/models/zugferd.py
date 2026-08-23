@@ -121,8 +121,7 @@ class ZUGFeRDTax(EN16931Tax):
         )
         if abs(self.tax_amount - expected) > Decimal("0.01"):
             raise ValueError(
-                f"BR-CO-17: tax_amount {self.tax_amount} deviates from {expected} "
-                "by more than 0.01"
+                f"BR-CO-17: tax_amount {self.tax_amount} deviates from {expected} by more than 0.01"
             )
         return self
 
@@ -203,11 +202,11 @@ class ZUGFeRDInvoice(EN16931Invoice):
 
 from mcp_einvoicing_core.profile_registry import profile_registry as _registry  # noqa: E402
 
-_registry.register("DE", "MINIMUM",   "CII", ZUGFeRDProfile.MINIMUM.value)
-_registry.register("DE", "BASIC_WL",  "CII", ZUGFeRDProfile.BASIC_WL.value)
-_registry.register("DE", "BASIC",     "CII", ZUGFeRDProfile.BASIC.value)
-_registry.register("DE", "EN_16931",  "CII", ZUGFeRDProfile.EN_16931.value)
-_registry.register("DE", "EN_16931",  "UBL", ZUGFeRDProfile.EN_16931.value)
-_registry.register("DE", "EXTENDED",  "CII", ZUGFeRDProfile.EXTENDED.value)
+_registry.register("DE", "MINIMUM", "CII", ZUGFeRDProfile.MINIMUM.value)
+_registry.register("DE", "BASIC_WL", "CII", ZUGFeRDProfile.BASIC_WL.value)
+_registry.register("DE", "BASIC", "CII", ZUGFeRDProfile.BASIC.value)
+_registry.register("DE", "EN_16931", "CII", ZUGFeRDProfile.EN_16931.value)
+_registry.register("DE", "EN_16931", "UBL", ZUGFeRDProfile.EN_16931.value)
+_registry.register("DE", "EXTENDED", "CII", ZUGFeRDProfile.EXTENDED.value)
 _registry.register("DE", "XRECHNUNG", "CII", ZUGFeRDProfile.XRECHNUNG.value)
 _registry.register("DE", "XRECHNUNG", "UBL", ZUGFeRDProfile.XRECHNUNG.value)

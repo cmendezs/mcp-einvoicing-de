@@ -174,16 +174,23 @@ async def tax_rules(query: str, context: str | None = None) -> dict[str, Any]:
         if context:
             context_lower = context.lower()
             results = [
-                r for r in results
+                r
+                for r in results
                 if any(kw in r.get("description_en", "").lower() for kw in context_lower.split())
             ] or results  # Fall back to all if filter yields nothing
 
-    if any(kw in query_lower for kw in ("exempt", "befreit", "§4", "zero", "null", "klein", "19 ustg")):
+    if any(
+        kw in query_lower for kw in ("exempt", "befreit", "§4", "zero", "null", "klein", "19 ustg")
+    ):
         results.extend(_EXEMPTIONS)
 
     if any(kw in query_lower for kw in ("vatex", "reason code", "exemption code")):
         vatex_codes = [
-            {"vatex_code": r.get("vatex_code"), "description_en": r.get("description_en"), "paragraph": r.get("paragraph")}
+            {
+                "vatex_code": r.get("vatex_code"),
+                "description_en": r.get("description_en"),
+                "paragraph": r.get("paragraph"),
+            }
             for r in _EXEMPTIONS + _REVERSE_CHARGE_CASES
             if r.get("vatex_code")
         ]

@@ -57,9 +57,7 @@ mcp = EInvoicingMCPServer(
     ),
 )
 mcp.register_plugin(_register_de_tools, "de")
-mcp.register_plugin(
-    lambda m: register_peppol_tools(m, id_adapter=_de_id_adapter), "peppol"
-)
+mcp.register_plugin(lambda m: register_peppol_tools(m, id_adapter=_de_id_adapter), "peppol")
 
 
 def main() -> None:

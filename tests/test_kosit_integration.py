@@ -34,6 +34,4 @@ class TestKoSITIntegration:
         assert data["validator_used"] == "kosit_cloud", (
             f"Expected kosit_cloud but got {data['validator_used']}"
         )
-        assert data["is_valid"], (
-            f"KoSIT validation failed: {data.get('errors', [])}"
-        )
+        assert data["is_valid"], f"KoSIT validation failed: {data.get('errors', [])}"

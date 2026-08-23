@@ -27,14 +27,16 @@ logger = logging.getLogger(__name__)
 
 # Known KoSIT self-hosted and government hostnames.  Update when new official
 # endpoints are published.  Extend via EINVOICING_KOSIT_ALLOWLIST (comma-separated).
-_KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset({
-    "localhost",
-    "127.0.0.1",
-    "::1",
-    "validationtool",        # common docker-compose service name
-    "kosit-validator",       # alternative docker-compose service name
-    "validator.kosit.de",    # official KoSIT cloud validator
-})
+_KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset(
+    {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "validationtool",  # common docker-compose service name
+        "kosit-validator",  # alternative docker-compose service name
+        "validator.kosit.de",  # official KoSIT cloud validator
+    }
+)
 
 _RETRY_DELAYS = (1.0, 2.0, 4.0)
 
@@ -141,7 +143,9 @@ class KoSITValidator:
                     )
                     await asyncio.sleep(delay)
 
-        logger.error("KoSIT validator unreachable after %d attempts: %s", len(_RETRY_DELAYS) + 1, last_error)
+        logger.error(
+            "KoSIT validator unreachable after %d attempts: %s", len(_RETRY_DELAYS) + 1, last_error
+        )
         return ValidationResult(
             is_valid=False,
             errors=[

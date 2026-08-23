@@ -17,9 +17,7 @@ import re
 
 from mcp_einvoicing_core.routing import RoutingIdentifier
 
-_LEITWEG_PATTERN = re.compile(
-    r"^[0-9]{1,12}(-[A-Za-z0-9]{1,30}){0,1}-[0-9]{2}$"
-)
+_LEITWEG_PATTERN = re.compile(r"^[0-9]{1,12}(-[A-Za-z0-9]{1,30}){0,1}-[0-9]{2}$")
 
 
 def validate_leitweg_id(value: str) -> str:

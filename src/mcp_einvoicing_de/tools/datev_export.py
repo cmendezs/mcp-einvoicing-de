@@ -92,9 +92,7 @@ def _bu_key(category: GermanTaxCategory, rate: Decimal, line_kind: str = "revenu
     return ""
 
 
-def _resolve_line_tax(
-    item: Any, tax_lines: list[ZUGFeRDTax]
-) -> tuple[GermanTaxCategory, Decimal]:
+def _resolve_line_tax(item: Any, tax_lines: list[ZUGFeRDTax]) -> tuple[GermanTaxCategory, Decimal]:
     """Resolve the (category, rate) pair for one invoice line.
 
     Matches the line's own `tax_category` + `tax_rate` against the invoice's
@@ -132,28 +130,28 @@ def _build_extf_header(
     """Build the DATEV EXTF header row."""
     fy_start = fiscal_year_start or f"{date_from.year}0101"
     fields = [
-        '"EXTF"',                          # 1: Format identifier
-        str(_EXTF_FORMAT_VERSION),         # 2: Version
-        str(_EXTF_FORMAT_CATEGORY),        # 3: Format category
-        f'"{_EXTF_FORMAT_NAME}"',          # 4: Format name
-        str(_EXTF_FORMAT_VERSION),         # 5: Format version
-        "",                                # 6: Generated on (optional)
-        "",                                # 7: Reserved
-        "",                                # 8: Reserved
-        "",                                # 9: Reserved
-        "",                                # 10: Reserved
-        f'"{consultant_number}"',          # 11: Beraternummer
-        f'"{client_number}"',              # 12: Mandantennummer
-        f"{fy_start}",                     # 13: WJ-Beginn
-        "4",                               # 14: Sachkontenlänge
+        '"EXTF"',  # 1: Format identifier
+        str(_EXTF_FORMAT_VERSION),  # 2: Version
+        str(_EXTF_FORMAT_CATEGORY),  # 3: Format category
+        f'"{_EXTF_FORMAT_NAME}"',  # 4: Format name
+        str(_EXTF_FORMAT_VERSION),  # 5: Format version
+        "",  # 6: Generated on (optional)
+        "",  # 7: Reserved
+        "",  # 8: Reserved
+        "",  # 9: Reserved
+        "",  # 10: Reserved
+        f'"{consultant_number}"',  # 11: Beraternummer
+        f'"{client_number}"',  # 12: Mandantennummer
+        f"{fy_start}",  # 13: WJ-Beginn
+        "4",  # 14: Sachkontenlänge
         f"{date_from.strftime('%Y%m%d')}",  # 15: Datum von
-        f"{date_to.strftime('%Y%m%d')}",    # 16: Datum bis
-        "",                                # 17: Bezeichnung
-        "",                                # 18: Diktatkürzel
-        "0",                               # 19: Buchungstyp (0=Finanzbuchführung)
-        "0",                               # 20: Rechnungslegungszweck
-        "",                                # 21: Festschreibung
-        '"EUR"',                           # 22: WKZ
+        f"{date_to.strftime('%Y%m%d')}",  # 16: Datum bis
+        "",  # 17: Bezeichnung
+        "",  # 18: Diktatkürzel
+        "0",  # 19: Buchungstyp (0=Finanzbuchführung)
+        "0",  # 20: Rechnungslegungszweck
+        "",  # 21: Festschreibung
+        '"EUR"',  # 22: WKZ
     ]
     return ";".join(fields)
 
@@ -170,20 +168,20 @@ def _build_booking_record(
 ) -> list[str]:
     """Build a single DATEV Buchungsstapel record (one row)."""
     record = [""] * 116
-    record[0] = str(abs(amount))           # Umsatz
-    record[1] = debit_credit               # Soll/Haben (S/H)
-    record[2] = '"EUR"'                    # WKZ Umsatz
-    record[3] = ""                         # Kurs
-    record[4] = ""                         # Basis-Umsatz
-    record[5] = ""                         # WKZ Basis-Umsatz
-    record[6] = account                    # Konto
-    record[7] = contra_account             # Gegenkonto
-    record[8] = tax_code                   # BU-Schlüssel
+    record[0] = str(abs(amount))  # Umsatz
+    record[1] = debit_credit  # Soll/Haben (S/H)
+    record[2] = '"EUR"'  # WKZ Umsatz
+    record[3] = ""  # Kurs
+    record[4] = ""  # Basis-Umsatz
+    record[5] = ""  # WKZ Basis-Umsatz
+    record[6] = account  # Konto
+    record[7] = contra_account  # Gegenkonto
+    record[8] = tax_code  # BU-Schlüssel
     record[9] = _format_datev_date(invoice_date)  # Belegdatum
-    record[10] = f'"{invoice_number}"'     # Belegfeld 1
-    record[11] = ""                        # Belegfeld 2
-    record[12] = ""                        # Skonto
-    record[13] = f'"{description[:60]}"'   # Buchungstext (max 60 chars)
+    record[10] = f'"{invoice_number}"'  # Belegfeld 1
+    record[11] = ""  # Belegfeld 2
+    record[12] = ""  # Skonto
+    record[13] = f'"{description[:60]}"'  # Buchungstext (max 60 chars)
     return record
 
 
@@ -235,16 +233,18 @@ async def datev_export(
             line_tax = (item.line_net_amount * rate / Decimal("100")).quantize(Decimal("0.01"))
             gross = item.line_net_amount + line_tax
 
-            records.append(_build_booking_record(
-                amount=gross,
-                debit_credit="S",
-                account=receivable_account,
-                contra_account=revenue_account,
-                tax_code=tax_code,
-                invoice_date=invoice_model.invoice_date,
-                invoice_number=invoice_model.invoice_number,
-                description=desc,
-            ))
+            records.append(
+                _build_booking_record(
+                    amount=gross,
+                    debit_credit="S",
+                    account=receivable_account,
+                    contra_account=revenue_account,
+                    tax_code=tax_code,
+                    invoice_date=invoice_model.invoice_date,
+                    invoice_number=invoice_model.invoice_number,
+                    description=desc,
+                )
+            )
     else:
         category = GermanTaxCategory.STANDARD
         rate = Decimal("19")
@@ -253,16 +253,18 @@ async def datev_export(
             rate = invoice_model.tax_lines[0].rate
         tax_code = _bu_key(category, rate, line_kind="revenue")
 
-        records.append(_build_booking_record(
-            amount=invoice_model.tax_inclusive_amount,
-            debit_credit="S",
-            account=receivable_account,
-            contra_account=revenue_account,
-            tax_code=tax_code,
-            invoice_date=invoice_model.invoice_date,
-            invoice_number=invoice_model.invoice_number,
-            description=f"Rechnung {invoice_model.invoice_number}",
-        ))
+        records.append(
+            _build_booking_record(
+                amount=invoice_model.tax_inclusive_amount,
+                debit_credit="S",
+                account=receivable_account,
+                contra_account=revenue_account,
+                tax_code=tax_code,
+                invoice_date=invoice_model.invoice_date,
+                invoice_number=invoice_model.invoice_number,
+                description=f"Rechnung {invoice_model.invoice_number}",
+            )
+        )
 
     buf = StringIO()
     header = _build_extf_header(

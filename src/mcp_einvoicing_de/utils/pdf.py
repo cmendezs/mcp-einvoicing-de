@@ -31,11 +31,11 @@ logger = logging.getLogger(__name__)
 # Map ZUGFeRDProfile enum names → Factur-X XMP ConformanceLevel string
 # (FeRD Factur-X 1.08 §6.2.2 table).
 _PROFILE_CONFORMANCE: dict[str, str] = {
-    "MINIMUM":   "MINIMUM",
-    "BASIC_WL":  "BASIC WL",
-    "BASIC":     "BASIC",
-    "EN_16931":  "EN 16931",
-    "EXTENDED":  "EXTENDED",
+    "MINIMUM": "MINIMUM",
+    "BASIC_WL": "BASIC WL",
+    "BASIC": "BASIC",
+    "EN_16931": "EN 16931",
+    "EXTENDED": "EXTENDED",
     "XRECHNUNG": "XRECHNUNG",
 }
 
@@ -51,11 +51,7 @@ def _load_srgb_icc_bytes() -> bytes:
     PDF/A validators (veraPDF) reject the OutputIntent. This loads the real
     profile bundled as package data under ``resources/icc/``.
     """
-    return (
-        resources.files("mcp_einvoicing_de.resources.icc")
-        .joinpath(_ICC_RESOURCE)
-        .read_bytes()
-    )
+    return resources.files("mcp_einvoicing_de.resources.icc").joinpath(_ICC_RESOURCE).read_bytes()
 
 
 def _apply_pdfa3_conformance(pdf_bytes: bytes, deterministic_id: str = "") -> bytes:
@@ -67,9 +63,9 @@ def _apply_pdfa3_conformance(pdf_bytes: bytes, deterministic_id: str = "") -> by
     pdfa_block = (
         '    <rdf:Description rdf:about=""\n'
         '        xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/">\n'
-        '      <pdfaid:part>3</pdfaid:part>\n'
-        '      <pdfaid:conformance>B</pdfaid:conformance>\n'
-        '    </rdf:Description>'
+        "      <pdfaid:part>3</pdfaid:part>\n"
+        "      <pdfaid:conformance>B</pdfaid:conformance>\n"
+        "    </rdf:Description>"
     )
 
     src = BytesIO(pdf_bytes)
@@ -108,23 +104,27 @@ def _apply_pdfa3_conformance(pdf_bytes: bytes, deterministic_id: str = "") -> by
         icc_stream = pdf.make_stream(icc_bytes)
         icc_stream["/N"] = 3  # RGB = 3 components
 
-        output_intent = Dictionary({
-            "/Type": Name("/OutputIntent"),
-            "/S": Name("/GTS_PDFA1"),
-            "/OutputConditionIdentifier": String("sRGB IEC61966-2.1"),
-            "/RegistryName": String("http://www.color.org"),
-            "/Info": String("sRGB IEC61966-2.1"),
-            "/DestOutputProfile": icc_stream,
-        })
+        output_intent = Dictionary(
+            {
+                "/Type": Name("/OutputIntent"),
+                "/S": Name("/GTS_PDFA1"),
+                "/OutputConditionIdentifier": String("sRGB IEC61966-2.1"),
+                "/RegistryName": String("http://www.color.org"),
+                "/Info": String("sRGB IEC61966-2.1"),
+                "/DestOutputProfile": icc_stream,
+            }
+        )
         pdf.Root["/OutputIntents"] = Array([output_intent])
 
         # 3. Deterministic /ID trailer
         if deterministic_id:
             digest = hashlib.md5(deterministic_id.encode("utf-8")).digest()  # noqa: S324
-            pdf.trailer["/ID"] = Array([
-                pikepdf.Object.parse(b"<" + digest.hex().encode() + b">"),
-                pikepdf.Object.parse(b"<" + digest.hex().encode() + b">"),
-            ])
+            pdf.trailer["/ID"] = Array(
+                [
+                    pikepdf.Object.parse(b"<" + digest.hex().encode() + b">"),
+                    pikepdf.Object.parse(b"<" + digest.hex().encode() + b">"),
+                ]
+            )
 
         pdf.save(dst)
     return dst.getvalue()
@@ -149,18 +149,21 @@ def _register_embedded_font() -> str:
     vera_path = shutil.which("reportlab")
     if vera_path:
         import reportlab
+
         rl_dir = reportlab.__path__[0]
         candidates.append((f"{rl_dir}/fonts/Vera.ttf", "Vera"))
 
     # Also check reportlab's fonts directory directly
     try:
         import reportlab
+
         rl_fonts = f"{reportlab.__path__[0]}/fonts/Vera.ttf"
         candidates.append((rl_fonts, "Vera"))
     except Exception:
         pass
 
     import os
+
     for path, name in candidates:
         if os.path.isfile(path):
             try:

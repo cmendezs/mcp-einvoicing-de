@@ -121,11 +121,13 @@ class TestReducedRateCII:
 class TestReducedRateUBL:
     def _make_ubl_invoice(self) -> XRechnungInvoice:
         base = _make_reduced_rate_invoice()
-        return XRechnungInvoice.model_validate({
-            **base.model_dump(),
-            "syntax": XRechnungSyntax.UBL,
-            "buyer_reference": "PO-2026-0042",
-        })
+        return XRechnungInvoice.model_validate(
+            {
+                **base.model_dump(),
+                "syntax": XRechnungSyntax.UBL,
+                "buyer_reference": "PO-2026-0042",
+            }
+        )
 
     def test_category_id_emitted_as_s(self) -> None:
         invoice = self._make_ubl_invoice()
@@ -156,8 +158,6 @@ class TestReducedRateUBL:
         xml_bytes = XRechnungUBLSerializer().serialize(invoice, pretty_print=True)
 
         for key in ("en16931_ubl", "xrechnung_ubl"):
-            result = SchematronValidator(key).validate(
-                xml_bytes, profile="XRECHNUNG", syntax="UBL"
-            )
+            result = SchematronValidator(key).validate(xml_bytes, profile="XRECHNUNG", syntax="UBL")
             category_errors = [e for e in result.errors if "categor" in e.text.lower()]
             assert category_errors == [], f"{key} category-code errors: {category_errors}"
