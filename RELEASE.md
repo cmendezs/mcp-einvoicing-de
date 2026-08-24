@@ -41,6 +41,16 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.10.0] - 2026-08-24
+#### Changed
+- **[core v1.20.0]** `peppol_send` now emits a real `wsse:Security` message signature. Core's AS4 transport client's `_apply_message_signature` previously computed a signature and discarded it, sending unsigned outbound messages. Wire-level behavior change, not independently validated against a live sandbox Peppol AP at time of publish — the signing code is shared core logic, not DE-specific, so no per-package sandbox gate was required.
+- Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.20.0` (was `>=1.19.0`).
+- `xslt2` extra now also chains `mcp-einvoicing-core[xslt2]>=1.20.0` alongside the existing direct `saxonche` pin, so both this package's own Factur-X/XRechnung stylesheets and core's new Peppol EUSR/TSR/MLS validators resolve consistently.
+
+#### Added
+- Mounted three new opt-in core plugins in `server.py`, alongside the existing Peppol tool plugin: `register_peppol_reporting_tools` (`validate_eusr_report`, `validate_tsr_report`; requires `[xslt2]`), `register_peppol_mls_tools` (`validate_mls_message`, `build_mls_message`; requires `[xslt2]`), and `register_en16931_codelist_tools` (13 `list_*`/`check_*` pairs; requires `EINVOICING_EN16931_CODELIST_DIR`). `peppol_directory_search` arrives automatically via the existing `register_peppol_tools` mount.
+- Server-registration smoke test asserting the new tools register.
+
 ### [0.9.0] - 2026-08-21
 #### Changed
 - **[ARCH-CONVERGE-DE]** `server.py` converted from a raw `mcp.server.Server` (low-level protocol handlers, hand-rolled `types.Tool` JSON schemas) to `EInvoicingMCPServer`/`register_plugin`, matching the other country packages. Every `handle_*`/`TOOL_*` pair (`invoice_create`, `invoice_validate`, `invoice_parse`, `invoice_convert`, `datev_export`, `tax_rules`) was converted to a typed FastMCP tool function returning a plain dict, with the removed `TOOL_*` JSON schema descriptions folded into the function docstrings. `peppol_check` and `peppol_send` (DE's own hand-rolled Peppol tools) were removed entirely; `server.py` now mounts `mcp_einvoicing_core.peppol.tools.register_peppol_tools` as a second plugin, with a German-specific identifier adapter (`_de_id_adapter`) that normalizes a bare USt-IdNr to the `9930:<value>` Peppol scheme (`DE:VAT`), verified against the real local OpenPeppol eDEC v9.7 codelist data. DE gains `peppol_get_service_endpoint`, `resolve_peppol_dns`, and 8 eDEC codelist tools it did not have before; `peppol_lookup_participant` replaces `peppol_check` for the existing lookup use case. `peppol_send`'s DE-specific ZUGFeRD-to-XRechnung-UBL conversion step is no longer automatic: compose `invoice_convert` (or `invoice_create` with `target_syntax='UBL'`) with the core `peppol_send` tool instead.
