@@ -90,6 +90,9 @@ Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen
 | `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts. Wird nur verwendet, wenn die Cloud-Validierung aktiviert ist — siehe `EINVOICING_DE_KOSIT_ENABLE` | |
 | `EINVOICING_DE_KOSIT_ENABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung zu aktivieren (`validator.kosit.de` oder ein selbst gehosteter Endpunkt). Standardmaessig laeuft nur lokales Schematron | |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Lokales Verzeichnis mit einer eigenen Kopie der OpenPeppol eDEC Code Lists, erforderlich fuer die Peppol-Codelist-Werkzeuge (nicht in diesem Paket enthalten; siehe README von `mcp-einvoicing-core`) | |
+| `EINVOICING_EN16931_CODELIST_DIR` | Lokales Verzeichnis mit einer eigenen Kopie der EN-16931-Codelisten des CEF "Digital Building Blocks", erforderlich fuer die EN-16931-Codelist-Werkzeuge (nicht enthalten; siehe README von `mcp-einvoicing-core`) | |
+
+Die EUSR/TSR-Reporting- und MLS-Werkzeuge erfordern zusaetzlich das `[xslt2]`-Extra fuer die Schematron-Validierung.
 
 ### 🤖 Integration Claude Desktop
 
@@ -151,7 +154,9 @@ Konfigurationsdatei (`~/.cursor/mcp.json` oder `.cursor/mcp.json` im Projektverz
 
 ### Peppol-Netzwerkwerkzeuge
 
-Peppol-Teilnehmersuche, Suche nach Service-Endpunkten, eine reine DNS-Diagnose, AS4-Versand und die Codelist-Werkzeuge von OpenPeppol eDEC werden vom gemeinsamen Peppol-Werkzeug-Plugin des Core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`) bereitgestellt, das in `server.py` mit einem deutschlandspezifischen Identifikator-Adapter eingebunden ist: eine blanke USt-IdNr. (z. B. `123456789` oder `DE123456789`) wird auf das Peppol-Schema `9930:<Wert>` (`DE:VAT`) normalisiert; ein bereits schema-qualifizierter Identifikator (z. B. `9930:DE123456789` oder `0204:<Leitweg-ID>` fuer per Leitweg-ID geroutete B2G-Rechnungen) bleibt unveraendert. Fuer den Versand per AS4 zunaechst XRechnung UBL mit `invoice_convert` (oder `invoice_create` mit `target_syntax='UBL'`) erzeugen und das Ergebnis dann an `peppol_send` uebergeben.
+Peppol-Teilnehmersuche, Suche nach Service-Endpunkten, eine reine DNS-Diagnose, AS4-Versand, Peppol-Directory-Suche und die Codelist-Werkzeuge von OpenPeppol eDEC werden vom gemeinsamen Peppol-Werkzeug-Plugin des Core (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`) bereitgestellt, das in `server.py` mit einem deutschlandspezifischen Identifikator-Adapter eingebunden ist: eine blanke USt-IdNr. (z. B. `123456789` oder `DE123456789`) wird auf das Peppol-Schema `9930:<Wert>` (`DE:VAT`) normalisiert; ein bereits schema-qualifizierter Identifikator (z. B. `9930:DE123456789` oder `0204:<Leitweg-ID>` fuer per Leitweg-ID geroutete B2G-Rechnungen) bleibt unveraendert. Fuer den Versand per AS4 zunaechst XRechnung UBL mit `invoice_convert` (oder `invoice_create` mit `target_syntax='UBL'`) erzeugen und das Ergebnis dann an `peppol_send` uebergeben.
+
+`peppol_send` signiert ausgehende Nachrichten seit `mcp-einvoicing-core` v1.20.0 mit einer echten `wsse:Security`-Signatur (zuvor berechnet und verworfen — siehe CHANGELOG.md v0.10.0).
 
 | Werkzeug | Beschreibung |
 |---|---|
@@ -159,8 +164,25 @@ Peppol-Teilnehmersuche, Suche nach Service-Endpunkten, eine reine DNS-Diagnose, 
 | `peppol_get_service_endpoint` | Ruft den AS4-Endpunkt fuer den Dokumenttyp eines Teilnehmers ab |
 | `resolve_peppol_dns` | Reine DNS-Diagnose (SML), unabhaengig von der SMP-Erreichbarkeit |
 | `peppol_send` | Uebertraegt eine UBL/CII-Rechnung per AS4 |
+| `peppol_directory_search` | Durchsucht das oeffentliche Peppol Directory nach Teilnehmer, Name, Land oder Dokumenttyp |
 | `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | OpenPeppol-eDEC-Codelist-Abfragen (erfordern `EINVOICING_PEPPOL_CODELIST_DIR`) |
 | `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | OpenPeppol-eDEC-Codelist-Pruefungen und Versionsabfrage |
+
+Vollstaendige Parameterdokumentation zu diesen Werkzeugen siehe [README von `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme).
+
+---
+
+### Peppol-Reporting- und Statuswerkzeuge
+
+Hinzugefuegt in v0.10.0 ueber drei optionale Core-Plugins, die bedingungslos in `server.py` eingebunden werden. Jedes liefert einen klaren Fehler beim Aufruf (nicht bei der Registrierung), wenn das zugehoerige Extra oder Datenverzeichnis fehlt.
+
+| Werkzeug | Plugin | Beschreibung |
+|---|---|---|
+| `validate_eusr_report` | `register_peppol_reporting_tools` | Validiert einen End User Statistics Report (XSD, dann Schematron). Erfordert das `[xslt2]`-Extra. |
+| `validate_tsr_report` | `register_peppol_reporting_tools` | Validiert einen Transaction Statistics Report (XSD, dann Schematron). Erfordert das `[xslt2]`-Extra. |
+| `validate_mls_message` | `register_peppol_mls_tools` | Validiert ein Message-Level-Status-Dokument (UBL-`ApplicationResponse-2`-Teilmenge). Erfordert das `[xslt2]`-Extra. |
+| `build_mls_message` | `register_peppol_mls_tools` | Erstellt eine MLS-Antwort auf Dokumentebene. Erfordert das `[xslt2]`-Extra. |
+| 13 `list_*`/`check_*`-Paare, `get_en16931_codelist_version` | `register_en16931_codelist_tools` | Abfragen/Pruefungen der semantischen EN-16931-Codelisten (Einheiten, USt-Kategorien usw.). Erfordern `EINVOICING_EN16931_CODELIST_DIR`. |
 
 Vollstaendige Parameterdokumentation zu diesen Werkzeugen siehe [README von `mcp-einvoicing-core`](https://github.com/cmendezs/mcp-einvoicing-core#readme).
 

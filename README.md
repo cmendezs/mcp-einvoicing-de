@@ -90,6 +90,9 @@ The server does not require external credentials. Available environment variable
 | `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint. Only used if cloud validation is enabled — see `EINVOICING_DE_KOSIT_ENABLE` | |
 | `EINVOICING_DE_KOSIT_ENABLE` | Set to `1` to enable KoSIT cloud validation (`validator.kosit.de` or a self-hosted endpoint). Local Schematron-only validation is the default | |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Local directory containing your own copy of the OpenPeppol eDEC Code Lists, required by the Peppol codelist tools (not bundled with this package; see `mcp-einvoicing-core` README) | |
+| `EINVOICING_EN16931_CODELIST_DIR` | Local directory containing your own copy of the CEF "Digital Building Blocks" EN 16931 semantic code lists, required by the EN 16931 codelist tools (not bundled; see `mcp-einvoicing-core` README) | |
+
+The EUSR/TSR reporting and MLS tools additionally require the `[xslt2]` extra for Schematron validation.
 
 ### 🤖 Claude Desktop integration
 
@@ -151,7 +154,9 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 
 ### Peppol network tools
 
-Peppol participant lookup, service-endpoint lookup, a DNS-only diagnostic, AS4 send, and the OpenPeppol eDEC codelist tools are provided by the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a German-specific identifier adapter: a bare USt-IdNr (e.g. `123456789` or `DE123456789`) is normalized to the `9930:<value>` Peppol scheme (`DE:VAT`); an already scheme-qualified identifier (e.g. `9930:DE123456789`, or `0204:<leitweg-id>` for Leitweg-ID-routed B2G invoices) passes through unchanged. To send via AS4, first produce XRechnung UBL with `invoice_convert` (or `invoice_create` with `target_syntax='UBL'`), then pass the result to `peppol_send`.
+Peppol participant lookup, service-endpoint lookup, a DNS-only diagnostic, AS4 send, Peppol Directory search, and the OpenPeppol eDEC codelist tools are provided by the shared core Peppol tool plugin (`mcp_einvoicing_core.peppol.tools.register_peppol_tools`), mounted in `server.py` with a German-specific identifier adapter: a bare USt-IdNr (e.g. `123456789` or `DE123456789`) is normalized to the `9930:<value>` Peppol scheme (`DE:VAT`); an already scheme-qualified identifier (e.g. `9930:DE123456789`, or `0204:<leitweg-id>` for Leitweg-ID-routed B2G invoices) passes through unchanged. To send via AS4, first produce XRechnung UBL with `invoice_convert` (or `invoice_create` with `target_syntax='UBL'`), then pass the result to `peppol_send`.
+
+`peppol_send` signs outbound messages with a real `wsse:Security` signature as of `mcp-einvoicing-core` v1.20.0 (previously computed and discarded — see CHANGELOG.md v0.10.0).
 
 | Tool | Description |
 |---|---|
@@ -159,8 +164,25 @@ Peppol participant lookup, service-endpoint lookup, a DNS-only diagnostic, AS4 s
 | `peppol_get_service_endpoint` | Fetch the AS4 endpoint for a participant's document type |
 | `resolve_peppol_dns` | DNS-only (SML) diagnostic, independent of SMP reachability |
 | `peppol_send` | Transmit a UBL/CII invoice via AS4 |
+| `peppol_directory_search` | Search the public Peppol Directory by participant, name, country, or document type |
 | `list_participant_id_schemes`, `list_document_type_ids`, `list_process_ids`, `list_spis_use_case_ids` | OpenPeppol eDEC codelist lookups (require `EINVOICING_PEPPOL_CODELIST_DIR`) |
 | `check_document_type_id_in_codelist`, `check_process_id_in_codelist`, `check_participant_id_scheme_in_codelist`, `get_peppol_codelist_version` | OpenPeppol eDEC codelist checks and version reporting |
+
+See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicing-core#readme) for full parameter documentation on these tools.
+
+---
+
+### Peppol reporting and status tools
+
+Added in v0.10.0 via three opt-in core plugins, mounted unconditionally in `server.py`. Each raises a clear error at call time (not at registration) if its extra or data directory is missing.
+
+| Tool | Plugin | Description |
+|---|---|---|
+| `validate_eusr_report` | `register_peppol_reporting_tools` | Validate an End User Statistics Report (XSD, then Schematron). Requires the `[xslt2]` extra. |
+| `validate_tsr_report` | `register_peppol_reporting_tools` | Validate a Transaction Statistics Report (XSD, then Schematron). Requires the `[xslt2]` extra. |
+| `validate_mls_message` | `register_peppol_mls_tools` | Validate a Message Level Status document (UBL `ApplicationResponse-2` subset). Requires the `[xslt2]` extra. |
+| `build_mls_message` | `register_peppol_mls_tools` | Build a document-level MLS response. Requires the `[xslt2]` extra. |
+| 13 `list_*`/`check_*` pairs, `get_en16931_codelist_version` | `register_en16931_codelist_tools` | EN 16931 semantic code list lookups/checks (units, VAT categories, etc.). Require `EINVOICING_EN16931_CODELIST_DIR`. |
 
 See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicing-core#readme) for full parameter documentation on these tools.
 
