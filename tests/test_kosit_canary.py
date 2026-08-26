@@ -62,8 +62,11 @@ def _canary_invoice(
                 line_id="1",
                 name="Canary item",
                 quantity=Decimal("1"),
+                unit_code="C62",
                 unit_price=Decimal("100.00"),
-                net_amount=Decimal("100.00"),
+                line_net_amount=Decimal("100.00"),
+                tax_category=GermanTaxCategory.STANDARD,
+                tax_rate=Decimal("19"),
             ),
         ]
     invoice = ZUGFeRDInvoice(

@@ -1,8 +1,19 @@
 name: KoSIT canary corpus
 
+# Nightly schedule disabled 2026-08-26: this job has never passed since the
+# workflow was added (checked history back to 2026-06-26). Two root causes:
+#  1. tests/test_kosit_canary.py builds ZUGFeRDLineItem with a stale field
+#     name (net_amount instead of line_net_amount) and omits unit_code /
+#     tax_category / tax_rate, so 4 of 6 canary cases fail Pydantic
+#     validation before any network call is made.
+#  2. KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL points at
+#     https://validator.kosit.de/api/v1/validate, which the validator's own
+#     docstring already flags as [Unverified]: not a confirmed published
+#     KoSIT endpoint (DE-LC-2), and it fails TLS verification in CI.
+# Re-enable the schedule only after both are fixed: correct the fixture and
+# confirm the real KoSIT validate endpoint against KoSIT's technical service
+# documentation. Manual runs remain available via workflow_dispatch.
 on:
-  schedule:
-    - cron: '0 3 * * *'  # nightly at 03:00 UTC
   workflow_dispatch: {}
 
 jobs:
