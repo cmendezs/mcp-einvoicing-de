@@ -104,6 +104,10 @@ Reference material for the `datev_export` tool's DATEV EXTF Buchungsstapel mappi
   it out of the PyPI wheel, and DATEV's actual terms of use for `developer.datev.de` downloads
   were never verified `[Unverified]`. It is git-ignored (see `.gitignore`); re-download it from
   `developer.datev.de` locally if you need it for the CI follow-up below.
+- **Also deliberately not committed**: DATEV Serviceinformation PDFs such as Dok.-Nr. 1008613
+  ("Übersicht Steuerschlüssel (BU) in DATEV Unternehmen online"), used locally to verify the
+  `_bu_key` BU-Schlüssel mappings in `tools/datev_export.py` (DE-TL-1). These are copyrighted
+  DATEV publications, git-ignored (`specs/datev/*.pdf`); re-download from DATEV if needed.
 
 Consumer: [`tools/datev_export.py`](../src/mcp_einvoicing_de/tools/datev_export.py)
 cites `Format_Buchungsstapel.xml` field 9 (BU-Schlüssel) and field 10 (Belegdatum,

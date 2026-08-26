@@ -199,3 +199,27 @@ class TestXRechnungSchematronChaining:
             "Without chaining, the base-rule violation (missing due date / "
             f"payment terms) would be silently skipped; got {base_rule_ids}"
         )
+
+
+@pytest.mark.skipif(not _SAXON_AVAILABLE, reason="saxonche extra not installed")
+class TestExtendedSchematronCurrencyID:
+    """DE-ZF252-3 regression: the header ram:TaxTotalAmount must carry
+    @currencyID (BT-110/BT-5), otherwise the Factur-X EXTENDED rule
+    BR-FXEXT-CO-15 fires on every EXTENDED invoice with a VAT total. Fixed in
+    mcp-einvoicing-core v1.21.0 (EN16931CIISerializer._build_monetary_summary).
+    """
+
+    def test_extended_invoice_does_not_trip_br_fxext_co_15(self) -> None:
+        from mcp_einvoicing_de.validators.schematron import SchematronValidator
+
+        invoice = _make_invoice(ZUGFeRDProfile.EXTENDED, with_lines=True)
+        xml_bytes = ZUGFeRDCIISerializer().serialize(invoice, pretty_print=True)
+
+        result = SchematronValidator("zugferd_extended_cii").validate(
+            xml_bytes, profile="EXTENDED", syntax="CII"
+        )
+        fired = {m.rule_id for m in result.errors} | {m.rule_id for m in result.warnings}
+        assert "BR-FXEXT-CO-15" not in fired, (
+            "DE-ZF252-3 regression: BR-FXEXT-CO-15 fired — the header "
+            f"ram:TaxTotalAmount is missing @currencyID. Findings: {sorted(fired)}"
+        )

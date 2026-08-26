@@ -58,22 +58,36 @@ def _format_datev_date(d: date) -> str:
 def _bu_key(category: GermanTaxCategory, rate: Decimal, line_kind: str = "revenue") -> str:
     """Map a VAT category + rate to a DATEV BU-Schlüssel (tax code, field 9).
 
-    Source: specs/datev/Format_Buchungsstapel.xml field 9 (BU-Schlüssel, 4
-    chars max). ``line_kind`` is "revenue" for the sales/Ausgangsrechnung
-    bookings this tool produces (Debitoren-Sammelkonto debit / Erlöskonto
-    credit); "expense" codes are included for API completeness but are not
-    reachable from this tool's own call sites today.
+    ``line_kind`` is "revenue" for the sales/Ausgangsrechnung bookings this
+    tool produces (Debitoren-Sammelkonto debit / Erlöskonto credit) and
+    "expense" for incoming/Lieferantenrechnung bookings. The two sides use
+    *different* DATEV keys for the same VAT category: a §13b line the seller
+    provides ("Erbrachte Leistung", revenue) is a different key from one the
+    buyer receives ("Erhaltene Leistung", expense); likewise an
+    intra-community *supply* (revenue) vs. *acquisition* (expense).
 
-    Values marked [Verified locally] were confirmed against the bundled
-    DATEV EXTF_Buchungsstapel.csv sample ("Schreibwaren" row: BU 9, 19%
-    Vorsteuer). Others are [Unverified] pending confirmation against the
-    developer.datev.de Appendix > "Buchungsschlüssel (BU)" page — tracked as
-    a v0.8.1 follow-up.
+    All codes below are [Verified locally] against the DATEV "Übersicht
+    Steuerschlüssel (BU) in DATEV Unternehmen online" (Dok.-Nr. 1008613,
+    2026-05-11). That document is a proprietary DATEV publication and is not
+    redistributed via git or the PyPI wheel (git-ignored, see specs/README.md);
+    re-download it from DATEV if needed locally.
+    DE-TL-1: an earlier revision mis-keyed REVERSE_CHARGE→"94" and
+    INTRA_COMMUNITY→"91" on the revenue side, but 91/94 are "Erhaltene
+    Leistung § 13b" (received/expense) codes — corrected here.
     """
+    rate7 = rate in (Decimal("7"), Decimal("7.00"))
+    is_revenue = line_kind == "revenue"
+
     if category == GermanTaxCategory.REVERSE_CHARGE:
-        return "94"  # [Unverified] §13b UStG reverse charge
+        # AE — §13b Steuerschuldnerschaft des Leistungsempfängers.
+        if is_revenue:
+            return "200"  # Erbrachte Leistung § 13b UStG (seller-provided service)
+        return "91" if rate7 else "94"  # Erhaltene Leistung § 13b UStG (7% / 19%)
     if category == GermanTaxCategory.INTRA_COMMUNITY:
-        return "91"  # [Unverified] §4 Nr. 1b UStG intra-community supply
+        # K — §4 Nr. 1b.
+        if is_revenue:
+            return "11"  # steuerfreie innergem. Lieferung mit USt-IdNr. § 4 Nr. 1 b) UStG
+        return "18" if rate7 else "19"  # steuerpfl. innergem. Erwerb § 1a UStG (7% / 19%)
     if category in (
         GermanTaxCategory.EXEMPT,
         GermanTaxCategory.SERVICES_OUTSIDE_SCOPE,
@@ -83,12 +97,14 @@ def _bu_key(category: GermanTaxCategory, rate: Decimal, line_kind: str = "revenu
         return ""  # no Automatik-BU; book to a manual tax-exempt account
     # category == STANDARD (GermanTaxCategory.REDUCED is an alias of STANDARD;
     # the 7%/19% distinction is carried by `rate`, not by category).
-    if line_kind == "revenue":
-        return ""  # [Unverified] revenue Automatikkonto already encodes the rate (SKR03/04)
+    if is_revenue:
+        # Revenue Automatik-Erlöskonto (SKR03/04) already encodes the rate; the
+        # explicit non-Automatik USt keys would be "2" (7%) / "3" (19%) per Dok. 1008613.
+        return ""
     if rate == Decimal("19") or rate == Decimal("19.00"):
-        return "9"  # [Verified locally] Vorsteuer 19% — EXTF_Buchungsstapel.csv "Schreibwaren" row
-    if rate == Decimal("7") or rate == Decimal("7.00"):
-        return "8"  # [Unverified] Vorsteuer 7%
+        return "9"  # Vorsteuer 19%
+    if rate7:
+        return "8"  # Vorsteuer 7%
     return ""
 
 

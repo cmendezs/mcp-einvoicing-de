@@ -73,3 +73,7 @@ audit/report.json
 # Proprietary third-party binary (DATEV eG) — not redistributed via git or the
 # PyPI wheel; re-download from developer.datev.de if needed locally.
 specs/datev/DatevFormatPruefProgramm.exe
+# Proprietary DATEV Serviceinformation PDFs (e.g. Dok.-Nr. 1008613, "Übersicht
+# Steuerschlüssel (BU)") — used locally to verify _bu_key mappings; copyrighted
+# DATEV publications, not redistributed. Re-download from DATEV if needed.
+specs/datev/*.pdf

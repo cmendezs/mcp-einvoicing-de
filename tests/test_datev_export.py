@@ -72,8 +72,9 @@ def _tax(rate: Decimal, category: GermanTaxCategory, taxable: Decimal) -> ZUGFeR
 class TestBuKey:
     def test_standard_rate_revenue_has_no_automatik_bu(self) -> None:
         """Revenue-side postings at the standard/reduced rate carry no
-        BU-Schlüssel — the correct SKR03/04 Erlöskonto (8400 vs 8300)
-        encodes the rate, not the BU key. [Unverified]
+        BU-Schlüssel — the SKR03/04 Automatik-Erlöskonto (8400 vs 8300)
+        encodes the rate, not the BU key (DATEV Dok. 1008613: the explicit
+        non-Automatik USt keys would be "2" at 7% / "3" at 19%).
         """
         assert _bu_key(GermanTaxCategory.STANDARD, Decimal("19"), "revenue") == ""
         assert _bu_key(GermanTaxCategory.REDUCED, Decimal("7"), "revenue") == ""
@@ -85,12 +86,35 @@ class TestBuKey:
         """
         reverse_charge_bu = _bu_key(GermanTaxCategory.REVERSE_CHARGE, Decimal("0"), "revenue")
         exempt_bu = _bu_key(GermanTaxCategory.EXEMPT, Decimal("0"), "revenue")
-        assert reverse_charge_bu == "94"
+        assert reverse_charge_bu == "200"
         assert exempt_bu == ""
         assert reverse_charge_bu != exempt_bu
 
+    def test_reverse_charge_revenue_is_erbrachte_leistung(self) -> None:
+        """DE-TL-1: a seller-provided §13b service (Ausgangsrechnung) is
+        "Erbrachte Leistung § 13b UStG" = BU 200, not the received-side 91/94.
+        """
+        assert _bu_key(GermanTaxCategory.REVERSE_CHARGE, Decimal("0"), "revenue") == "200"
+
+    def test_reverse_charge_expense_is_erhaltene_leistung_by_rate(self) -> None:
+        """DE-TL-1: a received §13b service (Lieferantenrechnung) is
+        "Erhaltene Leistung § 13b UStG" — BU 91 at 7%, BU 94 at 19%.
+        """
+        assert _bu_key(GermanTaxCategory.REVERSE_CHARGE, Decimal("7"), "expense") == "91"
+        assert _bu_key(GermanTaxCategory.REVERSE_CHARGE, Decimal("19"), "expense") == "94"
+
     def test_intra_community_supply_bu(self) -> None:
-        assert _bu_key(GermanTaxCategory.INTRA_COMMUNITY, Decimal("0"), "revenue") == "91"
+        """DE-TL-1: an intra-community *supply* (revenue, §4 Nr. 1b) is BU 11
+        ("steuerfreie innergem. Lieferung mit USt-IdNr."), not the received 91.
+        """
+        assert _bu_key(GermanTaxCategory.INTRA_COMMUNITY, Decimal("0"), "revenue") == "11"
+
+    def test_intra_community_acquisition_expense_by_rate(self) -> None:
+        """DE-TL-1: an intra-community *acquisition* (expense, §1a) is BU 18 at
+        7%, BU 19 at 19%.
+        """
+        assert _bu_key(GermanTaxCategory.INTRA_COMMUNITY, Decimal("7"), "expense") == "18"
+        assert _bu_key(GermanTaxCategory.INTRA_COMMUNITY, Decimal("19"), "expense") == "19"
 
     def test_expense_side_standard_rate_differs_by_rate(self) -> None:
         assert _bu_key(GermanTaxCategory.STANDARD, Decimal("19"), "expense") == "9"
