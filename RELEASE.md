@@ -41,6 +41,24 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.11.0] - 2026-08-26
+#### Fixed
+- **[DE-TL-1]** `datev_export._bu_key` mis-mapped two revenue-side categories. Verified against the
+  DATEV "Übersicht Steuerschlüssel (BU)" (Dok.-Nr. 1008613, 2026-05-11), the old
+  `REVERSE_CHARGE→94` / `INTRA_COMMUNITY→91` are "Erhaltene Leistung §13b" (received/expense)
+  codes, wrong for the seller's Ausgangsrechnung side. `_bu_key` is now line_kind-aware: revenue
+  `REVERSE_CHARGE→200` (Erbrachte Leistung §13b), `INTRA_COMMUNITY→11` (steuerfreie innergem.
+  Lieferung §4 Nr. 1b); expense `→91/94` and `→18/19` by rate; `8`/`9` (Vorsteuer 7/19%) and
+  empty-revenue confirmed. All `[Unverified]` BU markers resolved to `[Verified locally]`.
+#### Changed
+- **[DE-ZF252-3]** Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.21.0` (was `>=1.20.0`),
+  picking up the header `ram:TaxTotalAmount` `@currencyID` fix in `EN16931CIISerializer`. Added a
+  Saxon-gated regression test asserting the EXTENDED rule `BR-FXEXT-CO-15` does not fire on a
+  serialized EXTENDED invoice. The `xslt2` extra pin was raised to `>=1.21.0` accordingly.
+#### Notes
+- The DATEV Dok. 1008613 PDF used to verify the BU codes is git-ignored (proprietary DATEV
+  publication, not redistributed via git or the wheel; see `specs/README.md`).
+
 ### [0.10.0] - 2026-08-24
 #### Changed
 - **[core v1.20.0]** `peppol_send` now emits a real `wsse:Security` message signature. Core's AS4 transport client's `_apply_message_signature` previously computed a signature and discarded it, sending unsigned outbound messages. Wire-level behavior change, not independently validated against a live sandbox Peppol AP at time of publish — the signing code is shared core logic, not DE-specific, so no per-package sandbox gate was required.
