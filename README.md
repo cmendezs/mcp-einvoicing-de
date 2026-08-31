@@ -320,9 +320,3 @@ make audit
 ## License
 
 This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LICENSE) file for details. For the full version history, see [CHANGELOG.md](CHANGELOG.md).
-
-Copyright 2026 cmendezs
-
----
-
-*Project maintained by [cmendezs](https://github.com/cmendezs). For questions about the ZUGFeRD or XRechnung specification implementation, please open an issue.*
