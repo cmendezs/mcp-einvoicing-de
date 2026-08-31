@@ -13,7 +13,7 @@ MCP server (Model Context Protocol) in Python for **German electronic invoicing*
 
 ---
 
-## 🏗️ Built on
+## Introduction
 
 This package is built on [**mcp-einvoicing-core**](https://github.com/cmendezs/mcp-einvoicing-core), a shared base library for European e-invoicing MCP servers. It provides shared models, validation abstractions, XML utilities, and the exception hierarchy.
 
@@ -21,29 +21,7 @@ This package is built on [**mcp-einvoicing-core**](https://github.com/cmendezs/m
 
 > **For developers:** `pip install -e ".[dev]"` installs the base package automatically from PyPI.
 
----
-
-## 🏗️ Architecture
-
-```
-mcp-einvoicing-de (this package, standalone MCP server)
-├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic models (all profiles)
-├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* rules
-├── KoSITValidator                     ← Remote validation tool (optional)
-└── Tools: create / validate / parse / convert / datev_export / tax_rules
-    (+ core Peppol tool plugin, mounted separately: lookup / send / DNS / codelists)
-
-        ↑ extends
-mcp-einvoicing-core (shared base, installed as dependency)
-├── BaseDocumentGenerator / Validator / Parser
-├── BaseInvoice, BaseParty … (Pydantic)
-├── xml_utils, exceptions
-└── EInvoicingMCPServer
-```
-
----
-
-## 🚀 Installation
+## Installation
 
 ### Via PyPI (recommended)
 
@@ -78,9 +56,7 @@ pip install -e ".[dev]"
 | `[pymupdf]` | Alternative PDF engine (uses `PyMuPDF`). | `pip install mcp-einvoicing-de[pymupdf]` |
 | `[dev]` | Development tools (pytest, ruff, pre-commit). | `pip install mcp-einvoicing-de[dev]` |
 
----
-
-## ⚙️ Configuration
+## Configuration
 
 The server does not require external credentials. Available environment variables:
 
@@ -94,24 +70,9 @@ The server does not require external credentials. Available environment variable
 
 The EUSR/TSR reporting and MLS tools additionally require the `[xslt2]` extra for Schematron validation.
 
-### 🤖 Claude Desktop integration
+## Claude Desktop integration
 
-Add the following entry to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "einvoicing-de": {
-      "command": "uvx",
-      "args": ["mcp-einvoicing-de"]
-    }
-  }
-}
-```
-
-### ⌨️ Cursor integration
-
-Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project directory):
+Add the following entry to `claude_desktop_config.json`. No environment variables are required:
 
 ```json
 {
@@ -124,7 +85,30 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 }
 ```
 
-### 🪐 Kiro integration
+## Cursor integration
+
+Cursor supports MCP servers via stdio. Add the configuration in:
+- **Global** (all projects): `~/.cursor/mcp.json`
+- **Project** (this repository only): `.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "einvoicing-de": {
+      "command": "uvx",
+      "args": ["mcp-einvoicing-de"]
+    }
+  }
+}
+```
+
+Reload the Cursor window (`Ctrl+Shift+P` then *Reload Window*) to apply the changes.
+
+## Kiro integration
+
+Kiro supports MCP servers via its dedicated configuration file. Two levels are available:
+- **Global** (all projects): `~/.kiro/settings/mcp.json`
+- **Workspace** (this repository only): `.kiro/settings/mcp.json`
 
 ```json
 {
@@ -139,9 +123,9 @@ Configuration file (`~/.cursor/mcp.json` or `.cursor/mcp.json` in the project di
 }
 ```
 
----
+The file is automatically reloaded on save. You can also open the config via the command palette (`Cmd+Shift+P` / `Ctrl+Shift+P`) then *MCP*.
 
-## 🧰 Available MCP tools
+## Available tools
 
 | Tool | Description |
 |------|-------------|
@@ -170,8 +154,6 @@ Peppol participant lookup, service-endpoint lookup, a DNS-only diagnostic, AS4 s
 
 See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicing-core#readme) for full parameter documentation on these tools.
 
----
-
 ### Peppol reporting and status tools
 
 Added in v0.10.0 via three opt-in core plugins, mounted unconditionally in `server.py`. Each raises a clear error at call time (not at registration) if its extra or data directory is missing.
@@ -186,11 +168,9 @@ Added in v0.10.0 via three opt-in core plugins, mounted unconditionally in `serv
 
 See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicing-core#readme) for full parameter documentation on these tools.
 
----
+### Usage examples
 
-## Usage examples
-
-### Example 1: Validate an invoice
+**Example 1: Validate an invoice**
 
 ```
 1. invoice_validate(
@@ -209,7 +189,7 @@ See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicin
      }
 ```
 
-### Example 2: Query German tax rules
+**Example 2: Query German tax rules**
 
 ```
 2. tax_rules(query="reverse_charge", context="Bauleistungen")
@@ -226,7 +206,7 @@ See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicin
      }
 ```
 
-### Example 3: Check Peppol registration
+**Example 3: Check Peppol registration**
 
 ```
 3. peppol_lookup_participant(
@@ -241,7 +221,7 @@ See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicin
      }
 ```
 
-### Example 4: Parse invoice data
+**Example 4: Parse invoice data**
 
 ```
 4. invoice_parse(xml_base64="...", include_raw_xml=False)
@@ -257,9 +237,25 @@ See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicin
      }
 ```
 
----
+## Architecture
 
-## 📚 Supported standards
+```
+mcp-einvoicing-de (this package, standalone MCP server)
+├── ZUGFeRDInvoice / XRechnungInvoice  ← Pydantic models (all profiles)
+├── SchematronValidator                ← EN 16931 + KoSIT BR-DE-* rules
+├── KoSITValidator                     ← Remote validation tool (optional)
+└── Tools: create / validate / parse / convert / datev_export / tax_rules
+    (+ core Peppol tool plugin, mounted separately: lookup / send / DNS / codelists)
+
+        ↑ extends
+mcp-einvoicing-core (shared base, installed as dependency)
+├── BaseDocumentGenerator / Validator / Parser
+├── BaseInvoice, BaseParty … (Pydantic)
+├── xml_utils, exceptions
+└── EInvoicingMCPServer
+```
+
+## Supported standards
 
 | Standard | Version | Profiles / Syntax |
 |----------|---------|-------------------|
@@ -278,9 +274,7 @@ See the [`mcp-einvoicing-core` README](https://github.com/cmendezs/mcp-einvoicin
 | EN 16931-1:2017 | [CEN](https://www.cen.eu/) |
 | Peppol BIS Billing 3.0 | [docs.peppol.eu](https://docs.peppol.eu/poacc/billing/3.0/) |
 
----
-
-## 🧪 Tests
+## Tests
 
 ```bash
 # Install development dependencies
@@ -296,16 +290,6 @@ pytest --cov=mcp_einvoicing_de --cov-report=term-missing
 pytest tests/test_models.py -v
 ```
 
----
-
-## Roadmap
-
-Current version: **v0.8.0**.
-
-For the history of past releases, see [RELEASE.md](RELEASE.md).
-
----
-
 ## Contributing
 
 Contributions are welcome. Please open an issue before submitting a pull request for significant changes.
@@ -317,8 +301,6 @@ pip install -e ".[dev]"
 pytest
 make audit
 ```
-
----
 
 ## Other e-invoicing MCP servers
 
@@ -335,12 +317,9 @@ make audit
 | 🇪🇸 Spain | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
 | 🇦🇪 United Arab Emirates | [mcp-einvoicing-ae](https://github.com/cmendezs/mcp-einvoicing-ae) |
 
----
+## License
 
-## 📄 License
-
-This project is licensed under the **Apache 2.0 License**.  
-See the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Apache 2.0 License**. See the [LICENSE](LICENSE) file for details. For the full version history, see [CHANGELOG.md](CHANGELOG.md).
 
 Copyright 2026 cmendezs
 
