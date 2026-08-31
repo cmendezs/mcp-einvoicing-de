@@ -331,7 +331,9 @@ make audit
 | 🇩🇪 Deutschland | [mcp-einvoicing-de](https://github.com/cmendezs/mcp-einvoicing-de) |
 | 🇮🇹 Italien | [mcp-fattura-elettronica-it](https://github.com/cmendezs/mcp-fattura-elettronica-it) |
 | 🇵🇱 Polen | [mcp-ksef-pl](https://github.com/cmendezs/mcp-ksef-pl) |
+| 🇸🇬 Singapur | [mcp-invoicenow-sg](https://github.com/cmendezs/mcp-invoicenow-sg) |
 | 🇪🇸 Spanien | [mcp-facturacion-electronica-es](https://github.com/cmendezs/mcp-facturacion-electronica-es) |
+| 🇦🇪 Vereinigte Arabische Emirate | [mcp-einvoicing-ae](https://github.com/cmendezs/mcp-einvoicing-ae) |
 
 ---
 
