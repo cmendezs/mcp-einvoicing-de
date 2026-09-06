@@ -77,3 +77,7 @@ specs/datev/DatevFormatPruefProgramm.exe
 # Steuerschlüssel (BU)") — used locally to verify _bu_key mappings; copyrighted
 # DATEV publications, not redistributed. Re-download from DATEV if needed.
 specs/datev/*.pdf
+docs/node_modules/
+docs/dist/
+docs/.astro/
+docs/src/styles/docs-theme.css
