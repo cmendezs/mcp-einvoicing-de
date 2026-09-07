@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.3] - 2026-09-07
+
+### Fixed
+- **`src/mcp_einvoicing_de/__init__.py`'s `__version__` was left at `0.11.1`**
+  across the v0.11.2 release, while `pyproject.toml` and `server.json` were
+  both bumped correctly. Purely a metadata fix; no behavioral change.
+
+### Added
+- `tests/test_metadata.py::test_version_slot_consistency` — regression test
+  guarding all three version slots against future drift.
+
+---
+
 ## [0.11.2] - 2026-09-07
 
 ### Fixed
