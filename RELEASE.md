@@ -41,6 +41,31 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.11.2] - 2026-09-07
+#### Fixed
+- **XRechnung CII validation no longer rejects every invoice (latent BLOCKING-class bug).**
+  The local `XRECHNUNG` CII chain used FeRD's `FACTUR-X_EN16931.xslt` as its EN 16931 base;
+  that stylesheet enforces the Factur-X BT-24 codelist and fails the XRechnung profile URN
+  (`FX-SCH-A-000556`), so every XRechnung CII invoice was reported invalid. The genuine CEN
+  `EN16931-CII-validation.xsl` is now bundled and used as the CII base via a new
+  `validators/schematron.py::_STYLESHEET_MAP` key `en16931_cii_cen`;
+  `tools/invoice_validate.py::_PROFILE_TO_STYLESHEET["XRECHNUNG"]["CII"]` points at it.
+#### Changed
+- **Bundled XRechnung rules are now one version-matched set.** EN 16931 base (UBL + CII) and
+  XRechnung 3.0.2 CIUS (UBL + CII) are all taken from the `validator-configuration-xrechnung`
+  v2026-08-31 release (release asset `xrechnung-3.0.2-validator-configuration-2026-08-31.zip`,
+  fetched directly per one-session user authorization). This supersedes v0.11.1's split, where
+  the base (v2026-01-31) had drifted out of sync with the CIUS (`xrechnung-schematron` v2.6.0)
+  and mis-validated the official v2026-08-31 test suite. Apache-2.0 (KoSIT) over the CEN
+  EN 16931 base (EUPL 1.2); no Peppol/OpenPeppol-licensed content is introduced.
+#### Added
+- Vendored the official KoSIT `xrechnung-testsuite` v2026-08-31 positive reference corpus
+  (Apache-2.0) under `specs/xrechnung/testsuite/`, and `tests/test_xrechnung_testsuite.py`,
+  which validates all 78 standard + CIUS instances clean through the `XRECHNUNG` chain
+  (the 8 `extension`/`cvd` instances are separate XRechnung profiles, xfailed by design).
+  This corpus is what surfaced the CII fix above. Audit gate `CHECK_5` now also asserts the
+  new `EN16931-CII-validation.xsl` ships in the wheel.
+
 ### [0.11.1] - 2026-09-07
 #### Changed
 - **[regulatory-update, closes `regulatory-update` issue #6]** KoSIT `xrechnung-schematron`

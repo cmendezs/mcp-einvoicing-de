@@ -175,8 +175,18 @@ class TestXRechnungSchematronChaining:
         )
 
     async def test_merged_report_includes_base_and_cius_findings(self) -> None:
-        """A fixture missing BT-9/BT-20 (base rule) and BG-16/electronic
-        addresses (CIUS rules) must surface findings from both stylesheets.
+        """A fixture that violates an EN 16931 base arithmetic rule (BR-CO-15)
+        and is missing CIUS-required fields (electronic addresses etc.) must
+        surface findings from *both* stylesheets — proving the XRECHNUNG chain
+        runs the EN 16931 base ruleset, not the KoSIT CIUS ruleset alone.
+
+        BR-CO-15 (grand total with VAT = total without VAT + VAT total) is a
+        pure base rule absent from the CIUS overlay, so an ``en16931_*`` finding
+        for it can only come from running the base stylesheet. It is used here
+        instead of BR-CO-25 (missing due date / payment terms): the official
+        KoSIT ``validator-configuration-xrechnung`` v2026-08-31 EN 16931 base
+        no longer emits BR-CO-25, so relying on it made this guard stylesheet-
+        version-fragile.
         """
         base = _make_invoice(ZUGFeRDProfile.XRECHNUNG, with_lines=True)
         invoice = XRechnungInvoice.model_validate(
@@ -186,18 +196,25 @@ class TestXRechnungSchematronChaining:
             }
         )
         xml_bytes = XRechnungUBLSerializer().serialize(invoice, pretty_print=True)
+        # Break BR-CO-15: inflate the tax-inclusive grand total so it no longer
+        # equals tax-exclusive total + VAT. Targeted string replace keeps the
+        # rest of the document (and its CIUS violations) intact.
+        xml_bytes = xml_bytes.replace(
+            b'<cbc:TaxInclusiveAmount currencyID="EUR">238.00</cbc:TaxInclusiveAmount>',
+            b'<cbc:TaxInclusiveAmount currencyID="EUR">999.00</cbc:TaxInclusiveAmount>',
+        )
 
         data = await self._validate(xml_bytes)
         sources = {e["source"] for e in data["errors"]}
 
         assert "en16931_ubl" in sources, (
-            f"Expected an EN 16931 base-rule finding (e.g. BR-CO-25); got sources={sources}"
+            f"Expected an EN 16931 base-rule finding (e.g. BR-CO-15); got sources={sources}"
         )
         assert "xrechnung_ubl" in sources, f"Expected a KoSIT CIUS finding; got sources={sources}"
         base_rule_ids = {e["rule_id"] for e in data["errors"] if e["source"] == "en16931_ubl"}
-        assert "BR-CO-25" in base_rule_ids, (
-            "Without chaining, the base-rule violation (missing due date / "
-            f"payment terms) would be silently skipped; got {base_rule_ids}"
+        assert any("BR-CO-15" in rid for rid in base_rule_ids), (
+            "Without chaining, the base-rule arithmetic violation would be "
+            f"silently skipped; got {base_rule_ids}"
         )
 
 

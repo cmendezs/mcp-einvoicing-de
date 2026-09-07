@@ -23,7 +23,7 @@
             <schxslt.compile.typed-variables xmlns="https://doi.org/10.5281/zenodo.1495494#">true</schxslt.compile.typed-variables>
          </dct:Agent>
       </dct:creator>
-      <dct:created>2026-02-04T14:39:14.267326314Z</dct:created>
+      <dct:created>2026-09-02T11:54:24.106910003Z</dct:created>
    </rdf:Description>
    <xsl:output indent="yes"/>
    <xsl:param name="schxslt.validate.initial-document-uri" as="xs:string?"/>
@@ -66,7 +66,7 @@
                               <schxslt.compile.typed-variables xmlns="https://doi.org/10.5281/zenodo.1495494#">true</schxslt.compile.typed-variables>
                            </dct:Agent>
                         </dct:creator>
-                        <dct:created>2026-02-04T14:39:14.267326314Z</dct:created>
+                        <dct:created>2026-09-02T11:54:24.106910003Z</dct:created>
                      </rdf:Description>
                   </dct:source>
                </svrl:metadata>
@@ -129,7 +129,7 @@
                </svrl:active-pattern>
             </xsl:for-each>
          </schxslt:pattern>
-         <schxslt:pattern id="d17e879">
+         <schxslt:pattern id="d17e873">
             <xsl:if test="exists(base-uri(root()))">
                <xsl:attribute name="documents" select="base-uri(root())"/>
             </xsl:if>
@@ -141,7 +141,7 @@
                </svrl:active-pattern>
             </xsl:for-each>
          </schxslt:pattern>
-         <schxslt:pattern id="d17e3323">
+         <schxslt:pattern id="d17e3320">
             <xsl:if test="exists(base-uri(root()))">
                <xsl:attribute name="documents" select="base-uri(root())"/>
             </xsl:if>
@@ -157,7 +157,7 @@
       </schxslt:document>
    </xsl:template>
    <xsl:template match="cac:AdditionalDocumentReference"
-                 priority="104"
+                 priority="103"
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
@@ -194,55 +194,6 @@
                                       id="BR-52">
                      <xsl:attribute name="test">normalize-space(cbc:ID) != ''</xsl:attribute>
                      <svrl:text>[BR-52]-Each Additional supporting document (BG-24) shall contain a Supporting document reference (BT-122).</svrl:text>
-                  </svrl:failed-assert>
-               </xsl:if>
-            </schxslt:rule>
-            <xsl:next-match>
-               <xsl:with-param name="schxslt:patterns-matched"
-                               as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e40')"/>
-            </xsl:next-match>
-         </xsl:otherwise>
-      </xsl:choose>
-   </xsl:template>
-   <xsl:template match="/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount "
-                 priority="103"
-                 mode="d17e40">
-      <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
-      <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e40']">
-            <schxslt:rule pattern="d17e40">
-               <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount " shadowed by preceding rule</xsl:comment>
-               <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount </xsl:attribute>
-                  <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
-                  <xsl:if test="exists($documentUri)">
-                     <xsl:attribute name="document" select="$documentUri"/>
-                  </xsl:if>
-               </svrl:suppressed-rule>
-            </schxslt:rule>
-            <xsl:next-match>
-               <xsl:with-param name="schxslt:patterns-matched"
-                               as="xs:string*"
-                               select="$schxslt:patterns-matched"/>
-            </xsl:next-match>
-         </xsl:when>
-         <xsl:otherwise>
-            <schxslt:rule pattern="d17e40">
-               <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
-                  <xsl:attribute name="context">/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount </xsl:attribute>
-                  <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
-                  <xsl:if test="exists($documentUri)">
-                     <xsl:attribute name="document" select="$documentUri"/>
-                  </xsl:if>
-               </svrl:fired-rule>
-               <xsl:if test="not(((. &gt; 0) and (exists(//cbc:DueDate) or exists(//cac:PaymentTerms/cbc:Note))) or (. &lt;= 0))">
-                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
-                                      location="{schxslt:location(.)}"
-                                      flag="fatal"
-                                      id="BR-CO-25">
-                     <xsl:attribute name="test">((. &gt; 0) and (exists(//cbc:DueDate) or exists(//cac:PaymentTerms/cbc:Note))) or (. &lt;= 0)</xsl:attribute>
-                     <svrl:text>[BR-CO-25]-In case the Amount due for payment (BT-115) is positive, either the Payment due date (BT-9) or the Payment terms (BT-20) shall be present.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
             </schxslt:rule>
@@ -1407,13 +1358,13 @@
                      <svrl:text>[BR-B-01]-An Invoice where the VAT category code (BT-151, BT-95 or BT-102) is “Split payment” shall be a domestic Italian invoice.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="not(((cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B') and (not(cac:TaxTotal/cac:TaxSubtotal/cbc:ID ='S' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='S' or //cac:ClassifiedTaxCategory/cbc:ID = 'S'))) or (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B')))">
+               <xsl:if test="not(((cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B') and (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='S' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='S' or //cac:ClassifiedTaxCategory/cbc:ID = 'S'))) or (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B')))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-B-02">
-                     <xsl:attribute name="test">((cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B') and (not(cac:TaxTotal/cac:TaxSubtotal/cbc:ID ='S' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='S' or //cac:ClassifiedTaxCategory/cbc:ID = 'S'))) or (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B'))</xsl:attribute>
-                     <svrl:text>[BR-B-02]-An Invoice that contains an Invoice line (BG-25), a Document level allowance (BG-20) or a Document level charge (BG-21) where the VAT category code (BT-151, BT-95 or BT-102) is “Split payment" shall not contain an invoice line (BG-25), a Document level allowance (BG-20) or  a Document level charge (BG-21) where the VAT category code (BT-151, BT-95 or BT-102) is “Standard rated”.</svrl:text>
+                     <xsl:attribute name="test">((cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B') and (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='S' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='S' or //cac:ClassifiedTaxCategory/cbc:ID = 'S'))) or (not(cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID ='B' or cac:AllowanceCharge/cac:TaxCategory/cbc:ID ='B' or //cac:ClassifiedTaxCategory/cbc:ID = 'B'))</xsl:attribute>
+                     <svrl:text>[BR-B-02]-An Invoice that contains an Invoice line (BG-25), a Document level allowance (BG-20) or a Document level charge (BG-21) where the VAT category code (BT-151, BT-95, BT-118 or BT-102) is “Split payment" shall not contain an invoice line (BG-25), a Document level allowance (BG-20) or  a Document level charge (BG-21) where the VAT category code (BT-151, BT-95, BT-118 or BT-102) is “Standard rated”.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
             </schxslt:rule>
@@ -2279,12 +2230,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(exists(cac:Party/cac:PartyTaxScheme[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:CompanyID) or exists(cac:Party/cac:PartyIdentification/cbc:ID) or exists(cac:Party/cac:PartyLegalEntity/cbc:CompanyID))">
+               <xsl:if test="not(exists(cac:Party/cac:PartyTaxScheme[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:CompanyID) or exists(cac:Party/cac:PartyIdentification/cbc:ID[not(@schemeID = 'SEPA')]) or exists(cac:Party/cac:PartyLegalEntity/cbc:CompanyID))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CO-26">
-                     <xsl:attribute name="test">exists(cac:Party/cac:PartyTaxScheme[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:CompanyID) or exists(cac:Party/cac:PartyIdentification/cbc:ID) or exists(cac:Party/cac:PartyLegalEntity/cbc:CompanyID)</xsl:attribute>
+                     <xsl:attribute name="test">exists(cac:Party/cac:PartyTaxScheme[cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']/cbc:CompanyID) or exists(cac:Party/cac:PartyIdentification/cbc:ID[not(@schemeID = 'SEPA')]) or exists(cac:Party/cac:PartyLegalEntity/cbc:CompanyID)</xsl:attribute>
                      <svrl:text>[BR-CO-26]-In order for the buyer to automatically identify a supplier, the Seller identifier (BT-29), the Seller legal registration identifier (BT-30) and/or the Seller VAT identifier (BT-31) shall be present.  </svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -4639,8 +4590,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "//cac:PostalAddress | //cac:Address " shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//cac:PostalAddress | //cac:Address </xsl:attribute>
@@ -4657,7 +4608,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//cac:PostalAddress | //cac:Address </xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4678,7 +4629,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4688,8 +4639,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AccountingSupplierParty/cac:Party" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AccountingSupplierParty/cac:Party</xsl:attribute>
@@ -4706,7 +4657,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AccountingSupplierParty/cac:Party</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4727,7 +4678,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4735,8 +4686,8 @@
    <xsl:template match="cac:AdditionalDocumentReference" priority="35" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AdditionalDocumentReference" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AdditionalDocumentReference</xsl:attribute>
@@ -4753,7 +4704,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AdditionalDocumentReference</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4783,7 +4734,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4793,8 +4744,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "//*[ends-with(name(), 'Amount') and not(ends-with(name(),'PriceAmount')) and not(ancestor::cac:Price/cac:AllowanceCharge)]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//*[ends-with(name(), 'Amount') and not(ends-with(name(),'PriceAmount')) and not(ancestor::cac:Price/cac:AllowanceCharge)]</xsl:attribute>
@@ -4811,7 +4762,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//*[ends-with(name(), 'Amount') and not(ends-with(name(),'PriceAmount')) and not(ancestor::cac:Price/cac:AllowanceCharge)]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4832,7 +4783,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4842,8 +4793,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "//*[ends-with(name(), 'BinaryObject')]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//*[ends-with(name(), 'BinaryObject')]</xsl:attribute>
@@ -4860,7 +4811,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">//*[ends-with(name(), 'BinaryObject')]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4890,7 +4841,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4898,8 +4849,8 @@
    <xsl:template match="cac:Delivery" priority="32" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:Delivery" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:Delivery</xsl:attribute>
@@ -4916,7 +4867,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:Delivery</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4937,7 +4888,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4947,8 +4898,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AllowanceCharge[cbc:ChargeIndicator = false()]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = false()]</xsl:attribute>
@@ -4965,7 +4916,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = false()]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -4986,7 +4937,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -4996,8 +4947,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AllowanceCharge[cbc:ChargeIndicator = true()]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = true()]</xsl:attribute>
@@ -5014,7 +4965,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = true()]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -5035,7 +4986,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -5043,8 +4994,8 @@
    <xsl:template match="cac:PartyTaxScheme" priority="29" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PartyTaxScheme" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PartyTaxScheme</xsl:attribute>
@@ -5061,7 +5012,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PartyTaxScheme</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -5082,7 +5033,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -5090,8 +5041,8 @@
    <xsl:template match="/ubl:Invoice | /cn:CreditNote" priority="28" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "/ubl:Invoice | /cn:CreditNote" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">/ubl:Invoice | /cn:CreditNote</xsl:attribute>
@@ -5108,7 +5059,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">/ubl:Invoice | /cn:CreditNote</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11137,12 +11088,12 @@
                      <svrl:text>[UBL-CR-673]-A UBL invoice shall not include an AdditionalDocumentReference simultaneously referring an Invoice Object Identifier and an Document Description</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="not(not(//cbc:PrimaryAccountNumber/@schemeID))">
+               <xsl:if test="not(not(//cbc:PrimaryAccountNumberID/@schemeID))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="warning"
                                       id="UBL-CR-674">
-                     <xsl:attribute name="test">not(//cbc:PrimaryAccountNumber/@schemeID)</xsl:attribute>
+                     <xsl:attribute name="test">not(//cbc:PrimaryAccountNumberID/@schemeID)</xsl:attribute>
                      <svrl:text>[UBL-CR-674]-A UBL invoice should not include the PrimaryAccountNumber schemeID</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -11650,11 +11601,20 @@
                      <svrl:text>[UBL-SR-55]-An Invoice shall contain maximum one Payment Mandate (BG-19).</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
+               <xsl:if test="not(count(cac:OriginatorDocumentReference/cbc:ID) &lt;= 1)">
+                  <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
+                                      location="{schxslt:location(.)}"
+                                      flag="fatal"
+                                      id="UBL-SR-56">
+                     <xsl:attribute name="test">count(cac:OriginatorDocumentReference/cbc:ID) &lt;= 1</xsl:attribute>
+                     <svrl:text>[UBL-SR-56]-An Invoice shall contain maximum one Originator document reference identifier (BT-17).</svrl:text>
+                  </svrl:failed-assert>
+               </xsl:if>
             </schxslt:rule>
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -11664,8 +11624,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:InvoiceLine | cac:CreditNoteLine" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:InvoiceLine | cac:CreditNoteLine</xsl:attribute>
@@ -11682,7 +11642,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:InvoiceLine | cac:CreditNoteLine</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11757,7 +11717,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -11765,8 +11725,8 @@
    <xsl:template match="cac:PayeeParty" priority="26" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PayeeParty" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PayeeParty</xsl:attribute>
@@ -11783,7 +11743,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PayeeParty</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11822,7 +11782,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -11830,8 +11790,8 @@
    <xsl:template match="cac:PaymentMeans" priority="25" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PaymentMeans" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PaymentMeans</xsl:attribute>
@@ -11848,7 +11808,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:PaymentMeans</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11887,7 +11847,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -11895,8 +11855,8 @@
    <xsl:template match="cac:BillingReference" priority="24" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:BillingReference" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:BillingReference</xsl:attribute>
@@ -11913,7 +11873,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:BillingReference</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11943,7 +11903,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -11951,8 +11911,8 @@
    <xsl:template match="cac:TaxRepresentativeParty" priority="23" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:TaxRepresentativeParty" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:TaxRepresentativeParty</xsl:attribute>
@@ -11969,7 +11929,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:TaxRepresentativeParty</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -11986,12 +11946,12 @@
                      <svrl:text>[UBL-SR-22]-Seller tax representative name shall occur maximum once, if the Seller has a tax representative</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
-               <xsl:if test="not((count(cac:Party/cac:PartyTaxScheme/cbc:CompanyID) &lt;= 1))">
+               <xsl:if test="not((count(cac:PartyTaxScheme/cbc:CompanyID) &lt;= 1))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="UBL-SR-23">
-                     <xsl:attribute name="test">(count(cac:Party/cac:PartyTaxScheme/cbc:CompanyID) &lt;= 1)</xsl:attribute>
+                     <xsl:attribute name="test">(count(cac:PartyTaxScheme/cbc:CompanyID) &lt;= 1)</xsl:attribute>
                      <svrl:text>[UBL-SR-23]-Seller tax representative VAT identifier shall occur maximum once, if the Seller has a tax representative</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -11999,7 +11959,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12007,8 +11967,8 @@
    <xsl:template match="cac:TaxSubtotal" priority="22" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e879']">
-            <schxslt:rule pattern="d17e879">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e873']">
+            <schxslt:rule pattern="d17e873">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:TaxSubtotal" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:TaxSubtotal</xsl:attribute>
@@ -12025,7 +11985,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e879">
+            <schxslt:rule pattern="d17e873">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl">
                   <xsl:attribute name="context">cac:TaxSubtotal</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12046,7 +12006,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e879')"/>
+                               select="($schxslt:patterns-matched, 'd17e873')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12056,8 +12016,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:InvoiceTypeCode | cbc:CreditNoteTypeCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:InvoiceTypeCode | cbc:CreditNoteTypeCode</xsl:attribute>
@@ -12074,7 +12034,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:InvoiceTypeCode | cbc:CreditNoteTypeCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12082,12 +12042,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not((self::cbc:InvoiceTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 71 80 81 82 84 102 130 202 203 204 211 218 219 295 325 326 331 380 382 383 384 385 386 387 388 389 390 393 394 395 456 457 471 472 473 500 501 502 503 527 553 575 623 633 751 780 817 870 875 876 877 935 ', concat(' ', normalize-space(.), ' '))))) or (self::cbc:CreditNoteTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 81 83 261 262 296 308 381 396 420 458 532 ', concat(' ', normalize-space(.), ' '))))))">
+               <xsl:if test="not((self::cbc:InvoiceTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 71 80 81 82 84 102 130 202 203 204 211 218 219 295 325 326 331 380 382 383 384 385 386 387 388 389 390 393 394 395 456 457 471 472 473 500 501 527 553 575 623 633 751 780 817 870 875 876 877 935 ', concat(' ', normalize-space(.), ' '))))) or (self::cbc:CreditNoteTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 81 83 261 262 296 308 381 396 420 458 502 503 532 ', concat(' ', normalize-space(.), ' '))))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-01">
-                     <xsl:attribute name="test">(self::cbc:InvoiceTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 71 80 81 82 84 102 130 202 203 204 211 218 219 295 325 326 331 380 382 383 384 385 386 387 388 389 390 393 394 395 456 457 471 472 473 500 501 502 503 527 553 575 623 633 751 780 817 870 875 876 877 935 ', concat(' ', normalize-space(.), ' '))))) or (self::cbc:CreditNoteTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 81 83 261 262 296 308 381 396 420 458 532 ', concat(' ', normalize-space(.), ' ')))))</xsl:attribute>
+                     <xsl:attribute name="test">(self::cbc:InvoiceTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 71 80 81 82 84 102 130 202 203 204 211 218 219 295 325 326 331 380 382 383 384 385 386 387 388 389 390 393 394 395 456 457 471 472 473 500 501 527 553 575 623 633 751 780 817 870 875 876 877 935 ', concat(' ', normalize-space(.), ' '))))) or (self::cbc:CreditNoteTypeCode and ((not(contains(normalize-space(.), ' ')) and contains(' 81 83 261 262 296 308 381 396 420 458 502 503 532 ', concat(' ', normalize-space(.), ' ')))))</xsl:attribute>
                      <svrl:text>[BR-CL-01]-The document type code MUST be coded by the invoice and credit note related code lists of UNTDID 1001.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12095,7 +12055,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12105,8 +12065,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:Amount | cbc:BaseAmount | cbc:PriceAmount | cbc:TaxAmount | cbc:TaxableAmount | cbc:LineExtensionAmount | cbc:TaxExclusiveAmount | cbc:TaxInclusiveAmount | cbc:AllowanceTotalAmount | cbc:ChargeTotalAmount | cbc:PrepaidAmount | cbc:PayableRoundingAmount | cbc:PayableAmount" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:Amount | cbc:BaseAmount | cbc:PriceAmount | cbc:TaxAmount | cbc:TaxableAmount | cbc:LineExtensionAmount | cbc:TaxExclusiveAmount | cbc:TaxInclusiveAmount | cbc:AllowanceTotalAmount | cbc:ChargeTotalAmount | cbc:PrepaidAmount | cbc:PayableRoundingAmount | cbc:PayableAmount</xsl:attribute>
@@ -12123,7 +12083,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:Amount | cbc:BaseAmount | cbc:PriceAmount | cbc:TaxAmount | cbc:TaxableAmount | cbc:LineExtensionAmount | cbc:TaxExclusiveAmount | cbc:TaxInclusiveAmount | cbc:AllowanceTotalAmount | cbc:ChargeTotalAmount | cbc:PrepaidAmount | cbc:PayableRoundingAmount | cbc:PayableAmount</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12131,12 +12091,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@currencyID), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(@currencyID), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(@currencyID), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(@currencyID), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-03">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@currencyID), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(@currencyID), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@currencyID), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(@currencyID), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-03]-currencyID MUST be coded using ISO code list 4217 alpha-3</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12144,7 +12104,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12152,8 +12112,8 @@
    <xsl:template match="cbc:DocumentCurrencyCode" priority="19" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:DocumentCurrencyCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:DocumentCurrencyCode</xsl:attribute>
@@ -12170,7 +12130,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:DocumentCurrencyCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12178,12 +12138,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-04">
-                     <xsl:attribute name="test">((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-04]-Invoice currency code MUST be coded using ISO code list 4217 alpha-3</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12191,7 +12151,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12199,8 +12159,8 @@
    <xsl:template match="cbc:TaxCurrencyCode" priority="18" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:TaxCurrencyCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:TaxCurrencyCode</xsl:attribute>
@@ -12217,7 +12177,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:TaxCurrencyCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12225,12 +12185,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-05">
-                     <xsl:attribute name="test">((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD ANG AOA ARS AUD AWG AZN BAM BBD BDT BGN BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(.), ' ')) and contains(' AED AFN ALL AMD AOA ARS AUD AWG AZN BAM BBD BDT BHD BIF BMD BND BOB BOV BRL BSD BTN BWP BYN BZD CAD CDF CHE CHF CHW CLF CLP CNH CNY COP COU CRC CUP CVE CZK DJF DKK DOP DZD EGP ERN ETB EUR FJD FKP GBP GEL GHS GIP GMD GNF GTQ GYD HKD HNL HTG HUF IDR ILS INR IQD IRR ISK JMD JOD JPY KES KGS KHR KMF KPW KRW KWD KYD KZT LAK LBP LKR LRD LSL LYD MAD MDL MGA MKD MMK MNT MOP MRU MUR MVR MWK MXN MXV MYR MZN NAD NGN NIO NOK NPR NZD OMR PAB PEN PGK PHP PKR PLN PYG QAR RON RSD RUB RWF SAR SBD SCR SDG SEK SGD SHP SLE SOS SRD SSP STD SVC SYP SZL THB TJS TMT TND TOP TRY TTD TWD TZS UAH UGX USD USN UYI UYU UYW UZS VES VED VND VUV WST XAF XAG XAU XBA XBB XBC XBD XCD XCG XDR XOF XPD XPF XPT XSU XTS XUA XXX YER ZAR ZMW ZWG ', concat(' ', normalize-space(.), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-05]-Tax currency code MUST be coded using ISO code list 4217 alpha-3</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12238,7 +12198,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12248,8 +12208,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:InvoicePeriod/cbc:DescriptionCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:InvoicePeriod/cbc:DescriptionCode</xsl:attribute>
@@ -12266,7 +12226,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:InvoicePeriod/cbc:DescriptionCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12287,7 +12247,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12297,8 +12257,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AdditionalDocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID] | cac:DocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AdditionalDocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID] | cac:DocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID]</xsl:attribute>
@@ -12315,7 +12275,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AdditionalDocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID] | cac:DocumentReference[cbc:DocumentTypeCode = '130']/cbc:ID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12336,7 +12296,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12346,8 +12306,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PartyIdentification/cbc:ID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PartyIdentification/cbc:ID[@schemeID]</xsl:attribute>
@@ -12364,7 +12324,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PartyIdentification/cbc:ID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12372,12 +12332,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' '))))  or ((not(contains(normalize-space(@schemeID), ' ')) and contains(' SEPA ', concat(' ', normalize-space(@schemeID), ' '))) and ((ancestor::cac:AccountingSupplierParty) or (ancestor::cac:PayeeParty))))">
+               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' '))))  or ((not(contains(normalize-space(@schemeID), ' ')) and contains(' SEPA ', concat(' ', normalize-space(@schemeID), ' '))) and ((ancestor::cac:AccountingSupplierParty) or (ancestor::cac:PayeeParty))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-10">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' '))))  or ((not(contains(normalize-space(@schemeID), ' ')) and contains(' SEPA ', concat(' ', normalize-space(@schemeID), ' '))) and ((ancestor::cac:AccountingSupplierParty) or (ancestor::cac:PayeeParty)))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' '))))  or ((not(contains(normalize-space(@schemeID), ' ')) and contains(' SEPA ', concat(' ', normalize-space(@schemeID), ' '))) and ((ancestor::cac:AccountingSupplierParty) or (ancestor::cac:PayeeParty)))</xsl:attribute>
                      <svrl:text>[BR-CL-10]-Any identifier identification scheme identifier MUST be coded using one of the ISO 6523 ICD list.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12385,7 +12345,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12395,8 +12355,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PartyLegalEntity/cbc:CompanyID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PartyLegalEntity/cbc:CompanyID[@schemeID]</xsl:attribute>
@@ -12413,7 +12373,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PartyLegalEntity/cbc:CompanyID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12421,12 +12381,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-11">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-11]-Any registration identifier identification scheme identifier MUST be coded using one of the ISO 6523 ICD list.</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12434,7 +12394,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12444,8 +12404,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:CommodityClassification/cbc:ItemClassificationCode[@listID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:CommodityClassification/cbc:ItemClassificationCode[@listID]</xsl:attribute>
@@ -12462,7 +12422,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:CommodityClassification/cbc:ItemClassificationCode[@listID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12484,7 +12444,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12494,8 +12454,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:Country/cbc:IdentificationCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:Country/cbc:IdentificationCode</xsl:attribute>
@@ -12512,7 +12472,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:Country/cbc:IdentificationCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12533,7 +12493,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12543,8 +12503,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:OriginCountry/cbc:IdentificationCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:OriginCountry/cbc:IdentificationCode</xsl:attribute>
@@ -12561,7 +12521,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:OriginCountry/cbc:IdentificationCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12582,7 +12542,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12592,8 +12552,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:PaymentMeans/cbc:PaymentMeansCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PaymentMeans/cbc:PaymentMeansCode</xsl:attribute>
@@ -12610,7 +12570,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:PaymentMeans/cbc:PaymentMeansCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12631,7 +12591,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12639,8 +12599,8 @@
    <xsl:template match="cac:TaxCategory/cbc:ID" priority="9" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:TaxCategory/cbc:ID" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:TaxCategory/cbc:ID</xsl:attribute>
@@ -12657,7 +12617,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:TaxCategory/cbc:ID</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12678,7 +12638,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12686,8 +12646,8 @@
    <xsl:template match="cac:ClassifiedTaxCategory/cbc:ID" priority="8" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:ClassifiedTaxCategory/cbc:ID" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:ClassifiedTaxCategory/cbc:ID</xsl:attribute>
@@ -12704,7 +12664,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:ClassifiedTaxCategory/cbc:ID</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12725,7 +12685,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12735,8 +12695,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AllowanceCharge[cbc:ChargeIndicator = false()]/cbc:AllowanceChargeReasonCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = false()]/cbc:AllowanceChargeReasonCode</xsl:attribute>
@@ -12753,7 +12713,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = false()]/cbc:AllowanceChargeReasonCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12774,7 +12734,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12784,8 +12744,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:AllowanceCharge[cbc:ChargeIndicator = true()]/cbc:AllowanceChargeReasonCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = true()]/cbc:AllowanceChargeReasonCode</xsl:attribute>
@@ -12802,7 +12762,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:AllowanceCharge[cbc:ChargeIndicator = true()]/cbc:AllowanceChargeReasonCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12823,7 +12783,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12833,8 +12793,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:StandardItemIdentification/cbc:ID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:StandardItemIdentification/cbc:ID[@schemeID]</xsl:attribute>
@@ -12851,7 +12811,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:StandardItemIdentification/cbc:ID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12859,12 +12819,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-21">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-21]-Item standard identifier scheme identifier MUST belong to the ISO 6523 ICD code list</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -12872,7 +12832,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12880,8 +12840,8 @@
    <xsl:template match="cbc:TaxExemptionReasonCode" priority="4" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:TaxExemptionReasonCode" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:TaxExemptionReasonCode</xsl:attribute>
@@ -12898,7 +12858,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:TaxExemptionReasonCode</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12919,7 +12879,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12929,8 +12889,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:InvoicedQuantity[@unitCode] | cbc:BaseQuantity[@unitCode] | cbc:CreditedQuantity[@unitCode]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:InvoicedQuantity[@unitCode] | cbc:BaseQuantity[@unitCode] | cbc:CreditedQuantity[@unitCode]</xsl:attribute>
@@ -12947,7 +12907,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:InvoicedQuantity[@unitCode] | cbc:BaseQuantity[@unitCode] | cbc:CreditedQuantity[@unitCode]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -12969,7 +12929,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -12979,8 +12939,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:EmbeddedDocumentBinaryObject[@mimeCode]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:EmbeddedDocumentBinaryObject[@mimeCode]</xsl:attribute>
@@ -12997,7 +12957,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:EmbeddedDocumentBinaryObject[@mimeCode]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -13018,7 +12978,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -13026,8 +12986,8 @@
    <xsl:template match="cbc:EndpointID[@schemeID]" priority="1" mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cbc:EndpointID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:EndpointID[@schemeID]</xsl:attribute>
@@ -13044,7 +13004,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cbc:EndpointID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -13052,12 +13012,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0007 0009 0037 0060 0088 0096 0097 0106 0130 0135 0142 0147 0151 0154 0158 0170 0177 0183 0184 0188 0190 0191 0192 0193 0194 0195 0196 0198 0199 0200 0201 0202 0203 0204 0205 0208 0209 0210 0211 0212 0213 0215 0216 0217 0218 0219 0220 0221 0225 0230 0235 0240 0244 9910 9913 9914 9915 9918 9919 9920 9922 9923 9924 9925 9926 9927 9928 9929 9930 9931 9932 9933 9934 9935 9936 9937 9938 9939 9940 9941 9942 9943 9944 9945 9946 9947 9948 9949 9950 9951 9952 9953 9957 9959 AN AQ AS AU EM ', concat(' ', normalize-space(@schemeID), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0007 0009 0037 0060 0088 0096 0097 0106 0130 0135 0142 0147 0151 0154 0158 0170 0177 0183 0184 0188 0190 0191 0192 0193 0194 0195 0196 0198 0199 0200 0201 0202 0203 0204 0205 0208 0209 0210 0211 0212 0213 0215 0216 0217 0218 0219 0220 0221 0225 0230 0235 0240 0244 0242 0245 0246 0248 9910 9913 9914 9915 9918 9919 9920 9922 9923 9924 9925 9926 9927 9928 9929 9930 9931 9932 9933 9934 9935 9936 9937 9938 9939 9940 9941 9942 9943 9944 9945 9946 9947 9948 9949 9950 9951 9952 9953 9957 9959 AN AQ AS AU EM ', concat(' ', normalize-space(@schemeID), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-25">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0007 0009 0037 0060 0088 0096 0097 0106 0130 0135 0142 0147 0151 0154 0158 0170 0177 0183 0184 0188 0190 0191 0192 0193 0194 0195 0196 0198 0199 0200 0201 0202 0203 0204 0205 0208 0209 0210 0211 0212 0213 0215 0216 0217 0218 0219 0220 0221 0225 0230 0235 0240 0244 9910 9913 9914 9915 9918 9919 9920 9922 9923 9924 9925 9926 9927 9928 9929 9930 9931 9932 9933 9934 9935 9936 9937 9938 9939 9940 9941 9942 9943 9944 9945 9946 9947 9948 9949 9950 9951 9952 9953 9957 9959 AN AQ AS AU EM ', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0007 0009 0037 0060 0088 0096 0097 0106 0130 0135 0142 0147 0151 0154 0158 0170 0177 0183 0184 0188 0190 0191 0192 0193 0194 0195 0196 0198 0199 0200 0201 0202 0203 0204 0205 0208 0209 0210 0211 0212 0213 0215 0216 0217 0218 0219 0220 0221 0225 0230 0235 0240 0244 0242 0245 0246 0248 9910 9913 9914 9915 9918 9919 9920 9922 9923 9924 9925 9926 9927 9928 9929 9930 9931 9932 9933 9934 9935 9936 9937 9938 9939 9940 9941 9942 9943 9944 9945 9946 9947 9948 9949 9950 9951 9952 9953 9957 9959 AN AQ AS AU EM ', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-25]-Endpoint identifier scheme identifier MUST belong to the CEF EAS code list</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -13065,7 +13025,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>
@@ -13075,8 +13035,8 @@
                  mode="d17e40">
       <xsl:param name="schxslt:patterns-matched" as="xs:string*"/>
       <xsl:choose>
-         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3323']">
-            <schxslt:rule pattern="d17e3323">
+         <xsl:when test="$schxslt:patterns-matched[. = 'd17e3320']">
+            <schxslt:rule pattern="d17e3320">
                <xsl:comment xmlns:svrl="http://purl.oclc.org/dsdl/svrl">WARNING: Rule for context "cac:DeliveryLocation/cbc:ID[@schemeID]" shadowed by preceding rule</xsl:comment>
                <svrl:suppressed-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:DeliveryLocation/cbc:ID[@schemeID]</xsl:attribute>
@@ -13093,7 +13053,7 @@
             </xsl:next-match>
          </xsl:when>
          <xsl:otherwise>
-            <schxslt:rule pattern="d17e3323">
+            <schxslt:rule pattern="d17e3320">
                <svrl:fired-rule xmlns:svrl="http://purl.oclc.org/dsdl/svrl" flag="fatal">
                   <xsl:attribute name="context">cac:DeliveryLocation/cbc:ID[@schemeID]</xsl:attribute>
                   <xsl:variable name="documentUri" as="xs:anyURI?" select="document-uri()"/>
@@ -13101,12 +13061,12 @@
                      <xsl:attribute name="document" select="$documentUri"/>
                   </xsl:if>
                </svrl:fired-rule>
-               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' ')))))">
+               <xsl:if test="not(((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' ')))))">
                   <svrl:failed-assert xmlns:svrl="http://purl.oclc.org/dsdl/svrl"
                                       location="{schxslt:location(.)}"
                                       flag="fatal"
                                       id="BR-CL-26">
-                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
+                     <xsl:attribute name="test">((not(contains(normalize-space(@schemeID), ' ')) and contains(' 0002 0003 0004 0005 0006 0007 0008 0009 0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021 0022 0023 0024 0025 0026 0027 0028 0029 0030 0031 0032 0033 0034 0035 0036 0037 0038 0039 0040 0041 0042 0043 0044 0045 0046 0047 0048 0049 0050 0051 0052 0053 0054 0055 0056 0057 0058 0059 0060 0061 0062 0063 0064 0065 0066 0067 0068 0069 0070 0071 0072 0073 0074 0075 0076 0077 0078 0079 0080 0081 0082 0083 0084 0085 0086 0087 0088 0089 0090 0091 0093 0094 0095 0096 0097 0098 0099 0100 0101 0102 0104 0105 0106 0107 0108 0109 0110 0111 0112 0113 0114 0115 0116 0117 0118 0119 0120 0121 0122 0123 0124 0125 0126 0127 0128 0129 0130 0131 0132 0133 0134 0135 0136 0137 0138 0139 0140 0141 0142 0143 0144 0145 0146 0147 0148 0149 0150 0151 0152 0153 0154 0155 0156 0157 0158 0159 0160 0161 0162 0163 0164 0165 0166 0167 0168 0169 0170 0171 0172 0173 0174 0175 0176 0177 0178 0179 0180 0183 0184 0185 0186 0187 0188 0189 0190 0191 0192 0193 0194 0195 0196 0197 0198 0199 0200 0201 0202 0203 0204 0205 0206 0207 0208 0209 0210 0211 0212 0213 0214 0215 0216 0217 0218 0219 0220 0221 0222 0223 0224 0225 0226 0227 0228 0229 0230 0231 0232 0233 0234 0235 0236 0237 0238 0239 0240 0241 0242 0243 0244 0245 0246 0247 0248 ', concat(' ', normalize-space(@schemeID), ' '))))</xsl:attribute>
                      <svrl:text>[BR-CL-26]-Delivery location identifier scheme identifier MUST belong to the ISO 6523 ICD code list</svrl:text>
                   </svrl:failed-assert>
                </xsl:if>
@@ -13114,7 +13074,7 @@
             <xsl:next-match>
                <xsl:with-param name="schxslt:patterns-matched"
                                as="xs:string*"
-                               select="($schxslt:patterns-matched, 'd17e3323')"/>
+                               select="($schxslt:patterns-matched, 'd17e3320')"/>
             </xsl:next-match>
          </xsl:otherwise>
       </xsl:choose>

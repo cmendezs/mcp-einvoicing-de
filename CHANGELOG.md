@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.2] - 2026-09-07
+
+### Fixed
+- **XRechnung CII validation no longer rejects every invoice.** The local `XRECHNUNG` CII validation chain used FeRD's `FACTUR-X_EN16931.xslt` as its EN 16931 base, which enforces the Factur-X BT-24 codelist and fails the XRechnung profile URN (`FX-SCH-A-000556`) — so every XRechnung CII invoice was reported invalid. The genuine CEN `EN16931-CII-validation.xsl` is now bundled and used as the CII base (new stylesheet key `en16931_cii_cen`).
+
+### Changed
+- **Bundled XRechnung rules are now a single version-matched set.** The EN 16931 base (UBL + CII) and the XRechnung 3.0.2 CIUS overlay (UBL + CII) are all sourced from the `validator-configuration-xrechnung` v2026-08-31 release, replacing the earlier split (base v2026-01-31 + CIUS from `xrechnung-schematron` v2.6.0) that had drifted out of sync.
+
+### Added
+- Vendored the official KoSIT `xrechnung-testsuite` v2026-08-31 positive reference corpus (Apache-2.0) under `specs/xrechnung/testsuite/`, and a new `tests/test_xrechnung_testsuite.py` that validates all 78 standard + CIUS instances clean through the `XRECHNUNG` chain (the `extension`/`cvd` instances are separate XRechnung profiles and are xfailed by design). This corpus is what surfaced the CII fix above.
+
+---
+
 ## [0.10.0] - 2026-08-24
 
 ### Changed

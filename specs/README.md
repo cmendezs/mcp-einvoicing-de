@@ -21,11 +21,17 @@ specs/
 │   └── resources/
 │       ├── cii/16b/xsl/        CII EN 16931 validation XSLT
 │       ├── ubl/2.1/xsl/        UBL EN 16931 validation XSLT
-│       ├── xrechnung/3.0.2/xsl/  XRechnung CIUS CII and UBL validation XSLT — sourced directly
-│       │                          from itplr-kosit/xrechnung-schematron v2.6.0 (2026-09-07);
-│       │                          the rest of this xrechnung/ tree is still from
-│       │                          validator-configuration-xrechnung v2026-01-31, untouched
+│       ├── xrechnung/3.0.2/xsl/  XRechnung CIUS CII and UBL validation XSLT
 │       └── xsd/                KoSIT report and scenarios XSD
+│   (EN 16931 base + XRechnung CIUS XSLT, both syntaxes, all sourced from the
+│    single version-matched validator-configuration-xrechnung v2026-08-31 release)
+├── testsuite/                  Official itplr-kosit/xrechnung-testsuite v2026-08-31
+│   │                           positive reference instances (Apache-2.0); regression
+│   │                           corpus for tests/test_xrechnung_testsuite.py
+│   ├── test/                   business-cases/ + technical-cases/ (UBL + CII)
+│   ├── LICENSE                 Apache-2.0
+│   ├── UPSTREAM-README.md      upstream README
+│   └── test-overview.md        per-instance purpose table
 ├── examples/
 │   └── zugferd/                Reference XML examples per profile (from FeRD 2.5.2 release)
 │       ├── MINIMUM/
@@ -45,7 +51,8 @@ specs/
 |---|---|---|
 | ZUGFeRD / Factur-X Schema + Schematron + XSLT + Examples + Documentation | 2.5.2 / 1.09.2 (2026-08-04, effective 2026-09-01) | FeRD / FNFE-MPE release package `ZUGFeRD_2.5.2_EN.zip`, retrieved 2026-08-09 |
 | CII D22B base XSD | D22B | UN/CEFACT; byte-identical to the previously bundled 1.08 copy — confirmed via diff, not re-copied |
-| XRechnung `xrechnung-schematron` compiled ruleset (CII + UBL) | 2.6.0 (2026-08-31, compatible with XRechnung 3.0.2 spec) | [itplr-kosit/xrechnung-schematron v2.6.0](https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0), commit `217c6cb` — user-supplied 2026-09-07, replacing the previously bundled 2.4.0-era compiled artifact (which had been mislabeled "3.0.2 / 2026-01-31" after the unrelated `validator-configuration-xrechnung` packaging repo; that repo was never actually the source of these files). Distinct version axis from the XRechnung 3.0.2 CIUS spec version, which is unchanged. |
+| EN 16931 base (UBL + CII) + XRechnung 3.0.2 CIUS (UBL + CII) compiled XSLT | validator-configuration-xrechnung v2026-08-31 (CEN base + XRechnung Schematron v2.6.0) | [itplr-kosit/validator-configuration-xrechnung v2026-08-31](https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/tag/v2026-08-31) release asset `xrechnung-3.0.2-validator-configuration-2026-08-31.zip`, fetched 2026-09-07. Apache-2.0 (KoSIT) over the CEN EN 16931 base (EUPL 1.2). Sourced as one matched set so base and CIUS stay version-consistent, superseding the earlier split (base v2026-01-31 + CIUS from `xrechnung-schematron` v2.6.0), which drifted and mis-validated the v2026-08-31 test suite. The CII EN 16931 base is now bundled explicitly (`EN16931-CII-validation.xsl`); the XRechnung CII path no longer borrows FeRD's `FACTUR-X_EN16931.xslt`, which rejected the XRechnung BT-24 URN (`FX-SCH-A-000556`). |
+| XRechnung test suite (positive reference instances) | v2026-08-31 | [itplr-kosit/xrechnung-testsuite v2026-08-31](https://github.com/itplr-kosit/xrechnung-testsuite/releases/tag/v2026-08-31), Apache-2.0, fetched 2026-09-07. Vendored under `testsuite/`; drives `tests/test_xrechnung_testsuite.py`. |
 | XRechnung specification PDF | 3.0 / 2024-06-20 | xeinkauf.de |
 
 **2026-08-09 update notes:**
@@ -53,6 +60,13 @@ specs/
 - General change: in BASIC WL, BASIC, and EN16931, rule `BR-CO-27` was renamed to `CII-SR-470` (no functional change).
 - EXTENDED profile: BT-151/BT-151-0 cardinality relaxed `1..1` → `0..1` (`BR-FXEXT-CO-04` keeps it mandatory for DETAIL/no-subtype lines); `BR-S-1`/`BR-Z-1`/`BR-E-1`/`BR-AE-1`/`BR-IC-1`/`BR-G-1`/`BR-O-1`/`BR-AF-1`/`BR-AG-1` replaced by the `BR-FXEXT-*-01` series (allows >1 VAT Breakdown per category/exemption); `BR-54` split into `BR-FXEXT-BR-54-1`/`-2`; `BR-FXEXT-08` rounding fix for BT-131 sums. The BT-151 cardinality relaxation only matters for lines using `SubInvoiceLine`/subtype (BT-X-8) `GROUP`/`INFORMATION`, which `ZUGFeRDLineItem` does not currently model — no code change was needed for that specific item.
 - Verified via the full local test suite (`pytest`, 133 passed) including Saxon-executed validation of the new stylesheets against the bundled 2.5.2 example set, plus an ad hoc comparison showing the new EXTENDED stylesheet produces the *same or fewer* findings than the old one against a hand-built sample invoice (one pre-existing, unrelated finding — missing `currencyID` on `TaxTotalAmount` per `BR-FXEXT-CO-15` — reproduces identically under both the old and new stylesheet, so it predates this update; tracked separately as DE-ZF252-3 in `roadmap-2026.md`).
+
+**2026-09-07 update notes (XRechnung validation correctness):**
+- Adopting the official KoSIT `xrechnung-testsuite` v2026-08-31 as a regression corpus surfaced two defects in the previously bundled rules:
+  1. **XRechnung CII rejected everything.** The XRECHNUNG CII chain used FeRD's `FACTUR-X_EN16931.xslt` as its EN 16931 base; that stylesheet enforces the Factur-X BT-24 codelist and fails the XRechnung profile URN (`FX-SCH-A-000556`), so every XRechnung CII invoice was reported invalid. Fixed by bundling the genuine CEN `EN16931-CII-validation.xsl` and pointing the CII chain at it (`en16931_cii_cen`).
+  2. **Base/CIUS version drift.** The EN 16931 base was v2026-01-31 while the CIUS overlay was v2.6.0; the mismatch mis-validated the v2026-08-31 suite. All four stylesheets (EN 16931 UBL + CII base, XRechnung UBL + CII CIUS) are now taken from the single matched validator-configuration-xrechnung v2026-08-31 release.
+- Result: 78/78 standard + CIUS positive instances validate clean through the package's XRECHNUNG chain; the 8 `extension`/`cvd` instances are separate XRechnung profiles (own KoSIT scenario) and are xfailed by design.
+- Note (pre-existing, unchanged): KoSIT's XRechnung Schematron folds the `PEPPOL-EN16931-R*` rules into XRechnung validation (via its `peppol-into-xr.xsl`); these have shipped in the XRechnung CIUS stylesheets since v0.11.1 under KoSIT's Apache-2.0 and are not affected by this change.
 
 ## Profile URNs
 

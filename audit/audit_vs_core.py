@@ -610,6 +610,7 @@ def run_check_5() -> CheckResult:
         "FACTUR-X_EN16931.xslt",
         "FACTUR-X_EXTENDED.xslt",
         "EN16931-UBL-validation.xsl",
+        "EN16931-CII-validation.xsl",
         "XRechnung-CII-validation.xsl",
         "XRechnung-UBL-validation.xsl",
     )

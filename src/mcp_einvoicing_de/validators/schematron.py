@@ -8,12 +8,16 @@ under ``mcp_einvoicing_de/rules/`` so local validation works after a plain
 Bundled rule sources and versions:
 - ZUGFeRD / Factur-X profiles (MINIMUM, BASIC-WL, BASIC, EN16931, EXTENDED):
   FeRD / FNFE-MPE release package, Factur-X 1.08 (2025-12-04)
-- EN 16931 UBL: KoSIT validator-configuration-xrechnung v2026-01-31
-  (CEN Schematron Rules 1.3.15)
-- XRechnung 3.0.2 CII/UBL: KoSIT ``xrechnung-schematron`` ruleset v2.6.0
-  (2026-08-31), compiled directly from that repo — a separate version axis
-  from the "XRechnung 3.0.2" CIUS spec version (unchanged). Not from
-  validator-configuration-xrechnung, despite the historical filename layout.
+- EN 16931 base (UBL + CII) and XRechnung 3.0.2 CIUS (UBL + CII): the single
+  version-matched KoSIT ``validator-configuration-xrechnung`` v2026-08-31
+  release (``xrechnung-3.0.2-validator-configuration-2026-08-31.zip``), which
+  chains the CEN EN 16931 base (EUPL 1.2) ahead of the XRechnung CIUS overlay
+  (XRechnung Schematron v2.6.0). Sourcing the base and the CIUS from the same
+  release keeps them consistent — the earlier split (base v2026-01-31 + CIUS
+  from ``xrechnung-schematron`` v2.6.0) drifted and mis-validated the official
+  v2026-08-31 test suite. The EN 16931 CII base is bundled explicitly so the
+  XRechnung CII path no longer borrows the FeRD Factur-X EN16931 stylesheet,
+  which rejects the XRechnung BT-24 profile URN.
 
 Official rule sources:
 - ZUGFeRD: https://www.ferd-net.de/standards/zugferd-2-0/index.html
@@ -69,8 +73,12 @@ _STYLESHEET_MAP: dict[str, Path] = {
     "zugferd_basic_cii": _RULES_DIR / "FACTUR-X_BASIC.xslt",
     "en16931_cii": _RULES_DIR / "FACTUR-X_EN16931.xslt",
     "zugferd_extended_cii": _RULES_DIR / "FACTUR-X_EXTENDED.xslt",
-    # EN 16931 UBL (for XRechnung UBL base rules)
+    # CEN EN 16931 base rules (the neutral CIUS base for XRechnung), one per
+    # syntax. These are the genuine CEN base rulesets — distinct from the FeRD
+    # Factur-X ``en16931_cii`` stylesheet above, which additionally enforces the
+    # Factur-X BT-24 codelist and therefore rejects the XRechnung profile URN.
     "en16931_ubl": _RULES_DIR / "EN16931-UBL-validation.xsl",
+    "en16931_cii_cen": _RULES_DIR / "EN16931-CII-validation.xsl",
     # XRechnung 3.0.2 CIUS rules (CII and UBL)
     "xrechnung_cii": _RULES_DIR / "XRechnung-CII-validation.xsl",
     "xrechnung_ubl": _RULES_DIR / "XRechnung-UBL-validation.xsl",

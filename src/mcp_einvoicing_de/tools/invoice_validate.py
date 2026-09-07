@@ -181,13 +181,19 @@ _PROFILE_TO_STYLESHEET: dict[str, dict[str, list[str]]] = {
     # only encode the BR-DE-* / CIUS-specific rules, not the underlying
     # EN 16931 base rules (DE-SC-2) — running the CIUS stylesheet alone
     # silently skips base-rule violations.
+    #
+    # For the CII base, XRECHNUNG uses ``en16931_cii_cen`` (the genuine CEN
+    # EN 16931 CII Schematron), not the FeRD ``en16931_cii`` stylesheet used by
+    # the ZUGFeRD EN_16931 profile below: the FeRD stylesheet enforces the
+    # Factur-X BT-24 codelist and rejects the XRechnung profile URN
+    # (FX-SCH-A-000556), which previously failed every XRechnung CII invoice.
     "MINIMUM": {"CII": ["zugferd_minimum_cii"]},
     "BASIC_WL": {"CII": ["zugferd_basicwl_cii"]},
     "BASIC": {"CII": ["zugferd_basic_cii"]},
     "EN_16931": {"CII": ["en16931_cii"], "UBL": ["en16931_ubl"]},
     "EXTENDED": {"CII": ["zugferd_extended_cii"]},
     "XRECHNUNG": {
-        "CII": ["en16931_cii", "xrechnung_cii"],
+        "CII": ["en16931_cii_cen", "xrechnung_cii"],
         "UBL": ["en16931_ubl", "xrechnung_ubl"],
     },
 }
