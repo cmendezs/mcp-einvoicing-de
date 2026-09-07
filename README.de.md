@@ -312,6 +312,7 @@ make audit
 | 🇧🇷 Brasilien | [mcp-nfe-br](https://github.com/cmendezs/mcp-nfe-br) |
 | 🇫🇷 Frankreich | [mcp-facture-electronique-fr](https://github.com/cmendezs/mcp-facture-electronique-fr) |
 | 🇩🇪 Deutschland | [mcp-einvoicing-de](https://github.com/cmendezs/mcp-einvoicing-de) |
+| 🇮🇳 Indien | [mcp-einvoicing-in](https://github.com/cmendezs/mcp-einvoicing-in) |
 | 🇮🇹 Italien | [mcp-fattura-elettronica-it](https://github.com/cmendezs/mcp-fattura-elettronica-it) |
 | 🇲🇽 Mexiko | [mcp-cfdi-mx](https://github.com/cmendezs/mcp-cfdi-mx) |
 | 🇵🇱 Polen | [mcp-ksef-pl](https://github.com/cmendezs/mcp-ksef-pl) |
