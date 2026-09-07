@@ -21,7 +21,10 @@ specs/
 │   └── resources/
 │       ├── cii/16b/xsl/        CII EN 16931 validation XSLT
 │       ├── ubl/2.1/xsl/        UBL EN 16931 validation XSLT
-│       ├── xrechnung/3.0.2/xsl/  XRechnung CIUS CII and UBL validation XSLT
+│       ├── xrechnung/3.0.2/xsl/  XRechnung CIUS CII and UBL validation XSLT — sourced directly
+│       │                          from itplr-kosit/xrechnung-schematron v2.6.0 (2026-09-07);
+│       │                          the rest of this xrechnung/ tree is still from
+│       │                          validator-configuration-xrechnung v2026-01-31, untouched
 │       └── xsd/                KoSIT report and scenarios XSD
 ├── examples/
 │   └── zugferd/                Reference XML examples per profile (from FeRD 2.5.2 release)
@@ -42,7 +45,7 @@ specs/
 |---|---|---|
 | ZUGFeRD / Factur-X Schema + Schematron + XSLT + Examples + Documentation | 2.5.2 / 1.09.2 (2026-08-04, effective 2026-09-01) | FeRD / FNFE-MPE release package `ZUGFeRD_2.5.2_EN.zip`, retrieved 2026-08-09 |
 | CII D22B base XSD | D22B | UN/CEFACT; byte-identical to the previously bundled 1.08 copy — confirmed via diff, not re-copied |
-| XRechnung validator configuration | 3.0.2 / 2026-01-31 | [itplr-kosit/validator-configuration-xrechnung v2026-01-31](https://github.com/itplr-kosit/validator-configuration-xrechnung/releases/tag/v2026-01-31) — untouched by this update, XRechnung ships separately from the FeRD ZUGFeRD/Factur-X package |
+| XRechnung `xrechnung-schematron` compiled ruleset (CII + UBL) | 2.6.0 (2026-08-31, compatible with XRechnung 3.0.2 spec) | [itplr-kosit/xrechnung-schematron v2.6.0](https://github.com/itplr-kosit/xrechnung-schematron/releases/tag/v2.6.0), commit `217c6cb` — user-supplied 2026-09-07, replacing the previously bundled 2.4.0-era compiled artifact (which had been mislabeled "3.0.2 / 2026-01-31" after the unrelated `validator-configuration-xrechnung` packaging repo; that repo was never actually the source of these files). Distinct version axis from the XRechnung 3.0.2 CIUS spec version, which is unchanged. |
 | XRechnung specification PDF | 3.0 / 2024-06-20 | xeinkauf.de |
 
 **2026-08-09 update notes:**

@@ -41,6 +41,27 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.11.1] - 2026-09-07
+#### Changed
+- **[regulatory-update, closes `regulatory-update` issue #6]** KoSIT `xrechnung-schematron`
+  ruleset bumped 2.4.0 → 2.6.0 (2026-08-31, "compatible with XRechnung 3.0"). The bundled
+  `XRechnung-CII-validation.xsl` / `XRechnung-UBL-validation.xsl` (both the shipped
+  `src/mcp_einvoicing_de/rules/` copies and the `specs/xrechnung/resources/` reference copies)
+  were replaced with the upstream 2.6.0-compiled artifacts (user-supplied, per this repo's
+  local-specs-only rule). Both old and new stylesheets are XSLT 2.0/Saxon — no engine-backend
+  change. Notable rule deltas since 2.4.0: `BR-TMP-2` severity raised from warning to **fatal**
+  (KoSIT's own release notes flag this as a possible validation-workflow break — full local
+  test suite re-run clean, no fixture regressions); new warning-level `BR-TMP-4`–`BR-TMP-7`
+  temporary rules (date-format enforcement, CII-SR-475/476 context correction); CEN codelist
+  bumped to 1.3.16.
+- **Corrected a long-standing version-label conflation**: "XRechnung 3.0.2" is the CIUS *spec*
+  version (unchanged); the KoSIT `xrechnung-schematron` *ruleset* that implements it versions
+  independently and had drifted to being mislabeled with the spec version and an unrelated
+  packaging repo (`validator-configuration-xrechnung`) tag. Corrected in
+  `validators/schematron.py`'s docstring, `specs/README.md`, `README.md`/`README.de.md`, and
+  `context-library/countries/de.md` / `context-library/formats/zugferd-xrechnung.md` at the
+  workspace root.
+
 ### [0.11.0] - 2026-08-26
 #### Fixed
 - **[DE-TL-1]** `datev_export._bu_key` mis-mapped two revenue-side categories. Verified against the

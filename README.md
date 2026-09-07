@@ -261,6 +261,7 @@ mcp-einvoicing-core (shared base, installed as dependency)
 |----------|---------|-------------------|
 | ZUGFeRD | 2.5.2 | MINIMUM, BASIC WL, BASIC, EN 16931, EXTENDED |
 | XRechnung | 3.0.2 | CII (Cross Industry Invoice), UBL (Universal Business Language) |
+| KoSIT `xrechnung-schematron` ruleset | 2.6.0 | Validation rules for XRechnung 3.0.2 (separate version axis from the spec itself) |
 | EN 16931 | 2017 | European core data model for electronic invoicing |
 | Peppol BIS | 3.0 | Billing 3.0 (EN 16931-compliant) |
 

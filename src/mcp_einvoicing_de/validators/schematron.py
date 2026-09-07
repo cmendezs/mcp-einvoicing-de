@@ -10,17 +10,21 @@ Bundled rule sources and versions:
   FeRD / FNFE-MPE release package, Factur-X 1.08 (2025-12-04)
 - EN 16931 UBL: KoSIT validator-configuration-xrechnung v2026-01-31
   (CEN Schematron Rules 1.3.15)
-- XRechnung 3.0.2 CII/UBL: KoSIT validator-configuration-xrechnung v2026-01-31
+- XRechnung 3.0.2 CII/UBL: KoSIT ``xrechnung-schematron`` ruleset v2.6.0
+  (2026-08-31), compiled directly from that repo — a separate version axis
+  from the "XRechnung 3.0.2" CIUS spec version (unchanged). Not from
+  validator-configuration-xrechnung, despite the historical filename layout.
 
 Official rule sources:
 - ZUGFeRD: https://www.ferd-net.de/standards/zugferd-2-0/index.html
-- XRechnung: https://github.com/itplr-kosit/validator-configuration-xrechnung
+- XRechnung: https://github.com/itplr-kosit/xrechnung-schematron
 
 XSLT 2.0 backend (DE-XSLT2-1):
-The FeRD Factur-X stylesheets use XPath 2.0 constructs (``xs:decimal``,
-``cast as``) that lxml / libxslt (XSLT 1.0 only) cannot compile. Version
-detection and backend dispatch are delegated to core's
-``load_schematron_validator()``, which returns
+The FeRD Factur-X *and* KoSIT XRechnung stylesheets both use XPath 2.0
+constructs (``xs:decimal``, typed variables) that lxml / libxslt (XSLT 1.0
+only) cannot compile — despite this module's stylesheet-key naming, none of
+the bundled rule sets are XSLT 1.0. Version detection and backend dispatch
+are delegated to core's ``load_schematron_validator()``, which returns
 ``mcp_einvoicing_core.schematron.SaxonSchematronValidator`` (Saxon-HE via the
 optional ``saxonche`` extra: ``pip install mcp-einvoicing-de[xslt2]``) for
 XSLT 2.0+ stylesheets, or raises ``ImportError`` with a remediation message
