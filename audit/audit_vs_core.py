@@ -37,6 +37,7 @@ from mcp_einvoicing_core.audit import (
     parse_audit_args,
     render_summary_table,
     run_check_core_coverage,
+    run_check_resource_paths,
     run_check_version_compatibility,
 )
 
@@ -286,6 +287,18 @@ _DE_MODULES: list[str] = [
 ]
 
 _PYPROJECT = Path(__file__).parent.parent / "pyproject.toml"
+
+# CHECK 7 configuration — every runtime resource directory this package's
+# own modules resolve at import time (CORE-1, core v1.32.0). Each entry is
+# the actual resolved Path object the running module computes, not a
+# re-derivation, so this exercises the same resolution logic as production.
+import mcp_einvoicing_de  # noqa: E402
+from mcp_einvoicing_de.validators.schematron import _RULES_DIR  # noqa: E402
+
+_PACKAGE_ROOT = Path(mcp_einvoicing_de.__file__).resolve().parent
+_RESOURCE_PATHS: dict[str, Path] = {
+    "mcp_einvoicing_de.validators.schematron._RULES_DIR": _RULES_DIR,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -866,6 +879,12 @@ def run_audit() -> AuditReport:
     )
     report.checks.append(run_check_5())
     report.checks.append(run_check_6())
+    report.checks.append(
+        run_check_resource_paths(
+            package_root=_PACKAGE_ROOT,
+            resource_paths=_RESOURCE_PATHS,
+        )
+    )
 
     return report
 
