@@ -1,6 +1,6 @@
 # mcp-einvoicing-de
 
-> MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)
+> MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931), vendor-neutral Peppol transport
 
 ## Docs
 

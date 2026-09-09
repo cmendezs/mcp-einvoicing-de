@@ -255,6 +255,17 @@ mcp-einvoicing-core (shared base, installed as dependency)
 └── EInvoicingMCPServer
 ```
 
+## Vendor neutrality
+
+This server implements the standard itself: it builds, validates, and signs the document
+locally. It is not a client for a commercial invoicing platform, and your signing keys and
+credentials never leave your own infrastructure.
+
+A Peppol access point is optional: transmission via `peppol_send` is one available channel,
+and any accredited access point speaks the same AS4 profile, so switching providers is a
+configuration change, not a code change. This package does not implement direct submission to
+a German B2G state portal (ZRE/OZG-RE).
+
 ## Supported standards
 
 | Standard | Version | Profiles / Syntax |

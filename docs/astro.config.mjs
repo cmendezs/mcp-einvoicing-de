@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "mcp-einvoicing-de",
-      description: "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)",
+      description: "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931), vendor-neutral Peppol transport",
       customCss: ["./src/styles/docs-theme.css"],
       social: [
         { icon: "github", label: "GitHub", href: "https://github.com/cmendezs/mcp-einvoicing-de" },
@@ -28,7 +28,7 @@ export default defineConfig({
       plugins: [
         starlightLlmsTxt({
           projectName: "mcp-einvoicing-de",
-          description: "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931)",
+          description: "MCP server for German electronic invoicing (ZUGFeRD 2.x, XRechnung 3.x, EN 16931), vendor-neutral Peppol transport",
           customSets: [
             {
               label: "Key links",

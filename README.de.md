@@ -255,6 +255,17 @@ mcp-einvoicing-core (gemeinsame Basis, als Abhängigkeit installiert)
 └── EInvoicingMCPServer
 ```
 
+## Neutralität gegenüber Anbietern
+
+Dieser Server implementiert den Standard selbst: Er erstellt, validiert und signiert das
+Dokument lokal. Er ist kein Client für eine kommerzielle Rechnungsplattform, und Ihre
+Signaturschlüssel und Zugangsdaten verlassen niemals Ihre eigene Infrastruktur.
+
+Ein Peppol-Zugangspunkt ist optional: Die Übertragung via `peppol_send` ist ein verfügbarer
+Kanal, und jeder akkreditierte Zugangspunkt spricht dasselbe AS4-Profil, sodass ein
+Anbieterwechsel eine Konfigurationsänderung ist, keine Codeänderung. Dieses Paket implementiert
+keine direkte Einreichung an ein deutsches B2G-Landesportal (ZRE/OZG-RE).
+
 ## Unterstützte Standards
 
 | Standard | Version | Profile / Syntax |
