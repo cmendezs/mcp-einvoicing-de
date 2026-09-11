@@ -93,9 +93,7 @@ mcp-publisher publish
   version (unchanged); the KoSIT `xrechnung-schematron` *ruleset* that implements it versions
   independently and had drifted to being mislabeled with the spec version and an unrelated
   packaging repo (`validator-configuration-xrechnung`) tag. Corrected in
-  `validators/schematron.py`'s docstring, `specs/README.md`, `README.md`/`README.de.md`, and
-  `context-library/countries/de.md` / `context-library/formats/zugferd-xrechnung.md` at the
-  workspace root.
+  `validators/schematron.py`'s docstring, `specs/README.md`, and `README.md`/`README.de.md`.
 
 ### [0.11.0] - 2026-08-26
 #### Fixed
@@ -139,7 +137,7 @@ mcp-publisher publish
 - **ZUGFeRD 2.5.2 / Factur-X 1.09.2 spec upgrade** (FeRD/FNFE-MPE release, effective 2026-09-01): replaced bundled `specs/zugferd/{MINIMUM,BASICWL,BASIC,EN16931,EXTENDED}/` schema, Schematron, and XSLT, the runtime copies in `src/mcp_einvoicing_de/rules/`, the example set in `specs/examples/zugferd/`, and `specs/documentation/zugferd/`. Upgraded from ZUGFeRD 2.4 / Factur-X 1.08. The D16B→D22B rebase was a non-issue — `specs/zugferd/XSD_CII_D22B/` was already D22B, byte-identical to the new release. `BR-CO-27`→`CII-SR-470` and the `BR-FXEXT-*` EXTENDED-profile rules were already present in the 1.08 assets. EXTENDED-profile BT-151/BT-151-0 cardinality relaxation only applies to `SubInvoiceLine`/subtype (BT-X-8) `GROUP`/`INFORMATION` lines, which `ZUGFeRDLineItem` does not model — no model change needed.
 
 #### Known issues
-- `BR-FXEXT-CO-15` fires on EXTENDED-profile invoices with a VAT total; reproduces under both the old and new bundled stylesheet, so it predates this release. Tracked as DE-ZF252-3 in `roadmap-2026.md`.
+- `BR-FXEXT-CO-15` fires on EXTENDED-profile invoices with a VAT total; reproduces under both the old and new bundled stylesheet, so it predates this release. Tracked as DE-ZF252-3.
 
 ### [0.8.0] - 2026-07-20
 #### Fixed
