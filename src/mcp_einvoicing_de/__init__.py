@@ -5,5 +5,5 @@ Supports ZUGFeRD 2.x (MINIMUM through EXTENDED) and XRechnung 3.x
 e-invoicing mandate effective 2025.
 """
 
-__version__ = "0.11.3"
+__version__ = "0.11.4"
 __author__ = "cmendezs"
