@@ -63,8 +63,8 @@ Der Server benötigt keine externen Zugangsdaten. Verfügbare Umgebungsvariablen
 | Variable | Beschreibung | Standard |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Protokollierungsgrad (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines selbst gehosteten KoSIT-Validierungstool-REST-Endpunkts. Wird nur verwendet, wenn die Cloud-Validierung aktiviert ist — siehe `EINVOICING_DE_KOSIT_ENABLE` | |
-| `EINVOICING_DE_KOSIT_ENABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung zu aktivieren (`validator.kosit.de` oder ein selbst gehosteter Endpunkt). Standardmaessig laeuft nur lokales Schematron | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL eines vertrauenswuerdigen KoSIT-Validierungstool-REST-Endpunkts (z. B. selbst gehostet). Erforderlich fuer die Remote-Validierung: es gibt keinen integrierten Standard-Endpunkt. Siehe `EINVOICING_DE_KOSIT_ENABLE` | |
+| `EINVOICING_DE_KOSIT_ENABLE` | Auf `1` setzen, um die KoSIT-Cloud-Validierung zu aktivieren (ein in `EINVOICING_DE_KOSIT_VALIDATOR_URL` konfigurierter Endpunkt). Standardmaessig laeuft nur lokales Schematron | |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Lokales Verzeichnis mit einer eigenen Kopie der OpenPeppol eDEC Code Lists, erforderlich fuer die Peppol-Codelist-Werkzeuge (nicht in diesem Paket enthalten; siehe README von `mcp-einvoicing-core`) | |
 | `EINVOICING_EN16931_CODELIST_DIR` | Lokales Verzeichnis mit einer eigenen Kopie der EN-16931-Codelisten des CEF "Digital Building Blocks", erforderlich fuer die EN-16931-Codelist-Werkzeuge (nicht enthalten; siehe README von `mcp-einvoicing-core`) | |
 
@@ -130,7 +130,7 @@ Die Datei wird beim Speichern automatisch neu geladen. Sie koennen die Konfigura
 | Werkzeug | Beschreibung |
 |----------|-------------|
 | `invoice_create` | ZUGFeRD- oder XRechnung-XML (CII oder UBL) erzeugen. Erzwingt das B2B-Mandat nach §14 Abs. 2 UStG: Nicht-XML-Ausgaben werden fuer deutsche Rechnungsempfaenger mit USt-IdNr. (DE-Praefix) abgelehnt, sofern nicht `transitional_period_opt_in=True` gesetzt ist. `output_format='pdf'` erzeugt eine PDF/A-3-Hybridrechnung der Stufe B mit sRGB-ICC-Profil, OutputIntent, eingebetteten Schriften und deterministischer /ID. |
-| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. Standardmaessig laeuft nur lokale Schematron-Validierung (es verlassen keine Daten den eigenen Rechner); mit `cloud_validate=True` oder `EINVOICING_DE_KOSIT_ENABLE=1` die KoSIT-Cloud-Validierung (`validator.kosit.de` oder ein selbst gehosteter Endpunkt) mit exponentiellem Backoff-Retry (1s/2s/4s) aktivieren. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
+| `invoice_validate` | Rechnung gegen EN 16931 und KoSIT-Regeln (BR-DE-\*) pruefen. Standardmaessig laeuft nur lokale Schematron-Validierung (es verlassen keine Daten den eigenen Rechner); mit `cloud_validate=True` oder `EINVOICING_DE_KOSIT_ENABLE=1` die KoSIT-Cloud-Validierung (ein in `EINVOICING_DE_KOSIT_VALIDATOR_URL` konfigurierter Endpunkt) mit exponentiellem Backoff-Retry (1s/2s/4s) aktivieren. Lokale XSLT-2.0-Validierung erfordert das Extra `[xslt2]`. |
 | `invoice_parse` | Strukturierte Daten aus ZUGFeRD- oder XRechnung-XML extrahieren oder aus einer PDF/A-3-Hybridrechnung mit eingebetteter `factur-x.xml` / `zugferd-invoice.xml`. |
 | `invoice_convert` | Zwischen ZUGFeRD-Profilen konvertieren, ZUGFeRD/XRechnung-CII-Header tauschen oder Cross-Syntax-Konvertierung CII/UBL ueber Core `convert_wire_format` durchfuehren. |
 | `datev_export` | ZUGFeRD-Rechnung als DATEV-EXTF-700-Buchungsstapel-CSV-Datei fuer den Import in DATEV-Buchhaltungssoftware exportieren. Standardmaessig SKR-03-Konten (8400 Erloese / 10000 Forderungen). |

@@ -1,6 +1,7 @@
 """DE-V1-2: KoSIT cloud canary corpus.
 
-Replays a curated set of invoices against https://validator.kosit.de and
+Replays a curated set of invoices against the KoSIT endpoint named by
+EINVOICING_DE_KOSIT_VALIDATOR_URL and
 asserts they all validate successfully. Gated behind EINVOICING_DE_INTEGRATION_TESTS=1.
 Runs nightly in CI via .github/workflows/kosit-canary.yml.
 """
@@ -27,7 +28,10 @@ from mcp_einvoicing_de.serializers import ZUGFeRDCIISerializer
 from mcp_einvoicing_de.validators.kosit import KoSITValidator
 
 _INTEGRATION = os.environ.get("EINVOICING_DE_INTEGRATION_TESTS") == "1"
-pytestmark = pytest.mark.skipif(not _INTEGRATION, reason="Integration tests disabled")
+pytestmark = pytest.mark.skipif(
+    not (_INTEGRATION and os.environ.get("EINVOICING_DE_KOSIT_VALIDATOR_URL")),
+    reason="Integration tests disabled or EINVOICING_DE_KOSIT_VALIDATOR_URL unset",
+)
 
 
 def _canary_invoice(
@@ -108,7 +112,7 @@ class TestKoSITCanary:
         with_lines: bool,
     ) -> None:
         xml_bytes = _canary_invoice(profile, inv_num, with_lines)
-        validator = KoSITValidator(KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL)
+        validator = KoSITValidator(os.environ["EINVOICING_DE_KOSIT_VALIDATOR_URL"])
         result = await validator.validate(xml_bytes, filename=f"{inv_num}.xml")
 
         assert result.is_valid, (

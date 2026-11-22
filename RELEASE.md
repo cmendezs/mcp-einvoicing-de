@@ -41,6 +41,10 @@ mcp-publisher publish
 
 ## Changelog
 
+### [0.11.5] - 2026-11-22
+
+- **[DE-LC-2 follow-up]:** removed `KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL`. Remote KoSIT validation now requires `EINVOICING_DE_KOSIT_VALIDATOR_URL`; without it `invoice_validate(cloud_validate=True)` returns an explicit error instead of contacting an unconfirmed endpoint. New helper `configured_kosit_url()`.
+
 ### [0.11.4] - 2026-09-12
 #### Changed
 - Lower-bound pin on `mcp-einvoicing-core` raised to `>=1.34.1` (was `>=1.21.0`). This package's own CI now runs `CHECK_PUBLIC_HYGIENE`, the pre-publish audit check that blocks accidental citations of the private orchestration repo.

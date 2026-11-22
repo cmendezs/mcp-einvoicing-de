@@ -24,7 +24,11 @@ from mcp_einvoicing_core.xml_utils import format_error, resolve_xml_input
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from mcp_einvoicing_de.utils.xml_utils import detect_invoice_syntax, detect_zugferd_profile
-from mcp_einvoicing_de.validators.kosit import KoSITValidator
+from mcp_einvoicing_de.validators.kosit import (
+    KOSIT_URL_ENV,
+    KoSITValidator,
+    configured_kosit_url,
+)
 from mcp_einvoicing_de.validators.schematron import (
     SchematronValidator,
     ValidationMessage,
@@ -396,10 +400,17 @@ async def invoice_validate(
         result = await _validate_local(xml_bytes, profile_name, syntax)
         validator_used = "local_schematron"
     else:
-        # DE-LC-2: no implicit default URL — the caller opting into cloud
-        # validation gets the explicitly-named [Unverified] sentinel unless
-        # a real endpoint is configured via EINVOICING_DE_KOSIT_VALIDATOR_URL.
-        kosit = KoSITValidator(KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL)
+        # DE-LC-2: there is no built-in KoSIT endpoint. The caller opting into
+        # cloud validation must name one via EINVOICING_DE_KOSIT_VALIDATOR_URL.
+        kosit_url = configured_kosit_url()
+        if kosit_url is None:
+            return format_error(
+                "Remote KoSIT validation was requested but no endpoint is configured. "
+                f"Set {KOSIT_URL_ENV} to the URL of a KoSIT validator REST endpoint you "
+                "trust (for example a self-hosted validationtool daemon), or omit "
+                "cloud_validate to use local Schematron validation."
+            )
+        kosit = KoSITValidator(kosit_url)
         kosit_result = await kosit.validate(xml_bytes)
         kosit_failed = any(e.rule_id == "KOSIT-HTTP" for e in kosit_result.errors)
         if kosit_failed and not params.kosit_strict:

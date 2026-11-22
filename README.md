@@ -63,8 +63,8 @@ The server does not require external credentials. Available environment variable
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `EINVOICING_DE_LOG_LEVEL` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) | `INFO` |
-| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a self-hosted KoSIT validation tool REST endpoint. Only used if cloud validation is enabled — see `EINVOICING_DE_KOSIT_ENABLE` | |
-| `EINVOICING_DE_KOSIT_ENABLE` | Set to `1` to enable KoSIT cloud validation (`validator.kosit.de` or a self-hosted endpoint). Local Schematron-only validation is the default | |
+| `EINVOICING_DE_KOSIT_VALIDATOR_URL` | URL of a KoSIT validation tool REST endpoint you trust (for example self-hosted). Required for remote validation: there is no built-in default endpoint. See `EINVOICING_DE_KOSIT_ENABLE` | |
+| `EINVOICING_DE_KOSIT_ENABLE` | Set to `1` to enable KoSIT cloud validation (an endpoint you configure in `EINVOICING_DE_KOSIT_VALIDATOR_URL`). Local Schematron-only validation is the default | |
 | `EINVOICING_PEPPOL_CODELIST_DIR` | Local directory containing your own copy of the OpenPeppol eDEC Code Lists, required by the Peppol codelist tools (not bundled with this package; see `mcp-einvoicing-core` README) | |
 | `EINVOICING_EN16931_CODELIST_DIR` | Local directory containing your own copy of the CEF "Digital Building Blocks" EN 16931 semantic code lists, required by the EN 16931 codelist tools (not bundled; see `mcp-einvoicing-core` README) | |
 
@@ -130,7 +130,7 @@ The file is automatically reloaded on save. You can also open the config via the
 | Tool | Description |
 |------|-------------|
 | `invoice_create` | Generate ZUGFeRD or XRechnung XML (CII or UBL). Enforces the §14 Abs. 2 UStG B2B mandate: non-XML output is rejected for DE-prefixed VAT buyers unless `transitional_period_opt_in=True` is set. `output_format='pdf'` produces a PDF/A-3 level B hybrid invoice with sRGB ICC profile, OutputIntent, embedded fonts, and deterministic /ID. |
-| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT rules (BR-DE-\*). Local Schematron validation runs by default (no data leaves your machine); set `cloud_validate=True` or `EINVOICING_DE_KOSIT_ENABLE=1` to opt into KoSIT cloud validation (`validator.kosit.de` or a self-hosted endpoint) with exponential backoff retry (1s/2s/4s). XSLT 2.0 local validation requires the `[xslt2]` extra. |
+| `invoice_validate` | Validate an invoice against EN 16931 and KoSIT rules (BR-DE-\*). Local Schematron validation runs by default (no data leaves your machine); set `cloud_validate=True` or `EINVOICING_DE_KOSIT_ENABLE=1` to opt into KoSIT cloud validation (an endpoint you configure in `EINVOICING_DE_KOSIT_VALIDATOR_URL`) with exponential backoff retry (1s/2s/4s). XSLT 2.0 local validation requires the `[xslt2]` extra. |
 | `invoice_parse` | Extract structured data from ZUGFeRD or XRechnung XML, or from a PDF/A-3 hybrid invoice with embedded `factur-x.xml` / `zugferd-invoice.xml`. |
 | `invoice_convert` | Convert between ZUGFeRD profiles, swap ZUGFeRD/XRechnung CII headers, or perform cross-syntax CII/UBL conversion via core `convert_wire_format`. |
 | `datev_export` | Export a ZUGFeRD invoice as a DATEV EXTF 700 Buchungsstapel CSV file for import into DATEV accounting software. Defaults to SKR 03 accounts (8400 revenue / 10000 receivable). |

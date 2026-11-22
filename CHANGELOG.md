@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.11.5] - 2026-11-22
+
+### Changed
+- Remote KoSIT validation has no built-in endpoint. `invoice_validate(cloud_validate=True)` (or `EINVOICING_DE_KOSIT_ENABLE=1`) now returns an explicit error until `EINVOICING_DE_KOSIT_VALIDATOR_URL` names a trusted KoSIT REST endpoint. KoSIT operates no official public validation endpoint: its validator is distributed as a Java application, daemon or container to run locally against downloaded rule sets, so any REST endpoint is self-hosted or third-party. The former implicit `validator.kosit.de` URL is gone and the host is no longer on the built-in allowlist; add a trusted host through `EINVOICING_KOSIT_ALLOWLIST`.
+
+### Removed
+- `KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL`. Use `configured_kosit_url()` or pass a URL to `KoSITValidator(...)`.
+
+---
+
 ## [0.11.4] - 2026-09-12
 
 ### Changed

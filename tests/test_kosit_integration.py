@@ -1,7 +1,7 @@
 """DE-V1-5: End-to-end KoSIT integration test.
 
 Network-dependent test that submits one invoice per profile to
-https://validator.kosit.de and asserts valid: true.
+the KoSIT endpoint named by EINVOICING_DE_KOSIT_VALIDATOR_URL and asserts valid: true.
 Gated behind EINVOICING_DE_INTEGRATION_TESTS=1. Runs nightly, not on every PR.
 """
 
@@ -14,7 +14,10 @@ import pytest
 from mcp_einvoicing_de.tools.invoice_validate import invoice_validate
 
 _INTEGRATION = os.environ.get("EINVOICING_DE_INTEGRATION_TESTS") == "1"
-pytestmark = pytest.mark.skipif(not _INTEGRATION, reason="Integration tests disabled")
+pytestmark = pytest.mark.skipif(
+    not (_INTEGRATION and os.environ.get("EINVOICING_DE_KOSIT_VALIDATOR_URL")),
+    reason="Integration tests disabled or EINVOICING_DE_KOSIT_VALIDATOR_URL unset",
+)
 
 
 @pytest.fixture()

@@ -6,13 +6,11 @@ name: KoSIT canary corpus
 #     name (net_amount instead of line_net_amount) and omits unit_code /
 #     tax_category / tax_rate, so 4 of 6 canary cases fail Pydantic
 #     validation before any network call is made.
-#  2. KoSITValidator._UNVERIFIED_DEFAULT_KOSIT_URL points at
-#     https://validator.kosit.de/api/v1/validate, which the validator's own
-#     docstring already flags as [Unverified]: not a confirmed published
-#     KoSIT endpoint (DE-LC-2), and it fails TLS verification in CI.
-# Re-enable the schedule only after both are fixed: correct the fixture and
-# confirm the real KoSIT validate endpoint against KoSIT's technical service
-# documentation. Manual runs remain available via workflow_dispatch.
+#  2. The old default URL was never an official KoSIT endpoint (KoSIT
+#     publishes no public one; DE-LC-2 removed it in v0.11.5).
+# Re-enable the schedule only after the fixture is corrected and the job
+# points EINVOICING_DE_KOSIT_VALIDATOR_URL at a self-hosted KoSIT validator
+# container. Manual runs remain available via workflow_dispatch.
 on:
   workflow_dispatch: {}
 

@@ -34,11 +34,23 @@ _KOSIT_ALLOWLIST_DEFAULT: frozenset[str] = frozenset(
         "::1",
         "validationtool",  # common docker-compose service name
         "kosit-validator",  # alternative docker-compose service name
-        "validator.kosit.de",  # official KoSIT cloud validator
     }
 )
 
 _RETRY_DELAYS = (1.0, 2.0, 4.0)
+
+KOSIT_URL_ENV = "EINVOICING_DE_KOSIT_VALIDATOR_URL"
+
+
+def configured_kosit_url() -> str | None:
+    """Return the KoSIT validator URL set in the environment, or ``None``.
+
+    There is no built-in default endpoint (DE-LC-2): KoSIT does not publish one
+    stable public REST URL, so callers opting into remote validation must name
+    their own trusted endpoint through ``EINVOICING_DE_KOSIT_VALIDATOR_URL``.
+    """
+    value = os.environ.get(KOSIT_URL_ENV, "").strip()
+    return value or None
 
 
 def _validate_kosit_url(url: str) -> str:
@@ -96,16 +108,6 @@ class KoSITValidator:
     [NEED: confirm KoSIT API request/response schema]
     [NEED: confirm whether mcp-einvoicing-core provides a RemoteValidatorBase]
     """
-
-    _UNVERIFIED_DEFAULT_KOSIT_URL = os.environ.get(
-        "EINVOICING_DE_KOSIT_VALIDATOR_URL",
-        "https://validator.kosit.de/api/v1/validate",
-    )
-    """[Unverified] KoSIT does not publish a public REST validate endpoint at
-    this URL as of 2026-07; verify against the KoSIT technical service
-    documentation before enabling. There is no implicit default any more
-    (DE-LC-2) — callers that opt into cloud validation (DE-LC-1) must supply
-    a URL explicitly, either their own trusted endpoint or this sentinel."""
 
     def __init__(self, base_url: str, timeout: float = 30.0) -> None:
         self._base_url = _validate_kosit_url(base_url).rstrip("/")

@@ -22,7 +22,6 @@ class _RecordingKoSIT:
 
     instances: int = 0
     validate_calls: int = 0
-    _UNVERIFIED_DEFAULT_KOSIT_URL = "https://validator.kosit.de/api/v1/validate"
 
     def __init__(self, *args: object, **kwargs: object) -> None:
         type(self).instances += 1
@@ -180,6 +179,22 @@ class TestCloudValidateOptIn:
         _RecordingKoSIT.instances = 0
         _RecordingKoSIT.validate_calls = 0
         monkeypatch.setattr(invoice_validate_module, "KoSITValidator", _RecordingKoSIT)
+        monkeypatch.setenv(
+            "EINVOICING_DE_KOSIT_VALIDATOR_URL", "http://localhost:8080/api/v1/validate"
+        )
+
+    @pytest.mark.asyncio
+    async def test_cloud_validate_without_configured_url_returns_error(
+        self, minimal_cii_xml: bytes, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """DE-LC-2: no built-in endpoint; an unset URL is an explicit error."""
+        monkeypatch.delenv("EINVOICING_DE_KOSIT_VALIDATOR_URL", raising=False)
+        data = await invoice_validate(
+            xml_base64=base64.b64encode(minimal_cii_xml).decode(),
+            cloud_validate=True,
+        )
+        assert "EINVOICING_DE_KOSIT_VALIDATOR_URL" in str(data)
+        assert _RecordingKoSIT.instances == 0
 
     @pytest.mark.asyncio
     async def test_default_call_makes_no_kosit_call(self, minimal_cii_xml: bytes) -> None:
